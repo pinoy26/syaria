@@ -139,7 +139,21 @@ function endPrevMonth(p){ var a=p.split('-').map(Number); var d=new Date(Date.UT
 function sum(rows){ var t={pagu:0,lock:0,lalu:0,ini:0,sd:0,sisa:0,n:0,n0:0}; rows.forEach(function(r){ t.pagu+=r.pagu;t.lock+=r.lock;t.lalu+=r.lalu;t.ini+=r.ini;t.sd+=r.sd;t.sisa+=r.sisa;t.n++; if(r.sd===0&&r.pagu>0)t.n0++; }); t.p=t.pagu?t.sd/t.pagu:0; return t; }
 function group(rows, fn){ var m={},o=[]; rows.forEach(function(r){ var k=fn(r); if(!m[k]){m[k]=[];o.push(k);} m[k].push(r); }); return o.map(function(k){ var s=sum(m[k]); s.key=k; s.rows=m[k]; return s; }); }
 function toast(msg, html){ var t=$('toast'); if(html) t.innerHTML=msg; else t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},8000); }
-function errMsg(e){ return String((e && e.message) || (e && e.error_description) || e); }
+function errMsg(e){
+  var m = String((e && e.message) || (e && e.error_description) || e);
+  var peta = {
+    'Email not confirmed': 'Email belum dikonfirmasi. Klik tautan konfirmasi di email Anda, atau minta admin mematikan "Confirm email" di pengaturan Supabase.',
+    'Invalid login credentials': 'Email atau kata sandi salah.',
+    'User already registered': 'Email ini sudah terdaftar. Silakan masuk, atau pakai "Lupa kata sandi".',
+    'Password should be at least 6 characters': 'Kata sandi terlalu pendek (minimal 8 karakter).',
+    'Email rate limit exceeded': 'Batas pengiriman email Supabase tercapai. Coba lagi nanti atau matikan konfirmasi email.',
+    'Signups not allowed for this instance': 'Pendaftaran mandiri sedang dimatikan. Hubungi admin keuangan.',
+    'Failed to fetch': 'Tidak bisa menghubungi server. Periksa koneksi internet dan isi config.js.'
+  };
+  for (var k in peta) if (m.indexOf(k) >= 0) return peta[k];
+  return m;
+}
+function perluKonfirmasi(e){ return /Email not confirmed/i.test(String((e && e.message) || e)); }
 
 /* ================= konstanta ================= */
 var SRC = {RM:'Rupiah Murni', PNP:'PNBP'};
@@ -1068,7 +1082,19 @@ function tampilMasuk(catatan, mode){
       }
       $('gate').hidden = true; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
       mulai();
-    }).catch(function(x){ b.disabled = false; $('lgMsg').textContent = errMsg(x); });
+    }).catch(function(x){
+      b.disabled = false;
+      $('lgMsg').textContent = errMsg(x);
+      if (perluKonfirmasi(x)){
+        $('lgMsg').innerHTML = esc(errMsg(x)) + ' <button class="btn" type="button" id="lgKirim" style="margin-top:8px">Kirim ulang email konfirmasi</button>';
+        $('lgKirim').onclick = function(){
+          var kb = this; kb.disabled = true;
+          SBC.auth.resend({ type: 'signup', email: $('lgId').value.trim() })
+            .then(function(r){ if (r.error) throw r.error; $('lgMsg').textContent = 'Email konfirmasi dikirim ulang ke ' + $('lgId').value.trim() + '.'; })
+            .catch(function(er){ $('lgMsg').textContent = errMsg(er); });
+        };
+      }
+    });
   };
   $('lgId').focus();
 }
