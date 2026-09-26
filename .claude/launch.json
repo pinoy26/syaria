@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "static",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "cd /Users/nipap/Documents/syaria && exec python3 -m http.server 8842"],
+      "port": 8842
+    }
+  ]
+}
