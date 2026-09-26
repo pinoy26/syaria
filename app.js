@@ -155,6 +155,20 @@ function errMsg(e){
 }
 function perluKonfirmasi(e){ return /Email not confirmed/i.test(String((e && e.message) || e)); }
 
+/* ================= tema gelap/terang ================= */
+function toggleTheme(){
+  var root=document.documentElement;
+  var cur=root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  var next=cur==='dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  try{ localStorage.setItem('dasbor-tema', next); }catch(e){}
+}
+document.addEventListener('click', function(e){ if (e.target.closest('[data-theme-toggle]')) toggleTheme(); });
+var THEME_BTN = '<button type="button" class="icon theme-toggle" data-theme-toggle aria-label="Ganti mode gelap/terang" title="Mode gelap/terang">' +
+  '<svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>' +
+  '<svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>' +
+  '</button>';
+
 /* ================= konstanta ================= */
 var SRC = {RM:'Rupiah Murni', PNP:'PNBP'};
 var FAK_ORDER = ['FTIK','FEBI','FASYA','FUAD','Pascasarjana'];
@@ -740,21 +754,38 @@ var PAGES=[
   {id:'rincian',t:'Rincian & Ekspor',g:'Pemantauan',ic:'<path d="M4 5h16v14H4zM4 10h16M10 10v9"/>',r:renderRincian},
   {id:'kelola',t:'Kelola Data',g:'Admin',ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',r:renderKelola,admin:true,noData:true}
 ];
+var BOTTOM_MAIN=['ringkasan','unit','riwayat','perhatian'];
+var MORE_IC='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>';
 function renderNav(){
   var g='',h='';
-  PAGES.forEach(function(p){ if(p.admin&&!isAdmin()) return; if(!DB&&!p.noData) return;
+  var visible=PAGES.filter(function(p){ return (!p.admin||isAdmin()) && (DB||p.noData); });
+  visible.forEach(function(p){
     if(p.g!==g){ g=p.g; h+='<div class="grp">'+g+'</div>'; }
     h+='<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"'+(S.page===p.id?' aria-current="page"':'')+'><svg viewBox="0 0 24 24">'+p.ic+'</svg>'+p.t+'</button>'; });
   $('nav').innerHTML=h;
   var s=sess(), role={ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'}[s.role];
-  $('who').innerHTML='<b>'+esc(role)+'</b>'+esc(s.email)+'<br>'+(s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.')+
-    ('<div class="tools" style="margin-top:10px"><button class="btn" type="button" id="btnPw">Ubah sandi</button><button class="btn" type="button" id="btnOut">Keluar</button></div>');
-  if ($('btnOut')) $('btnOut').onclick=function(){ SB.keluar(); };
-  if ($('btnPw')) $('btnPw').onclick=function(){
-    var baru=prompt('Kata sandi baru (minimal 8 karakter):'); if(baru===null) return;
-    SB.gantiSandi(baru).then(function(r){ toast(r.pesan); }).catch(function(e){ toast(errMsg(e)); });
-  };
+  var scopeNote=s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.';
+  $('who').innerHTML='<b>'+esc(role)+'</b>'+esc(s.email)+'<br>'+scopeNote+
+    '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-pw>Ubah sandi</button><button class="btn" type="button" data-out>Keluar</button></div>';
+
+  /* navigasi bawah ala aplikasi native (mobile) */
+  var mainPages=BOTTOM_MAIN.map(function(id){ return visible.filter(function(p){return p.id===id;})[0]; }).filter(Boolean);
+  var morePages=visible.filter(function(p){ return BOTTOM_MAIN.indexOf(p.id)<0; });
+  var moreOn=morePages.some(function(p){ return p.id===S.page; });
+  var bh=mainPages.map(function(p){ return '<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"'+(S.page===p.id?' aria-current="page"':'')+'><svg viewBox="0 0 24 24">'+p.ic+'</svg><span>'+p.t+'</span></button>'; }).join('');
+  bh+='<button type="button" data-more class="'+(moreOn?'on':'')+'" aria-expanded="false"><svg viewBox="0 0 24 24">'+MORE_IC+'</svg><span>Lainnya</span></button>';
+  $('bottomnav').innerHTML=bh;
+  $('bottomnav').hidden=false;
+
+  var sh='<div class="sheet-hd"><b>Lainnya</b>'+THEME_BTN+'</div><div class="sheet-list">'+
+    morePages.map(function(p){ return '<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"><svg viewBox="0 0 24 24">'+p.ic+'</svg>'+p.t+'</button>'; }).join('')+
+    '</div><div class="sheet-hd"><b>'+esc(role)+'</b></div><p class="note" style="margin:0 0 12px">'+esc(s.email)+'<br>'+scopeNote+'</p>'+
+    '<div class="tools"><button class="btn" type="button" data-pw>Ubah sandi</button><button class="btn" type="button" data-out>Keluar</button></div>';
+  $('moreSheet').innerHTML=sh;
 }
+function openSheet(){ $('moreSheet').hidden=false; $('sheetBd').hidden=false; requestAnimationFrame(function(){ $('moreSheet').classList.add('open'); $('sheetBd').classList.add('open'); }); var b=$('bottomnav').querySelector('[data-more]'); if(b) b.setAttribute('aria-expanded','true'); }
+function closeSheet(){ $('moreSheet').classList.remove('open'); $('sheetBd').classList.remove('open'); setTimeout(function(){ $('moreSheet').hidden=true; $('sheetBd').hidden=true; },220); var b=$('bottomnav').querySelector('[data-more]'); if(b) b.setAttribute('aria-expanded','false'); }
+function sheetOpen(){ return $('moreSheet').classList.contains('open'); }
 function bindTips(root){
   [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });
 }
@@ -814,6 +845,23 @@ function reboot(periode, keepPage){
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
 $('btnPrintAll').onclick=function(){ document.body.classList.remove('print-one'); window.print(); };
 $('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0); });
+$('bottomnav').addEventListener('click',function(e){
+  if (e.target.closest('[data-more]')){ if(sheetOpen()) closeSheet(); else openSheet(); return; }
+  var b=e.target.closest('[data-page]'); if(!b) return;
+  S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0);
+});
+$('moreSheet').addEventListener('click',function(e){
+  var b=e.target.closest('[data-page]'); if(!b) return;
+  S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; closeSheet(); refresh(); window.scrollTo(0,0);
+});
+$('sheetBd').addEventListener('click',closeSheet);
+document.addEventListener('click',function(e){
+  if (e.target.closest('[data-out]')) { SB.keluar(); return; }
+  if (e.target.closest('[data-pw]')) {
+    var baru=prompt('Kata sandi baru (minimal 8 karakter):'); if(baru===null) return;
+    SB.gantiSandi(baru).then(function(r){ toast(r.pesan); }).catch(function(e){ toast(errMsg(e)); });
+  }
+});
 
 
 
@@ -1049,6 +1097,7 @@ SB.keluar = function(){ return SBC.auth.signOut().then(function(){ location.relo
 function tampilMasuk(catatan){
   $('app').hidden = true; $('boot').hidden = true; $('gate').hidden = false;
   $('gate').innerHTML =
+    THEME_BTN +
     '<div class="brand" style="justify-content:center;margin-bottom:14px"><div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>' +
     '<div style="text-align:left"><b>Dasbor Anggaran</b><small>' + esc((BOOT && BOOT.satker) || 'Monitoring Anggaran & Realisasi') + '</small></div></div>' +
     '<h2 style="margin:0 0 6px">Masuk</h2>' +
