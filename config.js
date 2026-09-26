@@ -4,6 +4,6 @@
      anon / public key  → anonKey   (kunci publik; aman berada di repo selama RLS aktif)
    JANGAN pernah menaruh service_role key di berkas ini. */
 window.SB_CONFIG = {
-  url: 'GANTI_DENGAN_PROJECT_URL',      // contoh: https://abcdefgh.supabase.co
-  anonKey: 'GANTI_DENGAN_ANON_KEY'
+  url: 'https://pbjddlgyzgvfibvmicta.supabase.co',      // contoh: https://abcdefgh.supabase.co
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiamRkbGd5emd2Zmlidm1pY3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MTAyMDIsImV4cCI6MjEwNTk4NjIwMn0.eeJMQhe-8nqqyl4QovEOJuzOD9PTeHyiAHlQGNl5StA'
 };
