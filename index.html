@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dasbor Anggaran &amp; Realisasi</title>
+<meta name="description" content="Monitoring anggaran dan realisasi satker — data SAKTI">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div id="gate" class="glass gate" hidden></div>
+<div id="boot" class="loading">Memuat dasbor…</div>
+
+<div class="app" id="app" hidden>
+  <aside class="side glass">
+    <div class="brand">
+      <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>
+      <div><b>Monitoring Anggaran</b><small id="brandSub"></small></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Menu utama"></nav>
+    <div class="who" id="who"></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="crumb" id="crumb"></div>
+        <h1 id="pageTitle">Ringkasan Realisasi</h1>
+      </div>
+      <div class="tools">
+        <label class="f" for="selPeriode">Posisi data
+          <select id="selPeriode"></select>
+        </label>
+        <button class="btn primary" id="btnPrintAll" type="button"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Cetak laporan lengkap</button>
+      </div>
+    </div>
+    <section class="glass filters" id="filters" aria-label="Filter"></section>
+    <div class="scope" id="scope"></div>
+    <div id="page"></div>
+  </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="toast glass" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
