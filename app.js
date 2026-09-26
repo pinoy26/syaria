@@ -615,13 +615,13 @@ function renderKelola(){
   var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th><th></th></tr></thead><tbody>'+
     A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]); return '<tr><td>'+esc(u[0])+'</td><td>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</td><td>'+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'Seluruh satker')+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td><td class="row-actions"><button class="btn" type="button" data-edit="'+u[6]+'">Ubah</button><button class="btn" type="button" data-act="'+u[6]+'" data-on="'+(aktif?0:1)+'">'+(aktif?'Nonaktifkan':'Aktifkan')+'</button></td></tr>'; }).join('')+'</tbody></table></div>'+
     '<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
-    '<label class="f" for="uEmail">Email / nama pengguna<input type="text" id="uEmail" placeholder="nama@gmail.com atau nama@'+esc(A.domain||'kampus')+'" autocomplete="off"></label>'+
-    '<label class="f" for="uPw">Kata sandi<input type="password" id="uPw" placeholder="Wajib untuk akun non-kampus" autocomplete="new-password"></label>'+
+    '<label class="f" for="uEmail">Email pengguna<input type="text" id="uEmail" readonly placeholder="pilih lewat tombol Ubah di tabel"></label>'+
+
     '<label class="f" for="uPeran">Peran<select id="uPeran"><option value="UNIT">Fakultas / unit</option><option value="PIMPINAN">Pimpinan</option><option value="ADMIN">Admin keuangan</option></select></label>'+
     '<label class="f" for="uKat">Kategori<select id="uKat"><option value="Fakultas">Fakultas</option><option value="Rektorat">Rektorat</option></select></label>'+
     '<label class="f" for="uUnit">Unit<select id="uUnit"></select></label>'+
     '<label class="f" for="uKet">Keterangan<input type="text" id="uKet" placeholder="Jabatan / catatan"></label>'+
-    '<p class="note" style="grid-column:1/-1;margin:0">Akun @'+esc(A.domain||'kampus')+' bisa masuk langsung dengan Google tanpa kata sandi. Akun lain (Gmail, dll.) masuk dengan kata sandi minimal 8 karakter. Saat mengubah pengguna, kosongkan kata sandi bila tidak ingin menggantinya.</p>'+
+    '<p class="note" style="grid-column:1/-1;margin:0">Membuat akun baru: buka <a class="link" href="'+esc(A.authUrl)+'" target="_blank" rel="noopener">Supabase → Authentication → Users</a> → <b>Add user</b> → isi email &amp; kata sandi → centang <b>Auto Confirm User</b>. Setelah itu muat ulang halaman ini, akunnya akan muncul di tabel, lalu klik <b>Ubah</b> untuk menentukan peran dan cakupan unitnya.</p>'+
     '<div class="tools"><button class="btn primary" type="button" id="btnSaveUser">Simpan pengguna</button><button class="btn" type="button" id="btnClearUser">Kosongkan</button></div></div><div id="userMsg" class="note" style="margin-top:8px"></div>';
   setTimeout(function(){ bindKelola(units); },0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
@@ -645,11 +645,11 @@ function bindKelola(units){
   var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
   var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };
   $('uKat').onchange=function(){ fillUnits(''); }; $('uPeran').onchange=peranChange; fillUnits(''); peranChange();
-  var clear=function(){ $('uRow').value=''; $('uEmail').value=''; $('uPw').value=''; $('uKet').value=''; $('uPeran').value='UNIT'; $('uKat').value='Fakultas'; fillUnits(''); peranChange(); $('uFormTitle').textContent='Tambah pengguna'; };
+  var clear=function(){ $('uRow').value=''; $('uEmail').value=''; $('uKet').value=''; $('uPeran').value='UNIT'; $('uKat').value='Fakultas'; fillUnits(''); peranChange(); $('uFormTitle').textContent='Tambah pengguna'; };
   $('btnClearUser').onclick=clear;
   [].forEach.call(document.querySelectorAll('[data-edit]'),function(b){ b.onclick=function(){
     var u=S.admin.users.filter(function(x){return String(x[6])===b.dataset.edit;})[0]; if(!u) return;
-    $('uRow').value=u[6]; $('uEmail').value=u[0]; $('uPeran').value=String(u[1]).toUpperCase(); if(u[2]) $('uKat').value=u[2]; fillUnits(u[3]); $('uKet').value=u[5]; $('uPw').value=''; peranChange();
+    $('uRow').value=u[6]; $('uEmail').value=u[0]; $('uPeran').value=String(u[1]).toUpperCase(); if(u[2]) $('uKat').value=u[2]; fillUnits(u[3]); $('uKet').value=u[5]; peranChange();
     $('uFormTitle').textContent='Ubah pengguna '+u[0]; $('uEmail').focus();
   }; });
   [].forEach.call(document.querySelectorAll('[data-act]'),function(b){ b.onclick=function(){
@@ -1010,10 +1010,14 @@ SB.adminInfo = function(){
         var c = cak[u.id] || [];
         return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
       }),
-      domain: '', sheetUrl: (window.SB_CONFIG.url || '').replace('.supabase.co', '.supabase.co/project/_/editor')
+      domain: '', authUrl: sbDashboardUrl('auth/users'), sheetUrl: sbDashboardUrl('editor')
     };
   });
 };
+function sbDashboardUrl(bagian){
+  var m = /https:\/\/([a-z0-9]+)\.supabase\.co/i.exec(window.SB_CONFIG.url || '');
+  return m ? 'https://supabase.com/dashboard/project/' + m[1] + '/' + bagian : 'https://supabase.com/dashboard';
+}
 SB.simpanPengguna = function(id, peran, kategori, unit, keterangan){
   if (!id) return Promise.reject(new Error('Pilih pengguna dari tabel di atas (tombol Ubah). Akun baru dibuat lewat halaman pendaftaran.'));
   var cak = peran === 'UNIT' ? [{ kategori: kategori, unit: unit || '' }] : [];
@@ -1042,58 +1046,38 @@ SB.gantiSandi = function(baru){
 SB.keluar = function(){ return SBC.auth.signOut().then(function(){ location.reload(); }); };
 
 /* ---------- halaman masuk & daftar ---------- */
-function tampilMasuk(catatan, mode){
+function tampilMasuk(catatan){
   $('app').hidden = true; $('boot').hidden = true; $('gate').hidden = false;
-  var daftar = mode === 'daftar';
   $('gate').innerHTML =
     '<div class="brand" style="justify-content:center;margin-bottom:14px"><div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>' +
     '<div style="text-align:left"><b>Dasbor Anggaran</b><small>' + esc((BOOT && BOOT.satker) || 'Monitoring Anggaran & Realisasi') + '</small></div></div>' +
-    '<h2 style="margin:0 0 6px">' + (daftar ? 'Daftar akun' : 'Masuk') + '</h2>' +
-    '<p class="note" style="margin:0 0 16px">' + esc(catatan || (daftar
-      ? 'Setelah mendaftar, admin keuangan akan mengaktifkan akun Anda dan menentukan cakupan unitnya.'
-      : 'Masukkan email dan kata sandi akun dasbor.')) + '</p>' +
+    '<h2 style="margin:0 0 6px">Masuk</h2>' +
+    '<p class="note" style="margin:0 0 16px">' + esc(catatan || 'Masukkan email dan kata sandi yang diberikan admin keuangan.') + '</p>' +
     '<form id="loginForm" style="display:grid;gap:12px;text-align:left">' +
     '<label class="f" for="lgId">Email<input type="email" id="lgId" autocomplete="username" required></label>' +
-    '<label class="f" for="lgPw">Kata sandi<input type="password" id="lgPw" autocomplete="' + (daftar ? 'new-password' : 'current-password') + '" required minlength="8"></label>' +
-    '<button class="btn primary" type="submit" id="lgBtn" style="justify-content:center">' + (daftar ? 'Daftar' : 'Masuk') + '</button>' +
+    '<label class="f" for="lgPw">Kata sandi<input type="password" id="lgPw" autocomplete="current-password" required></label>' +
+    '<button class="btn primary" type="submit" id="lgBtn" style="justify-content:center">Masuk</button>' +
     '<div id="lgMsg" class="note"></div></form>' +
-    '<div class="tools" style="margin-top:14px;justify-content:center">' +
-    '<button class="btn" type="button" id="lgSwitch">' + (daftar ? 'Sudah punya akun — Masuk' : 'Belum punya akun — Daftar') + '</button>' +
-    (daftar ? '' : '<button class="btn" type="button" id="lgLupa">Lupa kata sandi</button>') + '</div>';
-  $('lgSwitch').onclick = function(){ tampilMasuk('', daftar ? 'masuk' : 'daftar'); };
-  if ($('lgLupa')) $('lgLupa').onclick = function(){
+    '<div class="tools" style="margin-top:14px;justify-content:center"><button class="btn" type="button" id="lgLupa">Lupa kata sandi</button></div>' +
+    '<p class="note" style="margin-top:14px">Belum punya akun? Akun dibuatkan oleh admin keuangan.</p>';
+  $('lgLupa').onclick = function(){
     var em = $('lgId').value.trim();
     if (!em) { $('lgMsg').textContent = 'Isi email dulu, lalu klik Lupa kata sandi.'; return; }
     SBC.auth.resetPasswordForEmail(em, { redirectTo: location.href.split('#')[0] })
-      .then(function(){ $('lgMsg').textContent = 'Tautan penggantian kata sandi dikirim ke ' + em + '.'; })
+      .then(function(r){ if (r.error) throw r.error; $('lgMsg').textContent = 'Tautan penggantian kata sandi dikirim ke ' + em + '. Bila tidak sampai, minta admin mengganti kata sandi Anda.'; })
       .catch(function(e){ $('lgMsg').textContent = errMsg(e); });
   };
   $('loginForm').onsubmit = function(e){
     e.preventDefault();
-    var b = $('lgBtn'); b.disabled = true; $('lgMsg').textContent = daftar ? 'Mendaftarkan…' : 'Memeriksa…';
-    var em = $('lgId').value.trim(), pw = $('lgPw').value;
-    var aksi = daftar ? SBC.auth.signUp({ email: em, password: pw }) : SBC.auth.signInWithPassword({ email: em, password: pw });
-    aksi.then(function(r){
+    var b = $('lgBtn'); b.disabled = true; $('lgMsg').textContent = 'Memeriksa…';
+    SBC.auth.signInWithPassword({ email: $('lgId').value.trim(), password: $('lgPw').value }).then(function(r){
       if (r.error) throw r.error;
-      if (daftar && !r.data.session){
-        b.disabled = false;
-        $('lgMsg').textContent = 'Pendaftaran terkirim. Periksa email untuk konfirmasi, lalu hubungi admin agar akun diaktifkan.';
-        return;
-      }
       $('gate').hidden = true; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
       mulai();
     }).catch(function(x){
       b.disabled = false;
       $('lgMsg').textContent = errMsg(x);
-      if (perluKonfirmasi(x)){
-        $('lgMsg').innerHTML = esc(errMsg(x)) + ' <button class="btn" type="button" id="lgKirim" style="margin-top:8px">Kirim ulang email konfirmasi</button>';
-        $('lgKirim').onclick = function(){
-          var kb = this; kb.disabled = true;
-          SBC.auth.resend({ type: 'signup', email: $('lgId').value.trim() })
-            .then(function(r){ if (r.error) throw r.error; $('lgMsg').textContent = 'Email konfirmasi dikirim ulang ke ' + $('lgId').value.trim() + '.'; })
-            .catch(function(er){ $('lgMsg').textContent = errMsg(er); });
-        };
-      }
+      if (perluKonfirmasi(x)) $('lgMsg').textContent = 'Email akun ini belum dikonfirmasi. Minta admin membuka Supabase → Authentication → Users → akun Anda → Confirm email.';
     });
   };
   $('lgId').focus();
@@ -1105,10 +1089,10 @@ function mulai(){
     $('boot').hidden = true;
     BOOT = b;
     if (!b.session.allowed){
-      if (!b.session.email) { tampilMasuk('', 'masuk'); return; }
+      if (!b.session.email) { tampilMasuk(); return; }
       tampilMasuk(b.session.tanpaCakupan
         ? 'Akun ' + b.session.email + ' sudah aktif tetapi belum diberi cakupan unit. Hubungi admin keuangan.'
-        : 'Akun ' + b.session.email + ' belum diaktifkan admin keuangan.', 'masuk');
+        : 'Akun ' + b.session.email + ' belum diaktifkan admin keuangan.');
       SBC.auth.signOut();
       return;
     }
