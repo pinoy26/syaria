@@ -43,9 +43,9 @@ export function renderFilters(){
   var a3s={}; base.forEach(function(r){ if(!f.a2||r.a2===f.a2) a3s[r.a3]=1; });
   if (f.a3 && !a3s[f.a3]) f.a3='';
   h+='<label class="f" for="f_a3">Akun 3 digit<select id="f_a3" data-k="a3"><option value="">Semua akun</option>'+Object.keys(a3s).sort().map(function(k){return '<option value="'+k+'"'+(f.a3===k?' selected':'')+'>'+k+' '+esc(A3(k))+'</option>';}).join('')+'</select></label>';
-  h+='<label class="toggle" for="f_nogaji"><input type="checkbox" id="f_nogaji"'+(f.noGaji?' checked':'')+'>Tanpa gaji &amp; operasional kantor</label>';
-  h+='<div class="noprint" style="padding-bottom:4px"><button class="btn" type="button" id="btnReset">Atur ulang filter</button></div>';
-  $('filters').innerHTML=h;
+  var actions='<label class="toggle" for="f_nogaji"><input type="checkbox" id="f_nogaji"'+(f.noGaji?' checked':'')+'>Tanpa gaji &amp; operasional kantor</label>'+
+    '<button class="btn noprint" type="button" id="btnReset">Atur ulang filter</button>';
+  $('filters').innerHTML='<div class="filters-grid">'+h+'</div><div class="filters-actions">'+actions+'</div>';
   [].forEach.call($('filters').querySelectorAll('select[data-k]'), function(s){
     s.onchange=function(){ var k=s.dataset.k; S.f[k]=s.value; var i=CHAIN.indexOf(k); if(i>=0) for(var j=i+1;j<CHAIN.length;j++) S.f[CHAIN[j]]=''; if(k==='a2') S.f.a3=''; S.pg=0; S.cmp=null; refresh(); };
   });
