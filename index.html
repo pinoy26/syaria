@@ -30,6 +30,10 @@
     </div>
     <nav class="nav" id="nav" aria-label="Menu utama"></nav>
     <div class="who" id="who"></div>
+    <button type="button" class="side-collapse" id="btnSideCollapse" aria-label="Ciutkan sidebar" title="Ciutkan sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      <span class="sc-lbl">Ciutkan sidebar</span>
+    </button>
   </aside>
 
   <main class="main">
@@ -42,10 +46,11 @@
         <label class="f" for="selPeriode">Posisi data
           <select id="selPeriode"></select>
         </label>
+        <button class="btn" type="button" id="btnFilterToggle" aria-expanded="false" aria-controls="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter<span class="fcount" id="fcount" hidden></span></button>
         <button class="btn primary" id="btnPrintAll" type="button"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Cetak laporan lengkap</button>
       </div>
     </div>
-    <section class="glass filters" id="filters" aria-label="Filter"></section>
+    <section class="glass filters" id="filters" aria-label="Filter" hidden></section>
     <div class="scope" id="scope"></div>
     <div id="page"></div>
   </main>

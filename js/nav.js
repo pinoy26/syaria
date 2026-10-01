@@ -1,6 +1,6 @@
 /* js/nav.js — navigasi: sidebar desktop, bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
 import { $, esc } from './utils.js';
-import { S, BOOT, DB, sess, isAdmin, scopeLabel, persist } from './state.js';
+import { S, BOOT, DB, sess, isAdmin, scopeLabel, persist, activeFilterCount } from './state.js';
 import { bindTips, hideTip, clearPageState, openLevel } from './ui-components.js';
 import { THEME_BTN } from './theme.js';
 import { renderFilters } from './filters.js';
@@ -31,7 +31,7 @@ export function renderNav(){
   var visible=PAGES.filter(function(p){ return (!p.admin||isAdmin()) && (DB||p.noData); });
   visible.forEach(function(p){
     if(p.g!==g){ g=p.g; h+='<div class="grp">'+g+'</div>'; }
-    h+='<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"'+(S.page===p.id?' aria-current="page"':'')+'><svg viewBox="0 0 24 24">'+p.ic+'</svg>'+p.t+'</button>'; });
+    h+='<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"'+(S.page===p.id?' aria-current="page"':'')+' title="'+esc(p.t)+'"><svg viewBox="0 0 24 24">'+p.ic+'</svg><span class="lbl">'+p.t+'</span></button>'; });
   $('nav').innerHTML=h;
   var s=sess(), role={ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'}[s.role];
   var scopeNote=s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.';
@@ -60,11 +60,22 @@ export function refresh(){
   var p=PAGES.filter(function(x){ return x.id===S.page && (!x.admin||isAdmin()) && (DB||x.noData); })[0];
   if (!p){ p = DB ? PAGES[0] : (isAdmin()?PAGES[PAGES.length-1]:null); }
   if (!p){ $('page').innerHTML='<div class="glass card"><h2>Belum ada data</h2><p class="note">Admin keuangan belum mengunggah laporan realisasi.</p></div>'; $('filters').hidden=true; $('scope').hidden=true; renderNav(); return; }
+  var prevPage=S.page;
   S.page=p.id; persist(); clearPageState(); hideTip();
+  if (prevPage!==p.id) S.unitSel=null;
   renderNav();
   var noF=!DB||p.id==='kelola';
-  $('filters').hidden=noF; $('scope').hidden=noF;
+  $('scope').hidden=noF;
+  $('filters').hidden=noF||!S.filtersOpen;
   if (!noF) renderFilters();
+  var fBtn=$('btnFilterToggle');
+  if (fBtn){
+    fBtn.hidden=noF;
+    fBtn.setAttribute('aria-expanded',String(!!S.filtersOpen));
+    fBtn.classList.toggle('on',S.filtersOpen);
+    var n=activeFilterCount(), c=$('fcount');
+    if (c){ c.hidden=!n; c.textContent=n; }
+  }
   $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.t;
   $('crumb').textContent=p.g+' · '+BOOT.satker;
   $('page').innerHTML=p.r();
@@ -74,6 +85,7 @@ export function refresh(){
   [].forEach.call(pg.querySelectorAll('[data-openall]'),function(b){ b.onclick=function(){ openLevel(b.getAttribute('data-openall')); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-closeall]'),function(b){ b.onclick=function(){ var id=b.getAttribute('data-closeall'); Object.keys(S.open).forEach(function(k){ if(k.indexOf(id+'/')===0) delete S.open[k]; }); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-goa2]'),function(b){ b.onclick=function(){ S.f.a2=b.getAttribute('data-goa2'); S.f.a3=''; S.page='jenis'; S.open={}; S.open['t-jenis/'+S.f.a2]=true; refresh(); window.scrollTo(0,0); }; });
+  [].forEach.call(pg.querySelectorAll('[data-unit]'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-unit'); S.unitSel=(S.unitSel===k)?null:k; keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-print]'),function(b){ b.onclick=function(){ printCard(b.getAttribute('data-print')); }; });
   [].forEach.call(pg.querySelectorAll('[data-pdf]'),function(b){ b.onclick=function(){ pdfCard(b.getAttribute('data-pdf'),b.getAttribute('data-title')); }; });
   var q=$('q'); if(q) q.oninput=function(){ S.q=q.value; S.pg=0; var pos=q.selectionStart; refresh(); var n=$('q'); n.focus(); try{n.setSelectionRange(pos,pos);}catch(e){} };

@@ -24,7 +24,7 @@ export function pill(p){ var s=status(p,WAKTU); return '<span class="pill '+s[0]
 
 /* ================= filter & cakupan pengguna ================= */
 export var EMPTY_F = function(){ return {prog:'',keg:'',kro:'',ro:'',komp:'',sub:'',unit:'',sumber:'',a2:'',a3:'',noGaji:false}; };
-export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, cmp:null, cmpKey:'', admin:null };
+export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, cmp:null, cmpKey:'', admin:null, filtersOpen:false, unitSel:null };
 try { var sv=JSON.parse(localStorage.getItem('dasbor-v2')||'null'); if(sv&&sv.page) S.page=sv.page; } catch(e){}
 export function persist(){ try{ localStorage.setItem('dasbor-v2', JSON.stringify({page:S.page})); }catch(e){} }
 export function sess(){ return BOOT.session; }
@@ -50,6 +50,12 @@ export function unitCaption(){
   if (S.f.unit){ var u=S.f.unit.split('|'); return u[1]||('Semua '+u[0]); }
   if (isUnitUser()) return sess().scopes.map(scopeLabel).join(', ');
   return 'seluruh satker';
+}
+export function activeFilterCount(){
+  var f=S.f, n=0;
+  CHAIN.concat(['unit','sumber','a2','a3']).forEach(function(k){ if(f[k]) n++; });
+  if (f.noGaji) n++;
+  return n;
 }
 export function scopeText(){
   var f=S.f, parts=[unitCaption()];

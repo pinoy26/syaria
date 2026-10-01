@@ -32,6 +32,18 @@ export function reboot(periode, keepPage){
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
 $('btnPrintAll').onclick=function(){ document.body.classList.remove('print-one'); window.print(); };
+$('btnFilterToggle').onclick=function(){ S.filtersOpen=!S.filtersOpen; refresh(); };
+function labelSideCollapse(tutup){
+  var lbl=tutup?'Buka sidebar':'Ciutkan sidebar';
+  $('btnSideCollapse').setAttribute('aria-label',lbl);
+  $('btnSideCollapse').setAttribute('title',lbl);
+}
+try { if (localStorage.getItem('dasbor-sidebar')==='tutup'){ $('app').classList.add('side-collapsed'); labelSideCollapse(true); } } catch(e){}
+$('btnSideCollapse').onclick=function(){
+  var tutup=$('app').classList.toggle('side-collapsed');
+  labelSideCollapse(tutup);
+  try { localStorage.setItem('dasbor-sidebar', tutup?'tutup':'buka'); } catch(e){}
+};
 $('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0); });
 $('bottomnav').addEventListener('click',function(e){
   if (e.target.closest('[data-more]')){ if(sheetOpen()) closeSheet(); else openSheet(); return; }
