@@ -1,9 +1,9 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
 import { $, tgl, esc, errMsg, toast, yearFrac } from './utils.js';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT } from './state.js';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
-import { refresh, openSheet, closeSheet, sheetOpen } from './nav.js';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 
 export function setData(d){
@@ -33,7 +33,9 @@ export function reboot(periode, keepPage){
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
 $('btnPrintAll').onclick=function(){ document.body.classList.remove('print-one'); window.print(); };
-$('btnFilterToggle').onclick=function(){ S.filtersOpen=!S.filtersOpen; refresh(); };
+$('btnFilterToggle').onclick=function(){ if (filterDrawerOpen()) closeFilterDrawer(); else openFilterDrawer(); };
+$('filtersBd').addEventListener('click',closeFilterDrawer);
+$('filters').addEventListener('click',function(e){ if (e.target.closest('[data-filter-close]')) closeFilterDrawer(); });
 try { if (localStorage.getItem('dasbor-sidebar')==='tutup') $('app').classList.add('side-collapsed'); } catch(e){}
 $('btnSideToggle').onclick=function(){
   var tutup=$('app').classList.toggle('side-collapsed');
@@ -52,15 +54,17 @@ $('modal').addEventListener('click',function(e){
     refresh(); window.scrollTo(0,0);
   }
 });
-$('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0); });
+function gotoTab(id){ S.page=id; S.f=EMPTY_F(); S.open={}; S.pg=0; S.cmp=null; refresh(); window.scrollTo(0,0); }
+$('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; gotoTab(b.getAttribute('data-page')); });
+$('subtabs').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; gotoTab(b.getAttribute('data-page')); });
 $('bottomnav').addEventListener('click',function(e){
   if (e.target.closest('[data-more]')){ if(sheetOpen()) closeSheet(); else openSheet(); return; }
   var b=e.target.closest('[data-page]'); if(!b) return;
-  S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0);
+  gotoTab(b.getAttribute('data-page'));
 });
 $('moreSheet').addEventListener('click',function(e){
   var b=e.target.closest('[data-page]'); if(!b) return;
-  S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; closeSheet(); refresh(); window.scrollTo(0,0);
+  closeSheet(); gotoTab(b.getAttribute('data-page'));
 });
 $('sheetBd').addEventListener('click',closeSheet);
 document.addEventListener('click',function(e){

@@ -45,7 +45,8 @@ export function renderFilters(){
   h+='<label class="f" for="f_a3">Akun 3 digit<select id="f_a3" data-k="a3"><option value="">Semua akun</option>'+Object.keys(a3s).sort().map(function(k){return '<option value="'+k+'"'+(f.a3===k?' selected':'')+'>'+k+' '+esc(A3(k))+'</option>';}).join('')+'</select></label>';
   var actions='<label class="toggle" for="f_nogaji"><input type="checkbox" id="f_nogaji"'+(f.noGaji?' checked':'')+'>Tanpa gaji &amp; operasional kantor</label>'+
     '<button class="btn noprint" type="button" id="btnReset">Atur ulang filter</button>';
-  $('filters').innerHTML='<div class="filters-grid">'+h+'</div><div class="filters-actions">'+actions+'</div>';
+  $('filters').innerHTML='<div class="filters-hd"><b>Filter</b><button type="button" class="icon" data-filter-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>'+
+    '<div class="filters-grid">'+h+'</div><div class="filters-actions">'+actions+'</div>';
   [].forEach.call($('filters').querySelectorAll('select[data-k]'), function(s){
     s.onchange=function(){ var k=s.dataset.k; S.f[k]=s.value; var i=CHAIN.indexOf(k); if(i>=0) for(var j=i+1;j<CHAIN.length;j++) S.f[CHAIN[j]]=''; if(k==='a2') S.f.a3=''; S.pg=0; S.cmp=null; refresh(); };
   });
