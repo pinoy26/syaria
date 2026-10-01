@@ -27,6 +27,17 @@ export function bindTips(root){
   [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });
 }
 
+/* ================= modal ================= */
+export function openModal(html){
+  $('modal').innerHTML=html; $('modal').hidden=false; $('modalBd').hidden=false;
+  bindTips($('modal'));
+  requestAnimationFrame(function(){ $('modal').classList.add('open'); $('modalBd').classList.add('open'); });
+}
+export function closeModal(){
+  $('modal').classList.remove('open'); $('modalBd').classList.remove('open');
+  setTimeout(function(){ $('modal').hidden=true; $('modalBd').hidden=true; $('modal').innerHTML=''; },200);
+}
+
 /* ================= TABEL BERTINGKAT ================= */
 var TREES={};
 export function clearPageState(){ TIPS.length=0; TREES={}; }

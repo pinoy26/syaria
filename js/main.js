@@ -2,6 +2,7 @@
 import { $, tgl, esc, errMsg, toast, yearFrac } from './utils.js';
 import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
+import { closeModal } from './ui-components.js';
 import { refresh, openSheet, closeSheet, sheetOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 
@@ -32,6 +33,25 @@ export function reboot(periode, keepPage){
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
 $('btnPrintAll').onclick=function(){ document.body.classList.remove('print-one'); window.print(); };
+$('btnFilterToggle').onclick=function(){ S.filtersOpen=!S.filtersOpen; refresh(); };
+try { if (localStorage.getItem('dasbor-sidebar')==='tutup') $('app').classList.add('side-collapsed'); } catch(e){}
+$('btnSideToggle').onclick=function(){
+  var tutup=$('app').classList.toggle('side-collapsed');
+  try { localStorage.setItem('dasbor-sidebar', tutup?'tutup':'buka'); } catch(e){}
+};
+$('modalBd').addEventListener('click',closeModal);
+$('modal').addEventListener('click',function(e){
+  if (e.target.closest('[data-modal-close]')) { closeModal(); return; }
+  var g=e.target.closest('[data-goto-rincian]');
+  if (g){
+    var key=g.getAttribute('data-goto-rincian'), parts=key.split('|');
+    S.f.unit=key; S.f.a2=''; S.f.a3=''; S.cmp=null;
+    closeModal();
+    S.page='unit-rincian'; S.open={};
+    S.open['t-unit/'+parts[0]]=true; S.open['t-unit/'+parts[0]+'/'+parts[1]]=true;
+    refresh(); window.scrollTo(0,0);
+  }
+});
 $('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; S.page=b.getAttribute('data-page'); S.open={}; S.pg=0; refresh(); window.scrollTo(0,0); });
 $('bottomnav').addEventListener('click',function(e){
   if (e.target.closest('[data-more]')){ if(sheetOpen()) closeSheet(); else openSheet(); return; }
