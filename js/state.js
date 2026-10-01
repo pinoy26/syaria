@@ -24,7 +24,7 @@ export function pill(p){ var s=status(p,WAKTU); return '<span class="pill '+s[0]
 
 /* ================= filter & cakupan pengguna ================= */
 export var EMPTY_F = function(){ return {prog:'',keg:'',kro:'',ro:'',komp:'',sub:'',unit:'',sumber:'',a2:'',a3:'',noGaji:false}; };
-export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, cmp:null, cmpKey:'', admin:null, filtersOpen:false, unitSel:null };
+export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, cmp:null, cmpKey:'', admin:null, filtersOpen:false };
 try { var sv=JSON.parse(localStorage.getItem('dasbor-v2')||'null'); if(sv&&sv.page) S.page=sv.page; } catch(e){}
 export function persist(){ try{ localStorage.setItem('dasbor-v2', JSON.stringify({page:S.page})); }catch(e){} }
 export function sess(){ return BOOT.session; }

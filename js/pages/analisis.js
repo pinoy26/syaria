@@ -1,6 +1,6 @@
 /* js/pages/analisis.js — Unit Kerja, Sumber Dana, Jenis Belanja, Struktur DIPA */
 import { esc, rp, rpk, pc, group, sum } from '../utils.js';
-import { FAK_ORDER, SRC, rows, pill, S, A2 } from '../state.js';
+import { FAK_ORDER, SRC, rows, pill, A2 } from '../state.js';
 import { card, actions, track, printHead, treeCard, LV } from '../ui-components.js';
 
 /* ================= halaman analisis ================= */
@@ -9,30 +9,37 @@ export function renderUnit(){
   var R=rows();
   var gu=group(R,function(r){return r.kat+'|'+r.unit;}).sort(unitSort);
   var cards=gu.map(function(g){
-    var p=g.key.split('|'), on=S.unitSel===g.key;
-    return '<button type="button" class="unit-card'+(on?' on':'')+'" data-unit="'+esc(g.key)+'" aria-expanded="'+on+'">'+
+    var p=g.key.split('|');
+    return '<button type="button" class="unit-card" data-unit="'+esc(g.key)+'">'+
       '<span class="note">'+esc(p[0])+'</span><span class="nm">'+esc(p[1])+'</span>'+
       track(g.p,'var(--real)')+
       '<span class="row"><span class="pct">'+pc(g.p)+'</span><span class="note num">'+rpk(g.pagu)+'</span></span></button>';
   }).join('');
-
-  var detail='', selG=gu.filter(function(g){ return g.key===S.unitSel; })[0];
-  if (selG){
-    var p=selG.key.split('|');
-    var bySrc=group(selG.rows,function(r){return r.sumber||'?';}).sort(function(a,b){return a.key==='RM'?-1:1;});
-    var srcRows=bySrc.map(function(s){ return '<tr><td>'+esc(SRC[s.key]||'Belum dipetakan')+'</td><td class="n">'+rp(s.pagu)+'</td><td class="n">'+rp(s.sd)+'</td><td class="n">'+pc(s.p)+'</td></tr>'; }).join('');
-    var byA2=group(selG.rows,function(r){return r.a2;}).sort(function(a,b){return a.key<b.key?-1:1;});
-    var a2Rows=byA2.map(function(g2){ return '<tr><td>'+g2.key+' '+esc(A2(g2.key))+'</td><td class="n">'+rp(g2.pagu)+'</td><td class="n">'+rp(g2.sd)+'</td><td class="n">'+pc(g2.p)+'</td></tr>'; }).join('');
-    detail='<div class="unit-detail"><div class="unit-detail-hd"><h3>'+esc(p[0])+' · '+esc(p[1])+'</h3>'+pill(selG.p)+'</div>'+
-      '<div class="unit-mini">'+
-        '<div><div class="eyebrow" style="margin-bottom:8px">Sumber dana</div><div class="tbl"><table><thead><tr><th>Sumber</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th></tr></thead><tbody>'+srcRows+'</tbody></table></div></div>'+
-        '<div><div class="eyebrow" style="margin-bottom:8px">Jenis belanja</div><div class="tbl"><table><thead><tr><th>Akun</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th></tr></thead><tbody>'+a2Rows+'</tbody></table></div></div>'+
-      '</div></div>';
-  }
-
-  return '<div class="page-sec grid">'+printHead('Realisasi per Unit Kerja')+
-    card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.','<div class="unit-grid">'+cards+'</div>'+detail)+
-    treeCard('t-unit','Rincian lengkap unit kerja','Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
+  return '<div class="page-sec grid">'+printHead('Unit Kerja')+
+    card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.','<div class="unit-grid">'+cards+'</div>')+'</div>';
+}
+export function unitModalHtml(key){
+  var gu=group(rows(),function(r){return r.kat+'|'+r.unit;});
+  var g=gu.filter(function(x){ return x.key===key; })[0];
+  if (!g) return '';
+  var p=key.split('|');
+  var bySrc=group(g.rows,function(r){return r.sumber||'?';}).sort(function(a,b){return a.key==='RM'?-1:1;});
+  var srcRows=bySrc.map(function(s){ return '<tr><td>'+esc(SRC[s.key]||'Belum dipetakan')+'</td><td class="n">'+rp(s.pagu)+'</td><td class="n">'+rp(s.sd)+'</td><td class="n">'+pc(s.p)+'</td></tr>'; }).join('');
+  var byA2=group(g.rows,function(r){return r.a2;}).sort(function(a,b){return a.key<b.key?-1:1;});
+  var a2Rows=byA2.map(function(g2){ return '<tr><td>'+g2.key+' '+esc(A2(g2.key))+'</td><td class="n">'+rp(g2.pagu)+'</td><td class="n">'+rp(g2.sd)+'</td><td class="n">'+pc(g2.p)+'</td></tr>'; }).join('');
+  return '<div class="modal-hd"><div><span class="note">'+esc(p[0])+'</span><h3>'+esc(p[1])+'</h3></div>'+
+      '<button type="button" class="icon" data-modal-close aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>'+
+    '<div style="margin-bottom:14px">'+pill(g.p)+' <span class="note num" style="margin-left:8px">Pagu '+rpk(g.pagu)+'</span></div>'+
+    '<div class="unit-mini">'+
+      '<div><div class="eyebrow" style="margin-bottom:8px">Sumber dana</div><div class="tbl"><table><thead><tr><th>Sumber</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th></tr></thead><tbody>'+srcRows+'</tbody></table></div></div>'+
+      '<div><div class="eyebrow" style="margin-bottom:8px">Jenis belanja</div><div class="tbl"><table><thead><tr><th>Akun</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th></tr></thead><tbody>'+a2Rows+'</tbody></table></div></div>'+
+    '</div>'+
+    '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" data-goto-rincian="'+esc(key)+'">Lihat rincian lengkap →</button></div>';
+}
+export function renderUnitRincian(){
+  var R=rows();
+  return '<div class="page-sec grid">'+printHead('Rincian Unit Kerja')+
+    treeCard('t-unit','Rincian unit kerja','Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
 }
 export function renderSumber(){
   var R=rows(), T=sum(R);

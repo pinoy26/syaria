@@ -30,17 +30,18 @@
     </div>
     <nav class="nav" id="nav" aria-label="Menu utama"></nav>
     <div class="who" id="who"></div>
-    <button type="button" class="side-collapse" id="btnSideCollapse" aria-label="Ciutkan sidebar" title="Ciutkan sidebar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
-      <span class="sc-lbl">Ciutkan sidebar</span>
-    </button>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div>
-        <div class="crumb" id="crumb"></div>
-        <h1 id="pageTitle">Ringkasan Realisasi</h1>
+      <div class="topbar-hd">
+        <button type="button" class="icon side-toggle" id="btnSideToggle" aria-label="Sembunyikan/tampilkan sidebar" title="Sembunyikan/tampilkan sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="crumb" id="crumb"></div>
+          <h1 id="pageTitle">Ringkasan Realisasi</h1>
+        </div>
       </div>
       <div class="tools">
         <label class="f" for="selPeriode">Posisi data
@@ -59,6 +60,8 @@
 <nav class="bottomnav" id="bottomnav" aria-label="Menu utama" hidden></nav>
 <div class="sheet-backdrop" id="sheetBd" hidden></div>
 <div class="sheet glass" id="moreSheet" hidden></div>
+<div class="modal-backdrop" id="modalBd" hidden></div>
+<div class="modal glass" id="modal" role="dialog" aria-modal="true" hidden></div>
 
 <div class="tip" id="tip" role="tooltip"></div>
 <div class="toast glass" id="toast" hidden></div>
