@@ -340,3 +340,123 @@ body.pdf-mode thead th,body.pdf-mode tr.tot td,body.pdf-mode th:first-child,body
 .row-actions{display:flex;gap:6px}
 .row-actions button{padding:4px 9px;font-size:12px}
 .link{color:var(--accent);font-weight:600}
+
+/* =====================================================================
+   TAMBAHAN — keterbacaan tabel lembar kerja anggaran
+   Tempel SELURUH blok ini di PALING BAWAH berkas web/styles.css Anda.
+   Tidak ada satu baris pun milik Anda yang perlu dihapus.
+   Semua aturan dikurung di dalam ".tbl", jadi hanya tabel yang terpengaruh —
+   menu samping, tab pintasan, tombol tiga garis, tombol tema, kartu
+   ringkasan dan grafik tidak tersentuh sama sekali.
+   Ingin membatalkan? Hapus saja blok ini, tidak perlu revert.
+   ===================================================================== */
+
+:root{
+  --tb-surface:#ffffff; --tb-surface2:#f1f7f7; --tb-grid:#c8dada;
+  --tb-head:#0d6268; --tb-head-ink:#ffffff; --tb-head-grid:rgba(255,255,255,.30);
+  --tb-hover:#dcefef; --tb-l0:#d8ebec; --tb-l1:#e8f4f4; --tb-l2:#f3faf9;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --tb-surface:#10292d; --tb-surface2:#143337; --tb-grid:#2a4e52;
+    --tb-head:#0f5a61; --tb-head-ink:#eaf7f7; --tb-head-grid:rgba(255,255,255,.18);
+    --tb-hover:#1b4348; --tb-l0:#1a3f44; --tb-l1:#16373c; --tb-l2:#133034;
+  }
+}
+:root[data-theme="dark"]{
+  --tb-surface:#10292d; --tb-surface2:#143337; --tb-grid:#2a4e52;
+  --tb-head:#0f5a61; --tb-head-ink:#eaf7f7; --tb-head-grid:rgba(255,255,255,.18);
+  --tb-hover:#1b4348; --tb-l0:#1a3f44; --tb-l1:#16373c; --tb-l2:#133034;
+}
+
+/* wadah: panel padat, kepala & kolom pertama bisa menempel */
+.tbl{overflow:auto;max-height:min(760px,76vh);border:1px solid var(--tb-grid);
+  border-radius:12px;background:var(--tb-surface);-webkit-overflow-scrolling:touch}
+.tbl table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;
+  color:var(--ink);background:var(--tb-surface)}
+.tbl th,.tbl td{padding:9px 11px;border-right:1px solid var(--tb-grid);
+  border-bottom:1px solid var(--tb-grid);text-align:left;vertical-align:middle}
+.tbl th:last-child,.tbl td:last-child{border-right:0}
+
+/* kepala tabel: batang solid, menempel saat digulung */
+.tbl thead th{position:sticky;top:0;z-index:2;background:var(--tb-head);
+  color:var(--tb-head-ink);font-size:12.5px;font-weight:700;letter-spacing:0;
+  text-transform:none;white-space:nowrap;border-right-color:var(--tb-head-grid);
+  border-bottom:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.tbl thead th.n{text-align:right}
+
+/* badan tabel */
+.tbl tbody tr{background:var(--tb-surface)}
+.tbl tbody tr:nth-child(even){background:var(--tb-surface2)}
+.tbl tbody tr:hover{background:var(--tb-hover)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl td.n,.tbl th.n{text-align:right;font-family:var(--mono);
+  font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px;letter-spacing:-.02em}
+.tbl td.n{font-weight:500}
+.tbl th.n,.tbl td.n{width:1%}
+.tbl thead th:first-child,.tbl tbody td:first-child{min-width:260px}
+
+/* kolom pertama ikut menempel saat tabel digeser mendatar */
+.tbl tbody th:first-child,.tbl tbody td:first-child{position:sticky;left:0;z-index:1;
+  background:inherit;border-right:1px solid var(--tb-grid)}
+.tbl thead th:first-child{position:sticky;left:0;z-index:3;background:var(--tb-head)}
+
+/* baris jumlah */
+.tbl tr.tot td{position:sticky;bottom:0;z-index:2;background:var(--tb-l0);font-weight:800;
+  border-top:2px solid var(--ink2);border-bottom:0;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.tbl tr.tot td:first-child{left:0;z-index:3}
+
+/* hierarki Program → Kegiatan → KRO → RO → Komponen → Sub komponen → detail */
+.tbl tr.tree td:first-child{white-space:normal}
+.tbl tbody tr.tree.l0{background:var(--tb-l0)}
+.tbl tbody tr.tree.l1{background:var(--tb-l1)}
+.tbl tbody tr.tree.l2,.tbl tbody tr.tree.l3,
+.tbl tbody tr.tree.l4,.tbl tbody tr.tree.l5{background:var(--tb-l2)}
+.tbl tbody tr.leaf{background:var(--tb-surface)}
+.tbl tr.tree.l0 td{font-weight:800;font-size:14px}
+.tbl tr.tree.l1 td{font-weight:700}
+.tbl tr.tree.l2 td,.tbl tr.tree.l3 td,
+.tbl tr.tree.l4 td,.tbl tr.tree.l5 td{font-weight:600}
+.tbl tr.leaf td{color:var(--ink);font-size:12.5px;vertical-align:top}
+.tbl tr.leaf td:first-child{color:var(--ink2);font-weight:400}
+.tbl .tw{max-width:100%;align-items:flex-start}
+.tbl .tw>button,.tbl .tw>.lvl{flex:none;margin-top:1px}
+.tbl .lvl{color:var(--ink2);background:var(--tb-surface);border-color:var(--tb-grid)}
+.tbl .code{font-size:12px;color:var(--ink2)}
+.tbl .minibar{width:40px;margin-left:7px}
+
+/* layar sempit: tidak perlu kolom menempel */
+@media (max-width:640px){
+  .tbl tbody th:first-child,.tbl tbody td:first-child,
+  .tbl thead th:first-child,.tbl tr.tot td:first-child{position:static}
+  .tbl{max-height:min(620px,70vh)}
+  .tbl th,.tbl td{padding:8px 10px}
+}
+
+/* cetak: semua baris ikut tercetak, tanpa gulungan & tanpa posisi menempel */
+@media print{
+  .tbl{max-height:none;overflow:visible;border:1px solid #999;border-radius:0}
+  .tbl thead th,.tbl tr.tot td,
+  .tbl tbody td:first-child,.tbl tbody th:first-child{position:static}
+  .tbl thead{display:table-header-group}
+  .tbl tr{break-inside:avoid}
+  .tbl th,.tbl td{border-right:1px solid #bbb;border-bottom:1px solid #bbb;
+    padding:5px 7px;font-size:10.5px}
+  .tbl thead th{background:#0d6268;color:#fff;font-size:10px}
+  .tbl tbody tr:nth-child(even){background:#f2f2f2}
+  .tbl tbody tr.tree.l0{background:#e2e2e2}
+  .tbl tr.tot td{background:#e2e2e2;border-top:1.5px solid #000}
+  .tbl td.n,.tbl th.n{font-size:10.5px}
+}
+
+/* unduh PDF (html2canvas tidak ikut menggulung) */
+body.pdf-mode .tbl{max-height:none;overflow:visible}
+body.pdf-mode .tbl thead th,body.pdf-mode .tbl tr.tot td,
+body.pdf-mode .tbl th:first-child,body.pdf-mode .tbl td:first-child{position:static}
+body.pdf-mode{--tb-surface:#ffffff;--tb-surface2:#f1f7f7;--tb-grid:#b9d1d1;
+  --tb-head:#0d6268;--tb-head-ink:#ffffff;--tb-head-grid:rgba(255,255,255,.3);
+  --tb-hover:#ffffff;--tb-l0:#d8ebec;--tb-l1:#e8f4f4;--tb-l2:#f3faf9}
+
+/* ===================== akhir blok tambahan ===================== */
+
