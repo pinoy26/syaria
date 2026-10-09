@@ -192,7 +192,7 @@ SB.adminInfo = function(){
         var c = cak[u.id] || [];
         return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
       }),
-      domain: '', authUrl: sbDashboardUrl('auth/users'), sheetUrl: sbDashboardUrl('editor')
+      domain: '', sheetUrl: sbDashboardUrl('editor')
     };
   });
 };
@@ -201,10 +201,24 @@ function sbDashboardUrl(bagian){
   return m ? 'https://supabase.com/dashboard/project/' + m[1] + '/' + bagian : 'https://supabase.com/dashboard';
 }
 SB.simpanPengguna = function(id, peran, kategori, unit, keterangan){
-  if (!id) return Promise.reject(new Error('Pilih pengguna dari tabel di atas (tombol Ubah). Akun baru dibuat lewat halaman pendaftaran.'));
+  if (!id) return Promise.reject(new Error('Pilih pengguna dari tabel di atas (tombol Ubah), atau gunakan "Buat pengguna baru".'));
   var cak = peran === 'UNIT' ? [{ kategori: kategori, unit: unit || '' }] : [];
   return SBC.rpc('simpan_pengguna', { p_id: id, p_peran: peran, p_aktif: true, p_keterangan: keterangan || '', p_cakupan: cak })
     .then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'Pengguna disimpan.' }; });
+};
+/* ---------- buat akun pengguna baru (lewat Edge Function, memakai service_role di server) ---------- */
+SB.buatPengguna = function(email, password, peran, kategori, unit, keterangan){
+  return SBC.functions.invoke('admin-create-user', {
+    body: { email: email, password: password, peran: peran, kategori: kategori, unit: unit, keterangan: keterangan }
+  }).then(function(r){
+    if (r.data && r.data.error) throw new Error(r.data.error);
+    if (r.error){
+      var ctx = r.error.context;
+      if (ctx && typeof ctx.json === 'function') return ctx.json().then(function(j){ throw new Error((j && j.error) || r.error.message); });
+      throw new Error(r.error.message);
+    }
+    return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dibuat.' };
+  });
 };
 SB.aktifkan = function(id, aktif){
   return SBC.from('pengguna').update({ aktif: aktif }).eq('id', id)
