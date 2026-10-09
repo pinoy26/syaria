@@ -55,8 +55,10 @@ Deno.serve(async (req) => {
     });
     if (createErr) return json({ error: createErr.message }, 400);
 
+    // simpan_pengguna memverifikasi sendiri pemanggilnya lewat auth.uid() —
+    // panggil pakai identitas admin yang login (caller), bukan service_role
     const cakupan = peran === "UNIT" ? [{ kategori, unit: unit || "" }] : [];
-    const { error: rpcErr } = await admin.rpc("simpan_pengguna", {
+    const { error: rpcErr } = await caller.rpc("simpan_pengguna", {
       p_id: created.user!.id, p_peran: peran, p_aktif: true,
       p_keterangan: keterangan, p_cakupan: cakupan,
     });
