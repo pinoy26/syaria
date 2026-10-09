@@ -11,7 +11,7 @@ export var IC = {
   box:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5"/><path d="M12 12v9"/></svg>',
   build:'<svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>'
 };
-export function actions(id,title){ return '<div class="card-a" data-html2canvas-ignore="true"><button class="icon" type="button" data-pdf="'+id+'" data-title="'+esc(title)+'" aria-label="Unduh PDF '+esc(title)+'" title="Unduh PDF">'+IC.pdf+'</button><button class="icon" type="button" data-print="'+id+'" aria-label="Cetak '+esc(title)+'" title="Cetak">'+IC.print+'</button></div>'; }
+export function actions(id,title){ return '<div class="card-a"><button class="icon" type="button" data-pdf="'+id+'" data-title="'+esc(title)+'" aria-label="Unduh PDF '+esc(title)+'" title="Unduh PDF">'+IC.pdf+'</button><button class="icon" type="button" data-print="'+id+'" aria-label="Cetak '+esc(title)+'" title="Cetak">'+IC.print+'</button></div>'; }
 export function card(id,title,sub,body){
   return '<section class="glass card" id="'+id+'"><div class="card-h"><div><h2>'+title+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div>'+actions(id,title.replace(/&amp;/g,'&'))+'</div>'+body+'</section>';
 }
@@ -64,7 +64,7 @@ export function tree(id,R,levels){
     });
   })(root);
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button></div>'+
-    '<div class="tbl"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th>Status</th></tr></thead><tbody>'+out.join('')+
+    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th>Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
 export function treeCard(id,title,sub,R,levels){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,tree(id,R,levels)); }

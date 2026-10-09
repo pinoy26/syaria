@@ -3,6 +3,7 @@ import { $, tgl, esc, errMsg, toast, yearFrac } from './utils.js';
 import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
+import { printAll } from './export.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 
@@ -32,7 +33,7 @@ export function reboot(periode, keepPage){
   });
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
-$('btnPrintAll').onclick=function(){ document.body.classList.remove('print-one'); window.print(); };
+$('btnPrintAll').onclick=printAll;
 $('btnFilterToggle').onclick=function(){ if (filterDrawerOpen()) closeFilterDrawer(); else openFilterDrawer(); };
 $('filtersBd').addEventListener('click',closeFilterDrawer);
 $('filters').addEventListener('click',function(e){ if (e.target.closest('[data-filter-close]')) closeFilterDrawer(); });

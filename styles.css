@@ -9,6 +9,7 @@
   --rm:#00979e; --pnbp:#d9782a; --v3:#6a55d8; --real:#1f5f8b; --track:rgba(15,37,41,.09);
   --good:#0ca30c; --good-ink:#0a6b1f; --warn:#fab219; --warn-ink:#8a5a00; --crit:#d03b3b; --crit-ink:#b22a2a;
   --field:rgba(255,255,255,.7);
+  --grid-bg:#ffffff; --grid-head:#eef2f2; --grid-zebra:#f7fafa; --grid-line:#d7e2e2;
   --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
   color-scheme:light;
@@ -25,6 +26,7 @@
     --rm:#0f9ea2; --pnbp:#cc7226; --v3:#8b79e6; --real:#6aa9d6; --track:rgba(255,255,255,.08);
     --good-ink:#3fcf52; --warn-ink:#fab219; --crit-ink:#f07b7b;
     --field:rgba(8,26,29,.6);
+    --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
     color-scheme:dark;
   }
 }
@@ -39,6 +41,7 @@
   --rm:#0f9ea2; --pnbp:#cc7226; --v3:#8b79e6; --real:#6aa9d6; --track:rgba(255,255,255,.08);
   --good-ink:#3fcf52; --warn-ink:#fab219; --crit-ink:#f07b7b;
   --field:rgba(8,26,29,.6);
+  --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -262,18 +265,12 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .alert .t{font-size:12.5px;color:var(--ink2)}
 
 /* tables */
-.tbl{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+.tbl{overflow-x:auto;border-radius:12px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
-th,td{padding:9px 12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:left;vertical-align:middle}
-th:last-child,td:last-child{border-right:0}
-th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2);font-weight:700;white-space:nowrap;background:var(--glass-strong);border-bottom:2px solid var(--line-strong)}
-td:first-child{position:sticky;left:0;z-index:1;border-right:1px solid var(--line-strong);background:var(--glass-strong)}
-th:first-child{position:sticky;left:0;z-index:2;border-right:1px solid var(--line-strong)}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
 td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
-tbody tr:nth-child(even){background:rgba(127,153,152,.06)}
-tbody tr:hover{background:var(--accent-soft)}
-tbody tr:hover td:first-child{background:var(--accent-soft)}
-tr.tot td{font-weight:700;border-top:2px solid var(--line-strong);border-bottom:0;background:var(--glass-strong)}
+tr.tot td{font-weight:700;border-top:1px solid var(--line-strong);border-bottom:0}
 .neg{color:var(--crit-ink);font-weight:700}
 .minibar{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--track);position:relative;vertical-align:middle;margin-left:8px;overflow:hidden}
 .minibar b{position:absolute;inset:0 auto 0 0;background:var(--real);border-radius:3px}
@@ -288,6 +285,23 @@ tr.tree td:first-child{white-space:nowrap}
 tr.l0 td{font-weight:700}
 tr.leaf td{color:var(--ink2)}
 .pager{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
+
+/* tabel rincian anggaran — panel padat bergaris penuh, kepala & kolom pertama menempel saat digulir */
+.tbl-grid{overflow:auto;max-height:min(640px,70vh);border-radius:10px;border:1px solid var(--grid-line);background:var(--grid-bg)}
+.tbl-grid table{font-size:12px}
+.tbl-grid th,.tbl-grid td{padding:7px 10px;border:1px solid var(--grid-line);white-space:nowrap;vertical-align:middle}
+.tbl-grid th{position:sticky;top:0;z-index:2;background:var(--grid-head);color:var(--ink);font-weight:700;text-transform:none;letter-spacing:0;font-size:11.5px}
+.tbl-grid td:first-child,.tbl-grid th:first-child{position:sticky;left:0;z-index:1;background:inherit;white-space:normal;min-width:220px}
+.tbl-grid th:first-child{z-index:3}
+.tbl-grid tbody tr{background:var(--grid-bg)}
+.tbl-grid tbody tr:nth-child(even){background:var(--grid-zebra)}
+.tbl-grid tbody tr:hover{background:var(--accent-soft)}
+.tbl-grid td.n,.tbl-grid th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tbl-grid tr.tot td{position:sticky;bottom:0;z-index:2;background:var(--grid-head);font-weight:800;border-top:2px solid var(--ink2)}
+.tbl-grid tr.tot td:first-child{z-index:3}
+.tbl-grid tr.tree.l0 td{font-weight:800}
+.tbl-grid tr.leaf td{color:var(--ink2)}
+.tbl-grid .minibar{background:var(--track)}
 
 .two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:18px}
 .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
@@ -357,13 +371,17 @@ tr.leaf td{color:var(--ink2)}
   .printhead{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
   body.print-one .two>:not(.print-target){display:none!important}
+  .tbl-grid{max-height:none!important;overflow:visible!important;background:#fff!important;border-color:#ccc!important}
+  .tbl-grid th,.tbl-grid td{position:static!important;background:#fff!important;border-color:#ccc!important}
+  .tbl-grid th{background:#eee!important}
+  .tbl-grid tbody tr:nth-child(even) td{background:#f7f7f7!important}
+  .tbl-grid tr.tot td{background:#eee!important}
+  .tbl-grid tr{break-inside:avoid}
+  thead{display:table-header-group}
+  tr.tot{break-inside:avoid}
 }
 .printhead{display:none;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;font-size:11px}
 .printhead b{font-size:14px;display:block}
-
-/* mode PDF: panel padat, tanpa efek kaca, palet terang */
-body.pdf-mode{--glass:#ffffff;--glass-strong:#f6f9f9;--glass-border:#d9e3e3;--line:rgba(15,37,41,.12);--line-strong:rgba(15,37,41,.2);--ink:#0f2529;--ink2:#43605f;--muted:#5f7776;--rm:#00979e;--pnbp:#d9782a;--real:#1f5f8b;--track:rgba(15,37,41,.09);--accent:#0a6a70;--accent-soft:rgba(0,151,158,.12);--good-ink:#0a6b1f;--warn-ink:#8a5a00;--crit-ink:#b22a2a}
-body.pdf-mode .glass{-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
 .gate{max-width:520px;margin:12vh auto;padding:28px;text-align:center;position:relative}
 .loading{padding:60px 0;text-align:center;color:var(--muted)}
 .sub-list{margin:8px 0 0;padding-left:18px;font-size:12px}
