@@ -69,7 +69,7 @@ export function tree(id,R,levels){
     });
   })(root);
   var legend='<div class="st-legend noprint"><span><span class="st-badge st-good">'+IC.stGood+'</span>Sesuai jadwal</span><span><span class="st-badge st-warn">'+IC.stWarn+'</span>Perlu percepatan</span><span><span class="st-badge st-crit">'+IC.stCrit+'</span>Kritis — melebihi pagu / tertinggal jauh</span></div>';
-  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+legend+'</div>'+
+  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-expandall="'+id+'">Buka semua</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+legend+'</div>'+
     '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
@@ -81,6 +81,10 @@ export function openLevel(id){
   var depthOpen=0; Object.keys(ids).forEach(function(k){ depthOpen=Math.max(depthOpen,k.split('/').length-1); });
   var d=Math.min(depthOpen,T.levels.length-1);
   T.rows.forEach(function(r){ var p=id; for(var i=0;i<=d;i++){ p+='/'+T.levels[i].key(r); if(i===d) S.open[p]=true; else if(!S.open[p]) return; } });
+}
+export function openAll(id){
+  var T=TREES[id]; if(!T) return;
+  T.rows.forEach(function(r){ var p=id; T.levels.forEach(function(L){ p+='/'+L.key(r); S.open[p]=true; }); });
 }
 export var LV={
   prog:{lvl:'Program',key:function(r){return r.prog;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.program[k]);}},

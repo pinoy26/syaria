@@ -1,7 +1,7 @@
 /* js/nav.js — navigasi: sidebar desktop, bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
 import { $, esc } from './utils.js';
 import { S, BOOT, DB, sess, isAdmin, scopeLabel, persist, activeFilterCount } from './state.js';
-import { bindTips, hideTip, clearPageState, openLevel, openModal } from './ui-components.js';
+import { bindTips, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js';
 import { THEME_BTN } from './theme.js';
 import { renderFilters } from './filters.js';
 import { pdfCard, printCard } from './export.js';
@@ -92,6 +92,7 @@ export function refresh(){
   bindTips(pg);
   [].forEach.call(pg.querySelectorAll('[data-tog]'),function(b){ b.onclick=function(){ var id=b.getAttribute('data-tog'); S.open[id]=!S.open[id]; keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-openall]'),function(b){ b.onclick=function(){ openLevel(b.getAttribute('data-openall')); keepScroll(); }; });
+  [].forEach.call(pg.querySelectorAll('[data-expandall]'),function(b){ b.onclick=function(){ openAll(b.getAttribute('data-expandall')); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-closeall]'),function(b){ b.onclick=function(){ var id=b.getAttribute('data-closeall'); Object.keys(S.open).forEach(function(k){ if(k.indexOf(id+'/')===0) delete S.open[k]; }); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-goa2]'),function(b){ b.onclick=function(){ S.f.a2=b.getAttribute('data-goa2'); S.f.a3=''; S.page='jenis'; S.open={}; S.open['t-jenis/'+S.f.a2]=true; refresh(); window.scrollTo(0,0); }; });
   [].forEach.call(pg.querySelectorAll('[data-unit]'),function(b){ b.onclick=function(){ openModal(unitModalHtml(b.getAttribute('data-unit'))); }; });
