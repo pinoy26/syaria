@@ -14,7 +14,8 @@ export var IC = {
   stWarn:'<svg viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>',
   stCrit:'<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
 };
-export function actions(id,title){ return '<div class="card-a"><button class="icon" type="button" data-pdf="'+id+'" data-title="'+esc(title)+'" aria-label="Unduh PDF '+esc(title)+'" title="Unduh PDF">'+IC.pdf+'</button><button class="icon" type="button" data-print="'+id+'" aria-label="Cetak '+esc(title)+'" title="Cetak">'+IC.print+'</button></div>'; }
+/* cetak/unduh per kartu dinonaktifkan sementara — akan dipindah ke tab unduh laporan tersendiri */
+export function actions(id,title){ return ''; }
 export function card(id,title,sub,body){
   return '<section class="glass card" id="'+id+'"><div class="card-h"><div><h2>'+title+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div>'+actions(id,title.replace(/&amp;/g,'&'))+'</div>'+body+'</section>';
 }
@@ -24,7 +25,11 @@ export function hideTip(){ tip.style.display='none'; }
 export function tipOf(name,t){ return '<b>'+esc(name)+'</b><div class="num">Pagu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rp '+rp(t.pagu)+'<br>Realisasi Rp '+rp(t.sd)+' ('+pc(t.p)+')<br>Periode ini Rp '+rp(t.ini)+'<br>Sisa&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rp '+rp(t.sisa)+'</div>'; }
 var TIPS=[];
 export function tipAttr(html){ TIPS.push(html); return ' data-tip="'+(TIPS.length-1)+'"'; }
-export function track(p,color){ return '<span class="track"><span class="fill" style="width:'+Math.min(100,Math.max(0,p*100))+'%;background:'+(p>1.0001?'var(--crit)':color)+'"></span><span class="mark" style="left:calc('+(WAKTU*100)+'% - 1px)"></span></span>'; }
+export function track(p,color){
+  var c=p>1.0001?'var(--crit)':color;
+  var grad='linear-gradient(90deg, color-mix(in srgb, '+c+' 35%, transparent), '+c+')';
+  return '<span class="track"><span class="fill" style="width:'+Math.min(100,Math.max(0,p*100))+'%;background:'+grad+'"></span><span class="mark" style="left:calc('+(WAKTU*100)+'% - 1px)"></span></span>';
+}
 export function printHead(title){ return '<div class="printhead"><b>'+esc(BOOT.satker)+' · Satker '+esc(BOOT.kode)+'</b>'+esc(title)+' · Posisi data '+tgl(DB.periode)+'<br>Cakupan: '+esc(scopeText())+' · Dicetak '+new Date().toLocaleString('id-ID')+' oleh '+esc(sess().email)+' · Sumber: Laporan Ketersediaan Dana Detail (SAKTI)</div>'; }
 export function bindTips(root){
   [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });

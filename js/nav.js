@@ -53,15 +53,6 @@ export function renderNav(){
     '</div><div class="sheet-hd"><b>'+esc(role)+'</b></div><p class="note" style="margin:0 0 12px">'+esc(s.email)+'<br>'+scopeNote+'</p>'+
     '<div class="tools"><button class="btn" type="button" data-pw>Ubah sandi</button><button class="btn" type="button" data-out>Keluar</button></div>';
   $('moreSheet').innerHTML=sh;
-
-  /* tab horizontal untuk halaman lain dalam grup yang sama */
-  var grp=visible.filter(function(p){ return p.g===( PAGES.filter(function(x){return x.id===S.page;})[0]||{} ).g; });
-  if (grp.length>1){
-    $('subtabs').innerHTML=grp.map(function(p){ return '<button type="button" data-page="'+p.id+'" class="'+(S.page===p.id?'on':'')+'"><svg viewBox="0 0 24 24">'+p.ic+'</svg>'+p.t+'</button>'; }).join('');
-    $('subtabs').hidden=false;
-  } else {
-    $('subtabs').innerHTML=''; $('subtabs').hidden=true;
-  }
 }
 export function openFilterDrawer(){ $('filters').hidden=false; $('filtersBd').hidden=false; requestAnimationFrame(function(){ $('filters').classList.add('open'); $('filtersBd').classList.add('open'); }); var b=$('btnFilterToggle'); if(b){ b.setAttribute('aria-expanded','true'); b.classList.add('on'); } }
 export function closeFilterDrawer(){ $('filters').classList.remove('open'); $('filtersBd').classList.remove('open'); setTimeout(function(){ $('filters').hidden=true; $('filtersBd').hidden=true; },220); var b=$('btnFilterToggle'); if(b){ b.setAttribute('aria-expanded','false'); b.classList.remove('on'); } }

@@ -3,7 +3,6 @@ import { $, tgl, esc, errMsg, toast, yearFrac } from './utils.js';
 import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
-import { printAll } from './export.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 
@@ -33,7 +32,6 @@ export function reboot(periode, keepPage){
   });
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
-$('btnPrintAll').onclick=printAll;
 $('btnFilterToggle').onclick=function(){ if (filterDrawerOpen()) closeFilterDrawer(); else openFilterDrawer(); };
 $('filtersBd').addEventListener('click',closeFilterDrawer);
 $('filters').addEventListener('click',function(e){ if (e.target.closest('[data-filter-close]')) closeFilterDrawer(); });
@@ -57,7 +55,6 @@ $('modal').addEventListener('click',function(e){
 });
 function gotoTab(id){ S.page=id; S.f=EMPTY_F(); S.open={}; S.pg=0; S.cmp=null; refresh(); window.scrollTo(0,0); }
 $('nav').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; gotoTab(b.getAttribute('data-page')); });
-$('subtabs').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; gotoTab(b.getAttribute('data-page')); });
 $('bottomnav').addEventListener('click',function(e){
   if (e.target.closest('[data-more]')){ if(sheetOpen()) closeSheet(); else openSheet(); return; }
   var b=e.target.closest('[data-page]'); if(!b) return;
