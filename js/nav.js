@@ -10,7 +10,8 @@ import { renderRingkasan, loadTrend } from './pages/ringkasan.js';
 import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js';
 import { renderRiwayat, loadCompare } from './pages/riwayat.js';
 import { renderPerhatian, renderRincian } from './pages/perhatian.js';
-import { renderKelola } from './pages/kelola.js';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js';
+import { renderLaporan } from './pages/laporan.js';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -23,7 +24,9 @@ export var PAGES=[
   {id:'riwayat',t:'Riwayat & Revisi',g:'Pemantauan',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',r:renderRiwayat,after:loadCompare},
   {id:'perhatian',t:'Perlu Perhatian',g:'Pemantauan',ic:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',r:renderPerhatian},
   {id:'rincian',t:'Rincian & Ekspor',g:'Pemantauan',ic:'<path d="M4 5h16v14H4zM4 10h16M10 10v9"/>',r:renderRincian},
-  {id:'kelola',t:'Kelola Data',g:'Admin',ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',r:renderKelola,admin:true,noData:true}
+  {id:'laporan',t:'Laporan',g:'Laporan',ic:'<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',r:renderLaporan,after:loadTrend},
+  {id:'kelola',t:'Kelola Data',g:'Admin',ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',r:renderKelola,admin:true,noData:true},
+  {id:'kelola-user',t:'Kelola Pengguna',g:'Admin',ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5-.2 4.4 1.4 5 4.8"/>',r:renderKelolaUser,admin:true,noData:true}
 ];
 var BOTTOM_MAIN=['ringkasan','unit','riwayat','perhatian'];
 var MORE_IC='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>';
@@ -62,12 +65,11 @@ export function closeSheet(){ $('moreSheet').classList.remove('open'); $('sheetB
 export function sheetOpen(){ return $('moreSheet').classList.contains('open'); }
 export function refresh(){
   var p=PAGES.filter(function(x){ return x.id===S.page && (!x.admin||isAdmin()) && (DB||x.noData); })[0];
-  if (!p){ p = DB ? PAGES[0] : (isAdmin()?PAGES[PAGES.length-1]:null); }
-  if (!p){ $('page').innerHTML='<div class="glass card"><h2>Belum ada data</h2><p class="note">Admin keuangan belum mengunggah laporan realisasi.</p></div>'; closeFilterDrawer(); $('scope').hidden=true; renderNav(); return; }
+  if (!p){ p = DB ? PAGES[0] : (isAdmin()?PAGES.filter(function(x){return x.id==='kelola';})[0]:null); }
+  if (!p){ $('page').innerHTML='<div class="glass card"><h2>Belum ada data</h2><p class="note">Admin keuangan belum mengunggah laporan realisasi.</p></div>'; closeFilterDrawer(); renderNav(); return; }
   S.page=p.id; persist(); clearPageState(); hideTip();
   renderNav();
-  var noF=!DB||p.id==='kelola'||p.id==='unit';
-  $('scope').hidden=noF||p.id==='unit-rincian';
+  var noF=!DB||p.id==='kelola'||p.id==='kelola-user'||p.id==='unit';
   if (noF) closeFilterDrawer();
   if (!noF) renderFilters();
   var fBtn=$('btnFilterToggle');

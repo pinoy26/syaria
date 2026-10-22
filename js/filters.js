@@ -1,6 +1,6 @@
 /* js/filters.js — panel filter cakupan data */
-import { $, esc, tgl, pc } from './utils.js';
-import { S, D, CHAIN, FLABEL, SRC, FAK_ORDER, DB, WAKTU, scoped, applyF, isUnitUser, sess, scopeLabel, unitCaption, A2, A3, EMPTY_F, subName } from './state.js';
+import { $, esc } from './utils.js';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, scoped, applyF, isUnitUser, sess, A2, A3, EMPTY_F, subName } from './state.js';
 import { refresh } from './nav.js';
 
 function optName(k,v,r){
@@ -52,13 +52,4 @@ export function renderFilters(){
   });
   $('f_nogaji').onchange=function(){ S.f.noGaji=this.checked; S.cmp=null; refresh(); };
   $('btnReset').onclick=function(){ S.f=EMPTY_F(); S.cmp=null; refresh(); };
-  var chips=[];
-  if (isUnitUser()) chips.push('<span class="chip lock">Akses: '+esc(sess().scopes.map(scopeLabel).join(', '))+'</span>');
-  CHAIN.forEach(function(k){ if(f[k]) chips.push('<span class="chip">'+FLABEL[k]+' '+esc(f[k])+'</span>'); });
-  if (f.unit) chips.push('<span class="chip">'+esc(unitCaption())+'</span>');
-  if (f.sumber) chips.push('<span class="chip">'+SRC[f.sumber]+'</span>');
-  if (f.a2) chips.push('<span class="chip">Akun '+f.a2+'</span>');
-  if (f.a3) chips.push('<span class="chip">Akun '+f.a3+'</span>');
-  if (f.noGaji) chips.push('<span class="chip">Tanpa gaji &amp; operasional kantor</span>');
-  $('scope').innerHTML='<span>Cakupan:</span>'+(chips.length?chips.join(''):'<span class="chip">Seluruh satker</span>')+'<span style="margin-left:auto">Posisi '+tgl(DB.periode)+' · waktu berjalan '+pc(WAKTU)+'</span>';
 }
