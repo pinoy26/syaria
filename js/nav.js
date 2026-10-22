@@ -80,8 +80,12 @@ export function refresh(){
   }
   $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
   $('crumb').textContent=p.g+' · '+BOOT.satker;
+  var toolsEl=$('pageTools');
+  if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
   $('page').innerHTML=p.r();
   var pg=$('page');
+  var firstHd=pg.querySelector('.card-h');
+  if (firstHd && toolsEl) firstHd.appendChild(toolsEl);
   bindTips(pg);
   [].forEach.call(pg.querySelectorAll('[data-tog]'),function(b){ b.onclick=function(){ var id=b.getAttribute('data-tog'); S.open[id]=!S.open[id]; keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-openall]'),function(b){ b.onclick=function(){ openLevel(b.getAttribute('data-openall')); keepScroll(); }; });
