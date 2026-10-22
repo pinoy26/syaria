@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
 import { $, esc, rp, pc, sum, tgl } from './utils.js';
-import { WAKTU, BOOT, DB, sess, scopeText, D, FAK_ORDER, FAK_FULL, SRC, S, pill, A2, A3 } from './state.js';
+import { WAKTU, BOOT, DB, sess, scopeText, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -52,7 +52,8 @@ export function tree(id,R,levels){
     node.children.forEach(function(c){ build(c,depth+1); });
   })(root,0);
   var out=[];
-  var cols=function(t){ return '<td class="n">'+rp(t.pagu)+'</td><td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td>'+pill(t.p)+'</td>'; };
+  var statusDot=function(p){ var s=status(p,WAKTU); return '<span class="st-dot '+s[0]+'" title="'+esc(s[1])+'" aria-label="'+esc(s[1])+'"></span>'; };
+  var cols=function(t){ return '<td class="n">'+rp(t.pagu)+'</td><td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="stc">'+statusDot(t.p)+'</td>'; };
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
@@ -63,8 +64,9 @@ export function tree(id,R,levels){
       }); else walk(c);
     });
   })(root);
-  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button></div>'+
-    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th>Status</th></tr></thead><tbody>'+out.join('')+
+  var legend='<div class="st-legend noprint"><span><span class="st-dot st-good"></span>Sesuai jadwal</span><span><span class="st-dot st-warn"></span>Perlu percepatan</span><span><span class="st-dot st-crit"></span>Kritis — melebihi pagu / tertinggal jauh</span></div>';
+  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+legend+'</div>'+
+    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
 export function treeCard(id,title,sub,R,levels){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,tree(id,R,levels)); }
