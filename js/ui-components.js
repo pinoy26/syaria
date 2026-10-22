@@ -14,10 +14,10 @@ export var IC = {
   stWarn:'<svg viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>',
   stCrit:'<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
 };
-/* cetak/unduh per kartu dinonaktifkan sementara — akan dipindah ke tab unduh laporan tersendiri */
+/* cetak/unduh per kartu dipindah ke halaman Laporan — kartu biasa tidak punya tombol sendiri lagi */
 export function actions(id,title){ return ''; }
-export function card(id,title,sub,body){
-  return '<section class="glass card" id="'+id+'"><div class="card-h"><div><h2>'+title+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div>'+actions(id,title.replace(/&amp;/g,'&'))+'</div>'+body+'</section>';
+export function card(id,title,sub,body,act){
+  return '<section class="glass card" id="'+id+'"><div class="card-h"><div><h2>'+title+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div>'+(act!==undefined?act:actions(id,title.replace(/&amp;/g,'&')))+'</div>'+body+'</section>';
 }
 var tip=$('tip');
 export function showTip(e,html){ tip.innerHTML=html; tip.style.display='block'; var x=e.clientX+14,y=e.clientY+14,w=tip.offsetWidth,h=tip.offsetHeight; if(x+w>innerWidth-8)x=e.clientX-w-14; if(y+h>innerHeight-8)y=e.clientY-h-14; tip.style.left=x+'px'; tip.style.top=y+'px'; }
@@ -78,7 +78,7 @@ export function tree(id,R,levels){
     '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
-export function treeCard(id,title,sub,R,levels){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,tree(id,R,levels)); }
+export function treeCard(id,title,sub,R,levels,act){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,tree(id,R,levels),act); }
 export function openLevel(id){
   var T=TREES[id]; if(!T) return;
   var ids={}; Object.keys(S.open).forEach(function(k){ if(S.open[k]&&k.indexOf(id+'/')===0) ids[k]=1; });
