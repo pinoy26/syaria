@@ -9,7 +9,10 @@ export var IC = {
   chev:'<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5-.2 4.4 1.4 5 4.8"/></svg>',
   box:'<svg viewBox="0 0 24 24"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5"/><path d="M12 12v9"/></svg>',
-  build:'<svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>'
+  build:'<svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>',
+  stGood:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+  stWarn:'<svg viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>',
+  stCrit:'<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
 };
 export function actions(id,title){ return '<div class="card-a"><button class="icon" type="button" data-pdf="'+id+'" data-title="'+esc(title)+'" aria-label="Unduh PDF '+esc(title)+'" title="Unduh PDF">'+IC.pdf+'</button><button class="icon" type="button" data-print="'+id+'" aria-label="Cetak '+esc(title)+'" title="Cetak">'+IC.print+'</button></div>'; }
 export function card(id,title,sub,body){
@@ -52,8 +55,9 @@ export function tree(id,R,levels){
     node.children.forEach(function(c){ build(c,depth+1); });
   })(root,0);
   var out=[];
-  var statusDot=function(p){ var s=status(p,WAKTU); return '<span class="st-dot '+s[0]+'" title="'+esc(s[1])+'" aria-label="'+esc(s[1])+'"></span>'; };
-  var cols=function(t){ return '<td class="n">'+rp(t.pagu)+'</td><td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="stc">'+statusDot(t.p)+'</td>'; };
+  var ST_ICON={'st-good':IC.stGood,'st-warn':IC.stWarn,'st-crit':IC.stCrit};
+  var statusBadge=function(p){ var s=status(p,WAKTU); return '<span class="st-badge '+s[0]+'" title="'+esc(s[1])+'" aria-label="'+esc(s[1])+'">'+ST_ICON[s[0]]+'</span>'; };
+  var cols=function(t){ return '<td class="n">'+rp(t.pagu)+'</td><td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="stc">'+statusBadge(t.p)+'</td>'; };
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
@@ -64,7 +68,7 @@ export function tree(id,R,levels){
       }); else walk(c);
     });
   })(root);
-  var legend='<div class="st-legend noprint"><span><span class="st-dot st-good"></span>Sesuai jadwal</span><span><span class="st-dot st-warn"></span>Perlu percepatan</span><span><span class="st-dot st-crit"></span>Kritis — melebihi pagu / tertinggal jauh</span></div>';
+  var legend='<div class="st-legend noprint"><span><span class="st-badge st-good">'+IC.stGood+'</span>Sesuai jadwal</span><span><span class="st-badge st-warn">'+IC.stWarn+'</span>Perlu percepatan</span><span><span class="st-badge st-crit">'+IC.stCrit+'</span>Kritis — melebihi pagu / tertinggal jauh</span></div>';
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+legend+'</div>'+
     '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
