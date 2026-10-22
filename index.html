@@ -38,24 +38,26 @@
   </div>
 
   <main class="main">
-    <div class="topbar">
-      <div class="topbar-hd">
-        <button type="button" class="icon side-toggle" id="btnSideToggle" aria-label="Buka/tutup menu" title="Buka/tutup menu" aria-expanded="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <div>
-          <div class="crumb" id="crumb"></div>
-          <h1 id="pageTitle">Ringkasan Realisasi</h1>
+    <div class="glass card page-head">
+      <div class="topbar">
+        <div class="topbar-hd">
+          <button type="button" class="icon side-toggle" id="btnSideToggle" aria-label="Buka/tutup menu" title="Buka/tutup menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <div class="crumb" id="crumb"></div>
+            <h1 id="pageTitle">Ringkasan Realisasi</h1>
+          </div>
+        </div>
+        <div class="tools">
+          <label class="f" for="selPeriode">Posisi data
+            <select id="selPeriode"></select>
+          </label>
+          <button class="btn" type="button" id="btnFilterToggle" aria-expanded="false" aria-controls="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter<span class="fcount" id="fcount" hidden></span></button>
         </div>
       </div>
-      <div class="tools">
-        <label class="f" for="selPeriode">Posisi data
-          <select id="selPeriode"></select>
-        </label>
-        <button class="btn" type="button" id="btnFilterToggle" aria-expanded="false" aria-controls="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter<span class="fcount" id="fcount" hidden></span></button>
-      </div>
+      <div class="scope" id="scope"></div>
     </div>
-    <div class="scope" id="scope"></div>
     <div id="page"></div>
   </main>
 </div>

@@ -1,6 +1,6 @@
 /* js/nav.js — navigasi: sidebar desktop, bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
 import { $, esc } from './utils.js';
-import { S, BOOT, DB, sess, isAdmin, scopeLabel, persist, activeFilterCount } from './state.js';
+import { S, BOOT, DB, sess, isAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js';
 import { bindTips, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js';
 import { THEME_BTN } from './theme.js';
 import { renderFilters } from './filters.js';
@@ -76,7 +76,7 @@ export function refresh(){
     var n=activeFilterCount(), c=$('fcount');
     if (c){ c.hidden=!n; c.textContent=n; }
   }
-  $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.t;
+  $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
   $('crumb').textContent=p.g+' · '+BOOT.satker;
   $('page').innerHTML=p.r();
   var pg=$('page');

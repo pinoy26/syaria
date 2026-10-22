@@ -1,6 +1,6 @@
 /* js/pages/analisis.js — Unit Kerja, Sumber Dana, Jenis Belanja, Struktur DIPA */
 import { esc, rp, rpk, pc, group, sum } from '../utils.js';
-import { FAK_ORDER, SRC, rows, pill, A2, unitCaption } from '../state.js';
+import { FAK_ORDER, SRC, rows, pill, A2 } from '../state.js';
 import { card, actions, track, printHead, treeCard, LV } from '../ui-components.js';
 
 /* ================= halaman analisis ================= */
@@ -38,9 +38,8 @@ export function unitModalHtml(key){
 }
 export function renderUnitRincian(){
   var R=rows();
-  var cap=unitCaption(), title='Rincian — '+esc(cap.charAt(0).toUpperCase()+cap.slice(1));
   return '<div class="page-sec grid">'+printHead('Rincian Unit Kerja')+
-    treeCard('t-unit',title,'Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
+    treeCard('t-unit','Rincian unit kerja','Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
 }
 export function renderSumber(){
   var R=rows(), T=sum(R);
