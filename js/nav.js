@@ -67,7 +67,7 @@ export function refresh(){
   S.page=p.id; persist(); clearPageState(); hideTip();
   renderNav();
   var noF=!DB||p.id==='kelola'||p.id==='unit';
-  $('scope').hidden=noF;
+  $('scope').hidden=noF||p.id==='unit-rincian';
   if (noF) closeFilterDrawer();
   if (!noF) renderFilters();
   var fBtn=$('btnFilterToggle');

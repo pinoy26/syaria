@@ -56,18 +56,22 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 .backdrop i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-26vw;background:var(--blob3)}
 .backdrop svg{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
 
-.app{position:relative;z-index:1;display:grid;grid-template-columns:264px minmax(0,1fr);gap:24px;max-width:min(2600px,96vw);margin:0 auto;padding-inline:clamp(20px,2.5vw,44px);padding-block:20px 48px;transition:grid-template-columns .2s}
-.app.side-collapsed{grid-template-columns:76px minmax(0,1fr)}
+.app{position:relative;z-index:1;max-width:min(2600px,96vw);margin:0 auto;padding-inline:clamp(20px,2.5vw,44px);padding-block:20px 48px}
 .glass{background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-radius:20px}
 
-/* sidebar */
-.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;padding:20px 14px;display:flex;flex-direction:column;gap:18px;max-height:calc(100vh - 40px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+/* sidebar — tersembunyi di tepi, muncul sebagai overlay (tidak menggeser konten) saat dihover atau dibuka */
+.side-host{position:fixed;top:0;left:0;height:100vh;width:18px;z-index:45}
+.side-host .side{position:fixed;top:0;left:0;height:100vh;width:264px;max-height:none;padding:20px 14px;display:flex;flex-direction:column;gap:18px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;border-radius:0 20px 20px 0;background:var(--glass-strong);transform:translateX(-100%);transition:transform .25s cubic-bezier(.2,.7,.2,1);box-shadow:16px 0 36px -18px rgba(16,52,58,.4)}
 .side::-webkit-scrollbar{width:6px}
 .side::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
-.app.side-collapsed{grid-template-columns:0 minmax(0,1fr)}
-.app.side-collapsed .side{display:none}
+.side-host:hover .side,.app.side-open .side{transform:translateX(0)}
+.side-peek{position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:44;width:20px;height:56px;padding:0;border:1px solid var(--glass-border);border-left:0;border-radius:0 14px 14px 0;background:var(--glass-strong);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s,opacity .15s}
+.side-peek svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.side-peek:hover{background:var(--accent-soft);color:var(--ink)}
+.app.side-open .side-peek{opacity:0;pointer-events:none}
 .topbar-hd{display:flex;align-items:flex-start;gap:10px}
 .side-toggle{margin-top:2px;flex:none}
+.side-toggle.on{background:var(--accent-soft);color:var(--ink)}
 .brand{display:flex;gap:11px;align-items:center;padding:0 6px}
 .brand .mark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,var(--rm),var(--real));color:#fff;flex:none}
 .brand b{display:block;font-size:14px;line-height:1.2;letter-spacing:-.01em}
@@ -114,7 +118,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 .modal-hd h3{margin:2px 0 0;font-size:17px;font-weight:700}
 
 /* main */
-.main{grid-column:2;display:flex;flex-direction:column;gap:18px;min-width:0}
+.main{display:flex;flex-direction:column;gap:18px;min-width:0}
 .topbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
 .topbar h1{margin:0;font-size:clamp(22px,2.4vw,30px);font-weight:800;letter-spacing:-.025em;text-wrap:balance}
 .topbar .crumb{color:var(--muted);font-size:12.5px;margin-bottom:2px}
@@ -325,10 +329,10 @@ tr.leaf td{color:var(--ink2)}
 
 @media (max-width:1100px){.two,.three{grid-template-columns:minmax(0,1fr)}.hero{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:900px){
-  .app{grid-template-columns:minmax(0,1fr);padding-inline:16px}
-  .side{display:none}
+  .app{padding-inline:16px}
+  .side-host,.side-peek{display:none}
   button.side-toggle{display:none}
-  .main{grid-column:1;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px)}
+  .main{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px)}
   .bottomnav{display:flex}
   .sheet-backdrop{display:block}
   .sheet{display:block}
