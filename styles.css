@@ -396,18 +396,19 @@ tr.leaf td{color:var(--ink2)}
   .tbl-grid td:first-child,.tbl-grid th:first-child{min-width:0!important}
   .tbl-grid .tw{padding-left:0!important}
   .tbl-grid tr.leaf td:first-child>span{padding-left:0!important}
-  .tbl-grid .code{display:inline-block;min-width:40px;color:#000!important}
+  .tbl-grid tr.lv-sub .tw{padding-left:32px!important}
+  .tbl-grid .code{display:inline-block;min-width:28px;color:#000!important}
   .tbl-grid td{color:#000!important}
   .tbl-grid tr.lv-kro td,.tbl-grid tr.lv-kro .code{color:#7b2fbe!important}
   .tbl-grid tr.lv-ro td,.tbl-grid tr.lv-ro .code{color:#c62828!important}
   .tbl-grid tr.lv-komp td,.tbl-grid tr.lv-komp .code{color:#a67c00!important}
+  .tbl-grid tr.lv-sub td{background:#f2f2f2!important}
   .printhead{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
   body.print-one .two>:not(.print-target){display:none!important}
   .tbl-grid{max-height:none!important;overflow:visible!important;background:#fff!important;border-color:#ccc!important}
   .tbl-grid th,.tbl-grid td{position:static!important;background:#fff!important;border-color:#ccc!important;max-width:none!important;box-shadow:none!important}
   .tbl-grid th{background:#eee!important}
-  .tbl-grid tbody tr:nth-child(even) td{background:#f7f7f7!important}
   .tbl-grid tr.tot td{background:#eee!important}
   .tbl-grid tr{break-inside:avoid}
   thead{display:table-header-group}

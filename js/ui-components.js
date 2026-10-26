@@ -107,7 +107,7 @@ export var LV={
   kro:{lvl:'KRO',cls:'lv-kro',key:function(r){return r.kro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kro[k]);}},
   ro:{lvl:'RO',cls:'lv-ro',key:function(r){return r.ro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.ro[k]);}},
   komp:{lvl:'Komponen',cls:'lv-komp',key:function(r){return r.komp;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.komp[k]);}},
-  sub:{lvl:'Sub Komp',key:function(r){return r.ro+'|'+r.sub;},label:function(k){var full=k.split('|')[1],parts=full.split('.'); return '<b class="code">'+esc(parts[parts.length-1])+'</b> '+esc(D.sub[k]);}},
+  sub:{lvl:'Sub Komp',cls:'lv-sub',key:function(r){return r.ro+'|'+r.sub;},label:function(k){var full=k.split('|')[1],parts=full.split('.'); return '<b class="code">'+esc(parts[parts.length-1])+'</b> '+esc(D.sub[k]);}},
   akun:{lvl:'Akun',key:function(r){return r.akun;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.akun[k]);}},
   a2:{lvl:'Jenis',key:function(r){return r.a2;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(A2(k));}},
   a3:{lvl:'Akun 3',key:function(r){return r.a3;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(A3(k));}},
