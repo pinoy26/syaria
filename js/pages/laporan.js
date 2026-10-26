@@ -12,6 +12,7 @@ var JENIS=[
   {id:'dipa',t:'Struktur DIPA Lengkap',sub:'Program → Kegiatan → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.prog,LV.keg,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]}
 ];
 var active='unit';
+var levelIdx=null; /* null = level terdalam (default, semua rincian) */
 
 function optName(k,v,r){
   var m={prog:D.program,keg:D.kegiatan,kro:D.kro,ro:D.ro,komp:D.komp}[k];
@@ -47,36 +48,56 @@ function chainFields(){
   });
   return h;
 }
+/* level terpilih -> {lv: daftar level terpotong, full: true bila sampai level terdalam} */
+function pilihLevel(J){
+  var n=(levelIdx==null||levelIdx>=J.lv.length)?J.lv.length-1:levelIdx;
+  return { lv: J.lv.slice(0,n+1), full: n===J.lv.length-1 };
+}
+function levelField(J){
+  return '<label class="f" for="lfLevel">Pilih level<select id="lfLevel">'+
+    J.lv.map(function(l,i){ return '<option value="'+i+'"'+(i===pilihLevel(J).lv.length-1?' selected':'')+'>'+esc(l.lvl)+'</option>'; }).join('')+
+    '</select></label>';
+}
 
 export function renderLaporan(){
   var J=JENIS.filter(function(x){return x.id===active;})[0]||JENIS[0];
+  var P=pilihLevel(J);
   var radio=JENIS.map(function(x){ return '<label><input type="radio" name="lapJenis" value="'+x.id+'"'+(x.id===active?' checked':'')+'>'+esc(x.t)+'</label>'; }).join('');
-  var form='<div class="glass card noprint"><div class="card-h"><div><h2>Laporan</h2><p>Pilih satuan kerja, jenis laporan, periode dan filter, lalu unduh.</p></div></div>'+
+  var form='<div class="glass card noprint"><div class="card-h"><div><h2>Laporan</h2><p>Pilih satuan kerja, jenis laporan, level, periode dan filter, lalu unduh.</p></div></div>'+
     '<div class="lap-box"><div class="eyebrow">Pilihan Cetak</div><div class="filters-grid">'+unitField()+'</div></div>'+
     '<div class="lap-box"><div class="eyebrow">Jenis Laporan &amp; Periode</div><div class="lap-radio">'+radio+'</div>'+
-      '<div class="lap-periode-row"><label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
+      '<div class="lap-periode-row">'+levelField(J)+'<label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
     '<div class="lap-box"><div class="eyebrow">Filter</div><div class="filters-grid">'+chainFields()+'</div></div>'+
     '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
   var prn='<section class="glass card lap-prn" id="lap-prn"><div class="card-h"><div><h2>'+esc(J.t)+'</h2><p>'+esc(J.sub)+'</p></div></div><div id="lapPrnBody"></div></section>';
   setTimeout(bindLaporan,0);
-  return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+prn+'</div>';
+  return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),P.lv)+prn+'</div>';
 }
 function bindLaporan(){
   var pg=document.getElementById('page'); if (!pg || !pg.querySelector('.lap-box')) return;
-  [].forEach.call(pg.querySelectorAll('input[name="lapJenis"]'), function(r){ r.onchange=function(){ active=this.value; refresh(); }; });
+  [].forEach.call(pg.querySelectorAll('input[name="lapJenis"]'), function(r){ r.onchange=function(){ active=this.value; levelIdx=null; refresh(); }; });
   [].forEach.call(pg.querySelectorAll('.lap-box select[data-k]'), function(s){
     s.onchange=function(){ var k=s.dataset.k; S.f[k]=s.value; var i=CHAIN.indexOf(k); if(i>=0) for(var j=i+1;j<CHAIN.length;j++) S.f[CHAIN[j]]=''; S.pg=0; refresh(); };
   });
+  var lvlSel=document.getElementById('lfLevel');
+  if (lvlSel) lvlSel.onchange=function(){ levelIdx=+lvlSel.value; refresh(); };
   var periodeSel=document.getElementById('selPeriode'), slot=document.getElementById('lfPeriodeSlot');
   if (periodeSel && slot && !slot.contains(periodeSel)) slot.appendChild(periodeSel);
   var btnX=document.getElementById('btnUnduhExcel'); if (btnX) btnX.onclick=unduhExcel;
   var btnPdf=document.getElementById('btnLapPdf');
   if (btnPdf) btnPdf.onclick=function(){
     var J=JENIS.filter(function(x){return x.id===active;})[0]||JENIS[0];
+    var P=pilihLevel(J);
     var R=rows(), id='lap-prn-tree';
-    R.forEach(function(r){ var p=id; J.lv.forEach(function(L){ p+='/'+L.key(r); S.open[p]=true; }); });
-    var html=tree(id,R,J.lv);
+    R.forEach(function(r){
+      var p=id;
+      P.lv.forEach(function(L,i){
+        p+='/'+L.key(r);
+        if (i<P.lv.length-1 || P.full) S.open[p]=true;
+      });
+    });
+    var html=tree(id,R,P.lv);
     Object.keys(S.open).forEach(function(k){ if(k.indexOf(id+'/')===0) delete S.open[k]; });
     document.getElementById('lapPrnBody').innerHTML=html;
     pdfCard('lap-prn', J.t);
