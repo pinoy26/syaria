@@ -8,7 +8,7 @@ function printStyleTag(){
   return s;
 }
 function setPrintOrientation(landscape){
-  printStyleTag().textContent='@media print{ @page{ size:A4 '+(landscape?'landscape':'portrait')+'; margin:14mm; } }';
+  printStyleTag().textContent='@media print{ @page{ size:A4 '+(landscape?'landscape':'portrait')+'; margin:5mm; } }';
 }
 /* lanskap dipilih bila salah satu tabel di dalamnya punya banyak kolom (potret jadi sempit untuk itu) */
 function isWide(root){

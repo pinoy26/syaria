@@ -384,14 +384,16 @@ tr.leaf td{color:var(--ink2)}
 .unit-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .unit-mini table{font-size:12px}
 @media print{
-  @page{size:A4;margin:14mm}
+  @page{size:A4;margin:5mm}
   body{background:#fff;color:#000}
-  .backdrop,.side,.filters,.tools,.card-a,.pager,.noprint,.toast{display:none!important}
+  .backdrop,.side,.side-host,.side-peek,.filters,.tools,.bottomnav,.sheet,.sheet-backdrop,.card-a,.pager,.noprint,.toast{display:none!important}
   .app{display:block;padding:0}
   .glass{background:#fff;box-shadow:none;border:1px solid #ccc;-webkit-backdrop-filter:none;backdrop-filter:none;break-inside:avoid;margin-bottom:10px}
   .glass:has(.tbl-grid){break-inside:auto}
   .tbl-grid .lvl{display:none}
   .tbl-grid .tw button{display:none}
+  .tbl-grid .chip{display:none}
+  .tbl-grid td:first-child,.tbl-grid th:first-child{min-width:0!important}
   .printhead{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
   body.print-one .two>:not(.print-target){display:none!important}
