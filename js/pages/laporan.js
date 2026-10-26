@@ -53,7 +53,7 @@ export function renderLaporan(){
   var form='<div class="glass card noprint"><div class="card-h"><div><h2>Laporan</h2><p>Pilih satuan kerja, jenis laporan, periode dan filter, lalu unduh.</p></div></div>'+
     '<div class="lap-box"><div class="eyebrow">Pilihan Cetak</div><div class="filters-grid">'+unitField()+'</div></div>'+
     '<div class="lap-box"><div class="eyebrow">Jenis Laporan &amp; Periode</div><div class="lap-radio">'+radio+'</div>'+
-      '<div class="filters-grid" style="margin-top:12px"><label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
+      '<div class="lap-periode-row"><label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
     '<div class="lap-box"><div class="eyebrow">Filter</div><div class="filters-grid">'+chainFields()+'</div></div>'+
     '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" data-pdf="lap-aktif" data-title="'+esc(J.t)+'">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
