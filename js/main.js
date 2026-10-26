@@ -1,5 +1,5 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, esc, errMsg, toast, yearFrac } from './utils.js';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js';
 import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
@@ -20,7 +20,7 @@ export function loadData(periode){
 }
 export function fillPeriods(sel){
   var ps=BOOT.periods;
-  $('selPeriode').innerHTML=ps.length?ps.slice().reverse().map(function(p){return '<option value="'+p.periode+'"'+(p.periode===sel?' selected':'')+'>'+tgl(p.periode)+'</option>';}).join(''):'<option>—</option>';
+  $('selPeriode').innerHTML=ps.length?ps.slice().reverse().map(function(p){return '<option value="'+p.periode+'"'+(p.periode===sel?' selected':'')+'>'+blnTahun(p.periode)+'</option>';}).join(''):'<option>—</option>';
 }
 export function reboot(periode, keepPage){
   return SB.boot().then(function(b){

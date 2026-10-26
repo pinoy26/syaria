@@ -30,7 +30,18 @@ export function track(p,color){
   var grad='linear-gradient(90deg, color-mix(in srgb, '+c+' 35%, transparent), '+c+')';
   return '<span class="track"><span class="fill" style="width:'+Math.min(100,Math.max(0,p*100))+'%;background:'+grad+'"></span><span class="mark" style="left:calc('+(WAKTU*100)+'% - 1px)"></span></span>';
 }
-export function printHead(title){ return '<div class="printhead"><b>'+esc(BOOT.satker)+' · Satker '+esc(BOOT.kode)+'</b>'+esc(title)+' · Posisi data '+tgl(DB.periode)+'<br>Cakupan: '+esc(scopeText())+' · Dicetak '+new Date().toLocaleString('id-ID')+' oleh '+esc(sess().email)+' · Sumber: Laporan Ketersediaan Dana Detail (SAKTI)</div>'; }
+export function printHead(title){
+  var unitNama='';
+  if (S.f.unit){
+    var u=S.f.unit.split('|');
+    unitNama=u[1]?(FAK_FULL[u[1]]||u[1]):('Seluruh '+u[0]);
+  }
+  return '<div class="printhead">'+
+    '<div class="kop-inst"><b>'+esc(BOOT.satker)+'</b>'+(unitNama?'<br><b>'+esc(unitNama)+'</b>':'')+'<br><span>Satker '+esc(BOOT.kode)+'</span></div>'+
+    '<div class="kop-garis"></div>'+
+    '<div class="kop-meta"><b>'+esc(title)+'</b><br>Realisasi sampai dengan '+tgl(DB.periode)+'<br>Cakupan: '+esc(scopeText())+' · Dicetak '+new Date().toLocaleString('id-ID')+' oleh '+esc(sess().email)+' · Sumber: Laporan Ketersediaan Dana Detail (SAKTI)</div>'+
+  '</div>';
+}
 export function bindTips(root){
   [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });
 }
