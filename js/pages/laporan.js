@@ -1,7 +1,7 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF (cetak asli browser) & Excel */
 import { esc } from '../utils.js';
 import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js';
-import { treeCard, printHead, LV, IC, openAll } from '../ui-components.js';
+import { treeCard, tree, printHead, LV, IC } from '../ui-components.js';
 import { pdfCard } from '../export.js';
 import { refresh } from '../nav.js';
 
@@ -58,8 +58,9 @@ export function renderLaporan(){
     '<div class="lap-box"><div class="eyebrow">Filter</div><div class="filters-grid">'+chainFields()+'</div></div>'+
     '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
+  var prn='<section class="glass card lap-prn" id="lap-prn"><div class="card-h"><div><h2>'+esc(J.t)+'</h2><p>'+esc(J.sub)+'</p></div></div><div id="lapPrnBody"></div></section>';
   setTimeout(bindLaporan,0);
-  return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+'</div>';
+  return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+prn+'</div>';
 }
 function bindLaporan(){
   var pg=document.getElementById('page'); if (!pg || !pg.querySelector('.lap-box')) return;
@@ -72,10 +73,13 @@ function bindLaporan(){
   var btnX=document.getElementById('btnUnduhExcel'); if (btnX) btnX.onclick=unduhExcel;
   var btnPdf=document.getElementById('btnLapPdf');
   if (btnPdf) btnPdf.onclick=function(){
-    openAll('lap-aktif');
-    refresh();
     var J=JENIS.filter(function(x){return x.id===active;})[0]||JENIS[0];
-    pdfCard('lap-aktif', J.t);
+    var R=rows(), id='lap-prn-tree';
+    R.forEach(function(r){ var p=id; J.lv.forEach(function(L){ p+='/'+L.key(r); S.open[p]=true; }); });
+    var html=tree(id,R,J.lv);
+    Object.keys(S.open).forEach(function(k){ if(k.indexOf(id+'/')===0) delete S.open[k]; });
+    document.getElementById('lapPrnBody').innerHTML=html;
+    pdfCard('lap-prn', J.t);
   };
 }
 function unduhExcel(){

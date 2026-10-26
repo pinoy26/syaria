@@ -157,6 +157,7 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .filters-hd b{font-size:14.5px}
 .filters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 12px;align-items:end}
 .lap-box{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px;background:var(--glass)}
+.lap-prn{display:none}
 .lap-box .eyebrow{margin-bottom:12px}
 .lap-box .filters-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .lap-periode-row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
@@ -388,6 +389,7 @@ tr.leaf td{color:var(--ink2)}
 .unit-mini table{font-size:12px}
 @media print{
   @page{size:A4;margin:5mm}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   body{background:#fff;color:#000}
   .backdrop,.side,.side-host,.side-peek,.filters,.tools,.bottomnav,.sheet,.sheet-backdrop,.card-a,.pager,.noprint,.toast{display:none!important}
   .app{display:block;padding:0}
@@ -412,12 +414,13 @@ tr.leaf td{color:var(--ink2)}
   .tbl-grid tr.lv-komp td:first-child{box-shadow:inset 4px 0 0 #a67c00!important}
   .tbl-grid tr.lv-sub td:first-child{box-shadow:inset 4px 0 0 #999!important}
   .printhead{display:block!important}
+  .lap-prn{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
   body.print-one .two>:not(.print-target){display:none!important}
   .tbl-grid{max-height:none!important;overflow:visible!important;background:#fff!important;border-color:#ccc!important}
   .tbl-grid th,.tbl-grid td{position:static!important;background:#fff!important;border-color:#ccc!important;max-width:none!important;box-shadow:none!important}
   .tbl-grid th{background:#0a6a70!important;color:#fff!important;border-color:#0a6a70!important}
-  .tbl-grid tr.tot td{background:#0a6a70!important;color:#fff!important;border-color:#0a6a70!important;font-weight:800}
+  .tbl-grid tr.tot td{background:#0a6a70!important;color:#fff!important;border:1px solid #0a6a70!important;font-weight:800}
   .tbl-grid tr{break-inside:avoid}
   thead{display:table-header-group}
   tr.tot{break-inside:avoid}
