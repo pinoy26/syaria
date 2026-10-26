@@ -5,7 +5,7 @@ import { treeCard, printHead, LV, IC } from '../ui-components.js';
 import { refresh } from '../nav.js';
 
 var JENIS=[
-  {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun]},
+  {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
   {id:'src',t:'Rincian per Sumber Dana',sub:'Sumber dana → Jenis belanja → Akun 3 digit → Akun 6 digit → Detail belanja.',lv:[LV.src,LV.a2,LV.a3,LV.akun]},
   {id:'jenis',t:'Rincian per Jenis Belanja',sub:'Akun 2 digit → 3 digit → 6 digit → Detail belanja.',lv:[LV.a2,LV.a3,LV.akun]},
   {id:'dipa',t:'Struktur DIPA Lengkap',sub:'Program → Kegiatan → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.prog,LV.keg,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]}

@@ -39,7 +39,7 @@ export function unitModalHtml(key){
 export function renderUnitRincian(){
   var R=rows();
   return '<div class="page-sec grid">'+printHead()+
-    treeCard('t-unit','Rincian unit kerja','Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
+    treeCard('t-unit','Rincian unit kerja','Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun])+'</div>';
 }
 export function renderSumber(){
   var R=rows(), T=sum(R);

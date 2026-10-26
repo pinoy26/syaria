@@ -66,7 +66,7 @@ export function tree(id,R,levels){
     var L=levels[depth], m={}, order=[];
     node.rows.forEach(function(r){ var k=L.key(r); if(!m[k]){m[k]=[];order.push(k);} m[k].push(r); });
     if (L.sort) order.sort(L.sort); else order.sort();
-    node.children=order.map(function(k){ var n={id:node.id+'/'+k,key:k,rows:m[k],depth:depth,lvl:L.lvl,label:L.label(k,m[k][0])}; n.t=sum(m[k]); return n; });
+    node.children=order.map(function(k){ var n={id:node.id+'/'+k,key:k,rows:m[k],depth:depth,lvl:L.lvl,cls:L.cls,label:L.label(k,m[k][0])}; n.t=sum(m[k]); return n; });
     node.children.forEach(function(c){ build(c,depth+1); });
   })(root,0);
   var out=[];
@@ -76,7 +76,7 @@ export function tree(id,R,levels){
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
-      out.push('<tr class="tree l'+c.depth+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="lvl">'+c.lvl+'</span><span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
+      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="lvl">'+c.lvl+'</span><span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
         out.push('<tr class="leaf"><td><span style="padding-left:'+(ind+44)+'px;display:inline-block"><span class="code">'+esc(r.no)+'</span> '+esc(r.item)+' <span class="chip" style="font-size:10.5px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
@@ -104,9 +104,9 @@ export function openAll(id){
 export var LV={
   prog:{lvl:'Program',key:function(r){return r.prog;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.program[k]);}},
   keg:{lvl:'Kegiatan',key:function(r){return r.keg;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kegiatan[k]);}},
-  kro:{lvl:'KRO',key:function(r){return r.kro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kro[k]);}},
-  ro:{lvl:'RO',key:function(r){return r.ro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.ro[k]);}},
-  komp:{lvl:'Komponen',key:function(r){return r.komp;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.komp[k]);}},
+  kro:{lvl:'KRO',cls:'lv-kro',key:function(r){return r.kro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kro[k]);}},
+  ro:{lvl:'RO',cls:'lv-ro',key:function(r){return r.ro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.ro[k]);}},
+  komp:{lvl:'Komponen',cls:'lv-komp',key:function(r){return r.komp;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.komp[k]);}},
   sub:{lvl:'Sub Komp',key:function(r){return r.ro+'|'+r.sub;},label:function(k){var full=k.split('|')[1],parts=full.split('.'); return '<b class="code">'+esc(parts[parts.length-1])+'</b> '+esc(D.sub[k]);}},
   akun:{lvl:'Akun',key:function(r){return r.akun;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.akun[k]);}},
   a2:{lvl:'Jenis',key:function(r){return r.a2;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(A2(k));}},
