@@ -1,7 +1,8 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF (cetak asli browser) & Excel */
 import { esc } from '../utils.js';
 import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js';
-import { treeCard, printHead, LV, IC } from '../ui-components.js';
+import { treeCard, printHead, LV, IC, openAll } from '../ui-components.js';
+import { pdfCard } from '../export.js';
 import { refresh } from '../nav.js';
 
 var JENIS=[
@@ -55,7 +56,7 @@ export function renderLaporan(){
     '<div class="lap-box"><div class="eyebrow">Jenis Laporan &amp; Periode</div><div class="lap-radio">'+radio+'</div>'+
       '<div class="lap-periode-row"><label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
     '<div class="lap-box"><div class="eyebrow">Filter</div><div class="filters-grid">'+chainFields()+'</div></div>'+
-    '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" data-pdf="lap-aktif" data-title="'+esc(J.t)+'">'+IC.pdf+' Unduh PDF</button>'+
+    '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
   setTimeout(bindLaporan,0);
   return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+'</div>';
@@ -69,6 +70,13 @@ function bindLaporan(){
   var periodeSel=document.getElementById('selPeriode'), slot=document.getElementById('lfPeriodeSlot');
   if (periodeSel && slot && !slot.contains(periodeSel)) slot.appendChild(periodeSel);
   var btnX=document.getElementById('btnUnduhExcel'); if (btnX) btnX.onclick=unduhExcel;
+  var btnPdf=document.getElementById('btnLapPdf');
+  if (btnPdf) btnPdf.onclick=function(){
+    openAll('lap-aktif');
+    refresh();
+    var J=JENIS.filter(function(x){return x.id===active;})[0]||JENIS[0];
+    pdfCard('lap-aktif', J.t);
+  };
 }
 function unduhExcel(){
   var R=rows();

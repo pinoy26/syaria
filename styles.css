@@ -407,6 +407,10 @@ tr.leaf td{color:var(--ink2)}
   .tbl-grid tr.lv-ro td,.tbl-grid tr.lv-ro .code{color:#c62828!important}
   .tbl-grid tr.lv-komp td,.tbl-grid tr.lv-komp .code{color:#a67c00!important}
   .tbl-grid tr.lv-sub td{background:#f2f2f2!important}
+  .tbl-grid tr.lv-kro td:first-child{box-shadow:inset 4px 0 0 #7b2fbe!important}
+  .tbl-grid tr.lv-ro td:first-child{box-shadow:inset 4px 0 0 #c62828!important}
+  .tbl-grid tr.lv-komp td:first-child{box-shadow:inset 4px 0 0 #a67c00!important}
+  .tbl-grid tr.lv-sub td:first-child{box-shadow:inset 4px 0 0 #999!important}
   .printhead{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
   body.print-one .two>:not(.print-target){display:none!important}
