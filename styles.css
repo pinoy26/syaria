@@ -390,7 +390,7 @@ tr.leaf td{color:var(--ink2)}
   .app{display:block;padding:0}
   .glass{background:#fff;box-shadow:none;border:1px solid #ccc;-webkit-backdrop-filter:none;backdrop-filter:none;break-inside:avoid;margin-bottom:10px}
   .glass:has(.tbl-grid){break-inside:auto}
-  .tbl-grid .lvl,.tbl-grid .code{display:none}
+  .tbl-grid .lvl{display:none}
   .tbl-grid .tw button{display:none}
   .printhead{display:block!important}
   body.print-one .card:not(.print-target),body.print-one .hero:not(.print-target),body.print-one .page-sec>:not(.print-target):not(.printhead):not(:has(.print-target)){display:none!important}
