@@ -48,15 +48,19 @@ function chainFields(){
   });
   return h;
 }
-/* level terpilih -> {lv: daftar level terpotong, full: true bila sampai level terdalam} */
+/* level terpilih -> {lv: daftar level terpotong, full: true bila sampai Detail (baris item individual)}
+   indeks 0..J.lv.length-1 = level kelompok (Kategori..Akun), indeks J.lv.length = "Detail" (default) */
 function pilihLevel(J){
-  var n=(levelIdx==null||levelIdx>=J.lv.length)?J.lv.length-1:levelIdx;
-  return { lv: J.lv.slice(0,n+1), full: n===J.lv.length-1 };
+  var maxIdx=J.lv.length;
+  var n=(levelIdx==null)?maxIdx:Math.max(0,Math.min(levelIdx,maxIdx));
+  var full=(n===maxIdx);
+  return { lv: J.lv.slice(0, full?J.lv.length:(n+1)), full: full };
 }
 function levelField(J){
-  return '<label class="f" for="lfLevel">Pilih level<select id="lfLevel">'+
-    J.lv.map(function(l,i){ return '<option value="'+i+'"'+(i===pilihLevel(J).lv.length-1?' selected':'')+'>'+esc(l.lvl)+'</option>'; }).join('')+
-    '</select></label>';
+  var P=pilihLevel(J), selIdx=P.full?J.lv.length:(P.lv.length-1);
+  var opts=J.lv.map(function(l,i){ return '<option value="'+i+'"'+(i===selIdx?' selected':'')+'>'+esc(l.lvl)+'</option>'; }).join('');
+  opts+='<option value="'+J.lv.length+'"'+(selIdx===J.lv.length?' selected':'')+'>Detail</option>';
+  return '<label class="f" for="lfLevel">Pilih level<select id="lfLevel">'+opts+'</select></label>';
 }
 
 export function renderLaporan(){
