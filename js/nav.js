@@ -69,7 +69,7 @@ export function refresh(){
   if (!p){ $('page').innerHTML='<div class="glass card"><h2>Belum ada data</h2><p class="note">Admin keuangan belum mengunggah laporan realisasi.</p></div>'; closeFilterDrawer(); renderNav(); return; }
   S.page=p.id; persist(); clearPageState(); hideTip();
   renderNav();
-  var noF=!DB||p.id==='kelola'||p.id==='kelola-user'||p.id==='unit';
+  var noF=!DB||p.id==='kelola'||p.id==='kelola-user'||p.id==='unit'||p.id==='laporan';
   if (noF) closeFilterDrawer();
   if (!noF) renderFilters();
   var fBtn=$('btnFilterToggle');
