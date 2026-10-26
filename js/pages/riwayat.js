@@ -21,7 +21,7 @@ export function renderRiwayat(){
     rev='<div class="form noprint" style="margin-bottom:14px;max-width:560px"><label class="f" for="cmpP1">Dibandingkan dengan posisi<select id="cmpP1">'+older.slice().reverse().map(function(p){return '<option value="'+p.periode+'"'+(p.periode===p1?' selected':'')+'>'+tgl(p.periode)+'</option>';}).join('')+'</select></label><div class="note" style="padding-bottom:8px">Posisi terbaru: <b>'+tgl(cur)+'</b> (pilih di bagian atas)</div></div><div id="cmpBox"><div class="loading" style="padding:30px 0">Membandingkan…</div></div>';
     S.cmpWant={p1:p1,p2:cur};
   }
-  return '<div class="page-sec grid">'+printHead('Riwayat & Revisi')+
+  return '<div class="page-sec grid">'+printHead()+
     card('c-rev','Perbandingan revisi pagu','Sub komponen yang bertambah, berkurang, atau berubah pagunya, perubahan pagu per unit, dan pergeseran antar akun.',rev)+
     card('c-gerak','Pergerakan realisasi','Realisasi s.d. periode lalu dibanding posisi '+tgl(cur)+'.',gerak)+'</div>';
 }

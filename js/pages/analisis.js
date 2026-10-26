@@ -15,7 +15,7 @@ export function renderUnit(){
       track(g.p,'var(--real)')+
       '<span class="row"><span class="pct">'+pc(g.p)+'</span><span class="note num">'+rpk(g.pagu)+'</span></span></button>';
   }).join('');
-  return '<div class="page-sec grid">'+printHead('Unit Kerja')+
+  return '<div class="page-sec grid">'+printHead()+
     card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.','<div class="unit-grid">'+cards+'</div>')+'</div>';
 }
 export function unitModalHtml(key){
@@ -38,7 +38,7 @@ export function unitModalHtml(key){
 }
 export function renderUnitRincian(){
   var R=rows();
-  return '<div class="page-sec grid">'+printHead('Rincian Unit Kerja')+
+  return '<div class="page-sec grid">'+printHead()+
     treeCard('t-unit','Rincian unit kerja','Kategori → Unit → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.komp,LV.sub,LV.akun])+'</div>';
 }
 export function renderSumber(){
@@ -48,14 +48,14 @@ export function renderSumber(){
       '<div class="num" style="font-size:30px;font-weight:600;letter-spacing:-.04em">'+rpk(s.pagu)+'</div><div class="note">'+pc(T.pagu?s.pagu/T.pagu:0)+' dari pagu induk · Rp '+rp(s.pagu)+'</div>'+
       '<div style="display:flex;justify-content:space-between;margin:14px 0 6px"><span>Realisasi '+rpk(s.sd)+'</span><span class="pct">'+pc(s.p)+'</span></div>'+track(s.p,c)+
       '<div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center"><span class="note">Sisa '+rpk(s.sisa)+'</span>'+pill(s.p)+'</div></section>'; }).join('');
-  return '<div class="page-sec grid">'+printHead('Realisasi per Sumber Dana')+'<div class="two">'+tiles+'</div>'+
+  return '<div class="page-sec grid">'+printHead()+'<div class="two">'+tiles+'</div>'+
     treeCard('t-src','Rincian per sumber dana','Sumber dana → Jenis belanja → Akun 3 digit → Akun 6 digit → Detail belanja.',R,[LV.src,LV.a2,LV.a3,LV.akun])+'</div>';
 }
 export function renderJenis(){
-  return '<div class="page-sec grid">'+printHead('Realisasi per Jenis Belanja')+
+  return '<div class="page-sec grid">'+printHead()+
     treeCard('t-jenis','Rincian jenis belanja','Akun 2 digit → 3 digit → 6 digit → Detail belanja. Nama akun 2 dan 3 digit diatur di sheet Ref_Akun.',rows(),[LV.a2,LV.a3,LV.akun])+'</div>';
 }
 export function renderDipa(){
-  return '<div class="page-sec grid">'+printHead('Struktur DIPA')+
+  return '<div class="page-sec grid">'+printHead()+
     treeCard('t-dipa','Struktur DIPA','Program → Kegiatan → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',rows(),[LV.prog,LV.keg,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun])+'</div>';
 }

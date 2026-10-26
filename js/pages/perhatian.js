@@ -16,7 +16,7 @@ export function renderPerhatian(){
   var z=group(R.filter(function(r){return r.sd===0&&r.pagu>0;}),function(r){return r.kat+'|'+r.unit;}).sort(function(a,b){return b.pagu-a.pagu;});
   var zb='<div class="tbl"><table><thead><tr><th>Unit</th><th class="n">Detail belum terealisasi</th><th class="n">Pagu belum diserap</th></tr></thead><tbody>'+z.map(function(g){return '<tr><td><span class="note">'+esc(g.key.split('|')[0])+'</span> <b>'+esc(g.key.split('|')[1])+'</b></td><td class="n">'+g.n+'</td><td class="n">'+rp(g.pagu)+'</td></tr>';}).join('')+'</tbody></table></div>';
   var nos=R.filter(function(r){return !r.sumber;});
-  return '<div class="page-sec grid">'+printHead('Perlu Perhatian')+
+  return '<div class="page-sec grid">'+printHead()+
     card('c-minus','Pagu minus','Detail dengan realisasi melebihi pagu — perlu usulan revisi DIPA.',mb)+
     card('c-low','Sub komponen penyerapan rendah','Pagu ≥ Rp 20 juta dan realisasi di bawah 30%, urut sisa terbesar.',lb)+
     card('c-zero','Detail belum terealisasi per unit','Jumlah detail belanja yang realisasinya masih Rp 0.',zb)+
@@ -35,7 +35,7 @@ export function renderRincian(){
     '<div class="tbl tbl-grid"><table><thead><tr><th>Unit</th><th>RO</th><th>Sub komp.</th><th>Akun</th><th>No</th><th>Uraian</th><th>SD</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th><th class="n">Sisa</th></tr></thead><tbody>'+
     R.slice(S.pg*PG,S.pg*PG+PG).map(function(r){ return '<tr><td>'+esc(r.unit)+'</td><td class="code">'+esc(r.ro)+'</td><td class="code" title="'+esc(subName(r))+'">'+esc(r.sub)+'</td><td class="code" title="'+esc(D.akun[r.akun])+'">'+esc(r.akun)+'</td><td class="code">'+esc(r.no)+'</td><td>'+esc(r.item)+'</td><td>'+(r.sumber==='PNP'?'PNBP':esc(r.sumber))+'</td><td class="n">'+rp(r.pagu)+'</td><td class="n">'+rp(r.sd)+'</td><td class="n">'+pc(r.pagu?r.sd/r.pagu:0)+'</td><td class="n'+(r.sisa<0?' neg':'')+'">'+rp(r.sisa)+'</td></tr>'; }).join('')+
     '</tbody></table></div><div class="pager"><span>Halaman '+(S.pg+1)+' dari '+pages+'</span><button class="btn" type="button" id="pgPrev"'+(S.pg?'':' disabled')+'>‹ Sebelumnya</button><button class="btn" type="button" id="pgNext"'+(S.pg<pages-1?'':' disabled')+'>Berikutnya ›</button></div>';
-  return '<div class="page-sec grid">'+printHead('Rincian Detail Belanja')+card('c-item','Rincian detail belanja','Semua detail dalam cakupan dan filter aktif.',body)+'</div>';
+  return '<div class="page-sec grid">'+printHead()+card('c-item','Rincian detail belanja','Semua detail dalam cakupan dan filter aktif.',body)+'</div>';
 }
 export function downloadCsv(){
   var head=['Kategori','Unit','Program','Kegiatan','KRO','RO','Komponen','Sub Komponen','Uraian Sub Komponen','Akun','Uraian Akun','Sumber Dana','No','Uraian','Pagu','Lock','Realisasi Lalu','Realisasi Periode Ini','Realisasi s.d.','Sisa'];

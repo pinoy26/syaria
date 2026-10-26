@@ -58,7 +58,7 @@ export function renderLaporan(){
     '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" data-pdf="lap-aktif" data-title="'+esc(J.t)+'">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
   setTimeout(bindLaporan,0);
-  return '<div class="page-sec grid">'+form+printHead(J.t)+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+'</div>';
+  return '<div class="page-sec grid">'+form+printHead()+treeCard('lap-aktif',J.t,J.sub,rows(),J.lv)+'</div>';
 }
 function bindLaporan(){
   var pg=document.getElementById('page'); if (!pg || !pg.querySelector('.lap-box')) return;

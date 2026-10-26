@@ -306,8 +306,14 @@ tr.leaf td{color:var(--ink2)}
 .tbl-grid td.n,.tbl-grid th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl-grid tr.tot td{position:sticky;bottom:0;z-index:2;background:var(--grid-head);font-weight:800;border-top:2px solid var(--ink2)}
 .tbl-grid tr.tot td:first-child{z-index:3}
-.tbl-grid tr.tree.l0 td{font-weight:800}
-.tbl-grid tr.leaf td{color:var(--ink2)}
+.tbl-grid tr.tree.l0 td{font-weight:800;color:var(--ink)}
+.tbl-grid tr.tree.l1 td{font-weight:700;color:var(--ink)}
+.tbl-grid tr.tree.l2 td{font-weight:700;color:var(--ink2)}
+.tbl-grid tr.tree.l3 td{font-weight:600;color:var(--ink2)}
+.tbl-grid tr.tree.l4 td{font-weight:600;color:var(--muted)}
+.tbl-grid tr.tree.l5 td{font-weight:500;color:var(--muted)}
+.tbl-grid tr.tree.l6 td{font-weight:500;color:var(--muted)}
+.tbl-grid tr.leaf td{color:var(--ink2);font-weight:400}
 .tbl-grid .minibar{background:var(--track)}
 .st-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;cursor:default;flex:none}
 .st-badge svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
@@ -399,9 +405,7 @@ tr.leaf td{color:var(--ink2)}
 .printhead .kop-inst{text-align:center;line-height:1.5}
 .printhead .kop-inst b{font-size:14px}
 .printhead .kop-inst span{font-size:11px;font-weight:400}
-.printhead .kop-garis{border-bottom:3px double #000;margin:8px 0 10px}
-.printhead .kop-meta{text-align:left;line-height:1.6}
-.printhead .kop-meta b{font-size:12.5px}
+.printhead .kop-garis{border-bottom:3px double #000;margin:8px 0 0}
 .gate{max-width:520px;margin:12vh auto;padding:28px;text-align:center;position:relative}
 .loading{padding:60px 0;text-align:center;color:var(--muted)}
 .sub-list{margin:8px 0 0;padding-left:18px;font-size:12px}

@@ -20,7 +20,7 @@ function gauge(p){
 }
 export function renderRingkasan(){
   var R=rows(), t=sum(R);
-  var h='<div class="page-sec grid">'+printHead('Ringkasan Realisasi');
+  var h='<div class="page-sec grid">'+printHead();
   h+='<section class="glass hero" id="c-hero"><div>'+
     '<div class="card-h" style="margin:0"><div class="eyebrow">Pagu induk · '+esc(unitCaption())+'</div>'+actions('c-hero','Ringkasan pagu induk')+'</div>'+
     '<div class="big"><small>Rp</small>'+rp(t.pagu)+'</div>'+

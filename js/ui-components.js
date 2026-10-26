@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
 import { $, esc, rp, pc, sum, tgl } from './utils.js';
-import { WAKTU, BOOT, DB, sess, scopeText, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -30,16 +30,15 @@ export function track(p,color){
   var grad='linear-gradient(90deg, color-mix(in srgb, '+c+' 35%, transparent), '+c+')';
   return '<span class="track"><span class="fill" style="width:'+Math.min(100,Math.max(0,p*100))+'%;background:'+grad+'"></span><span class="mark" style="left:calc('+(WAKTU*100)+'% - 1px)"></span></span>';
 }
-export function printHead(title){
+export function printHead(){
   var unitNama='';
   if (S.f.unit){
     var u=S.f.unit.split('|');
     unitNama=u[1]?(FAK_FULL[u[1]]||u[1]):('Seluruh '+u[0]);
   }
   return '<div class="printhead">'+
-    '<div class="kop-inst"><b>'+esc(BOOT.satker)+'</b>'+(unitNama?'<br><b>'+esc(unitNama)+'</b>':'')+'<br><span>Satker '+esc(BOOT.kode)+'</span></div>'+
+    '<div class="kop-inst"><b>'+esc(BOOT.satker)+'</b>'+(unitNama?'<br><b>'+esc(unitNama)+'</b>':'')+'<br><span>Realisasi sampai dengan '+tgl(DB.periode)+'</span></div>'+
     '<div class="kop-garis"></div>'+
-    '<div class="kop-meta"><b>'+esc(title)+'</b><br>Realisasi sampai dengan '+tgl(DB.periode)+'<br>Cakupan: '+esc(scopeText())+' · Dicetak '+new Date().toLocaleString('id-ID')+' oleh '+esc(sess().email)+' · Sumber: Laporan Ketersediaan Dana Detail (SAKTI)</div>'+
   '</div>';
 }
 export function bindTips(root){
