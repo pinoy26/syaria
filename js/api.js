@@ -48,7 +48,7 @@ SB.boot = function(){
       var aktif = !!(p && p.aktif);
       var sess = {
         email: (p && p.email) || user.email, via: 'sandi', allowed: aktif,
-        role: p ? p.peran : '', all: !!p && (p.peran === 'ADMIN' || p.peran === 'PIMPINAN'),
+        role: p ? p.peran : '', all: !!p && (p.peran === 'ADMIN' || p.peran === 'SUPERADMIN' || p.peran === 'PIMPINAN'),
         scopes: cak.map(function(c){ return { kat: c.kategori, unit: c.unit }; })
       };
       if (sess.all) sess.scopes = [];
@@ -218,6 +218,18 @@ SB.buatPengguna = function(email, password, peran, kategori, unit, keterangan){
       throw new Error(r.error.message);
     }
     return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dibuat.' };
+  });
+};
+/* ---------- hapus akun pengguna (lewat Edge Function, memakai service_role di server) ---------- */
+SB.hapusPengguna = function(id){
+  return SBC.functions.invoke('admin-delete-user', { body: { id: id } }).then(function(r){
+    if (r.data && r.data.error) throw new Error(r.data.error);
+    if (r.error){
+      var ctx = r.error.context;
+      if (ctx && typeof ctx.json === 'function') return ctx.json().then(function(j){ throw new Error((j && j.error) || r.error.message); });
+      throw new Error(r.error.message);
+    }
+    return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dihapus.' };
   });
 };
 SB.aktifkan = function(id, aktif){

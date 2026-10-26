@@ -28,7 +28,8 @@ export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, c
 try { var sv=JSON.parse(localStorage.getItem('dasbor-v2')||'null'); if(sv&&sv.page) S.page=sv.page; } catch(e){}
 export function persist(){ try{ localStorage.setItem('dasbor-v2', JSON.stringify({page:S.page})); }catch(e){} }
 export function sess(){ return BOOT.session; }
-export function isAdmin(){ return sess().role==='ADMIN'; }
+export function isAdmin(){ return sess().role==='ADMIN'||sess().role==='SUPERADMIN'; }
+export function isSuperAdmin(){ return sess().role==='SUPERADMIN'; }
 export function isUnitUser(){ return !sess().all; }
 export function scopeLabel(s){ return s.unit || ('Seluruh '+s.kat); }
 export function scoped(){ return ALL; } // data sudah disaring server sesuai hak akses

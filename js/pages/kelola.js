@@ -1,6 +1,6 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
 import { $, esc, rp, pc, tgl, toast, errMsg } from '../utils.js';
-import { S, FAK_ORDER, DB } from '../state.js';
+import { S, FAK_ORDER, DB, sess, isSuperAdmin } from '../state.js';
 import { card } from '../ui-components.js';
 import { SB } from '../api.js';
 import { refresh } from '../nav.js';
@@ -76,10 +76,16 @@ function doUpload(){
 export function renderKelolaUser(){
   var A=ensureAdmin(); if (!A) return '<div class="loading">Memuat data admin…</div>';
   var units={Fakultas:{},Rektorat:{}}; A.rules.forEach(function(r){ if(r[4]) (units[r[4]]=units[r[4]]||{})[r[5]]=1; });
-  var peranName={ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Unit'};
-  var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th><th></th></tr></thead><tbody>'+
-    A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]); return '<tr><td>'+esc(u[0])+'</td><td>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</td><td>'+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'Seluruh satker')+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td><td class="row-actions"><button class="btn" type="button" data-edit="'+u[6]+'">Ubah</button><button class="btn" type="button" data-act="'+u[6]+'" data-on="'+(aktif?0:1)+'">'+(aktif?'Nonaktifkan':'Aktifkan')+'</button></td></tr>'; }).join('')+'</tbody></table></div>'+
-    '<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
+  var peranName={SUPERADMIN:'Super admin',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Unit'};
+  var boleh=isSuperAdmin(), emailSaya=sess().email;
+  var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th>'+(boleh?'<th></th>':'')+'</tr></thead><tbody>'+
+    A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]), sendiri=u[0]===emailSaya;
+      var aksi=boleh?'<td class="row-actions"><button class="btn" type="button" data-edit="'+u[6]+'">Ubah</button><button class="btn" type="button" data-act="'+u[6]+'" data-on="'+(aktif?0:1)+'">'+(aktif?'Nonaktifkan':'Aktifkan')+'</button>'+(sendiri?'':'<button class="btn" type="button" data-del="'+u[6]+'" data-email="'+esc(u[0])+'">Hapus</button>')+'</td>':'';
+      return '<tr><td>'+esc(u[0])+'</td><td>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</td><td>'+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'Seluruh satker')+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td>'+aksi+'</tr>'; }).join('')+'</tbody></table></div>';
+  if (!boleh){
+    return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin dan pimpinan melihat seluruh satker; pengguna unit hanya melihat cakupannya. Hanya super admin yang bisa menambah/mengubah/menghapus pengguna.',users)+'</div>';
+  }
+  var form='<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
     '<label class="f" for="uEmail">Email pengguna<input type="text" id="uEmail" placeholder="nama@kampus.ac.id"></label>'+
     '<label class="f" for="uPassword" id="uPasswordWrap">Kata sandi awal<input type="password" id="uPassword" placeholder="Minimal 8 karakter" autocomplete="new-password"></label>'+
     '<label class="f" for="uPeran">Peran<select id="uPeran"><option value="UNIT">Fakultas / unit</option><option value="PIMPINAN">Pimpinan</option><option value="ADMIN">Admin keuangan</option></select></label>'+
@@ -89,10 +95,14 @@ export function renderKelolaUser(){
     '<p class="note" style="grid-column:1/-1;margin:0">Mengubah pengguna yang sudah ada (lewat tombol <b>Ubah</b>) tidak mengubah kata sandinya — kosongkan kolom kata sandi, kolom itu hanya dipakai saat membuat akun baru.</p>'+
     '<div class="tools"><button class="btn primary" type="button" id="btnSaveUser">Buat pengguna baru</button><button class="btn" type="button" id="btnClearUser">Kosongkan</button></div></div><div id="userMsg" class="note" style="margin-top:8px"></div>';
   setTimeout(function(){ bindKelolaUser(units); },0);
-  return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin dan pimpinan melihat seluruh satker; pengguna unit hanya melihat cakupannya.',users)+'</div>';
+  return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin dan pimpinan melihat seluruh satker; pengguna unit hanya melihat cakupannya.',users+form)+'</div>';
 }
 function bindKelolaUser(units){
   if (!$('uPeran')) return;
+  [].forEach.call(document.querySelectorAll('[data-del]'),function(b){ b.onclick=function(){
+    if(!confirm('Hapus akun '+b.dataset.email+'? Tindakan ini tidak bisa dibatalkan.')) return;
+    b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e)); });
+  }; });
   var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
   var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };
   $('uKat').onchange=function(){ fillUnits(''); }; $('uPeran').onchange=peranChange; fillUnits(''); peranChange();
