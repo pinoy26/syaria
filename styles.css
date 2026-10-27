@@ -56,7 +56,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 .backdrop i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-26vw;background:var(--blob3)}
 .backdrop svg{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
 
-.app{position:relative;z-index:1;max-width:min(2600px,96vw);margin:0 auto;padding-inline:clamp(20px,2.5vw,44px);padding-block:20px 48px}
+.app{position:relative;z-index:1;max-width:98vw;margin:0 auto;padding-inline:clamp(20px,2.5vw,44px);padding-block:20px 48px}
 .glass{background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-radius:20px}
 
 /* sidebar — tersembunyi di tepi, muncul sebagai overlay (tidak menggeser konten) saat dihover atau dibuka */
