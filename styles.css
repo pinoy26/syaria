@@ -306,7 +306,8 @@ tr.leaf td{color:var(--ink2)}
 .tbl-grid th.stc{white-space:nowrap}
 .tbl-grid tbody tr{background:var(--grid-bg)}
 .tbl-grid tbody tr:nth-child(even){background:var(--grid-zebra)}
-.tbl-grid tbody tr.lv-sub,.tbl-grid tbody tr.lv-akun,.tbl-grid tbody tr.leaf{background:var(--grid-bg)}
+.tbl-grid tbody tr.lv-akun,.tbl-grid tbody tr.leaf{background:var(--grid-bg)}
+.tbl-grid tbody tr.lv-sub{background:color-mix(in srgb, #1565c0 12%, var(--grid-bg))}
 .tbl-grid tbody tr:hover{background:var(--accent-soft)}
 .tbl-grid td.n,.tbl-grid th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl-grid tr.tot td{position:sticky;bottom:0;z-index:2;background:var(--grid-head);font-weight:800;border-top:2px solid var(--ink2)}
