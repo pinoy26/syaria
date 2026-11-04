@@ -37,8 +37,8 @@ export function applyF(rows, upto){
   var f=S.f;
   return rows.filter(function(r){
     for (var i=0;i<CHAIN.length;i++){ if (upto!=null && i>=upto) break; var k=CHAIN[i]; if (f[k] && r[k]!==f[k]) return false; }
-    if (upto!=null) return true;
     if (f.unit){ var u=f.unit.split('|'); if (r.kat!==u[0]) return false; if (u[1] && r.unit!==u[1]) return false; }
+    if (upto!=null) return true;
     if (f.sumber && r.sumber!==f.sumber) return false;
     if (f.a2 && r.a2!==f.a2) return false;
     if (f.a3 && r.a3!==f.a3) return false;

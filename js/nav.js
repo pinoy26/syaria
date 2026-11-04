@@ -1,7 +1,7 @@
 /* js/nav.js — navigasi: sidebar desktop, bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
 import { $, esc } from './utils.js';
 import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js';
-import { bindTips, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js';
 import { THEME_BTN } from './theme.js';
 import { renderFilters } from './filters.js';
 import { pdfCard, printCard, printAll } from './export.js';
@@ -87,6 +87,7 @@ export function refresh(){
   var firstHd=pg.querySelector('.card-h');
   if (firstHd && toolsEl) firstHd.appendChild(toolsEl);
   bindTips(pg);
+  bindTreeSearch(pg);
   [].forEach.call(pg.querySelectorAll('[data-tog]'),function(b){ b.onclick=function(){ var id=b.getAttribute('data-tog'); S.open[id]=!S.open[id]; keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-openall]'),function(b){ b.onclick=function(){ openLevel(b.getAttribute('data-openall')); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-expandall]'),function(b){ b.onclick=function(){ openAll(b.getAttribute('data-expandall')); keepScroll(); }; });

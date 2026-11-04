@@ -12,7 +12,10 @@ export var IC = {
   build:'<svg viewBox="0 0 24 24"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>',
   stGood:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
   stWarn:'<svg viewBox="0 0 24 24"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>',
-  stCrit:'<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+  stCrit:'<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  up:'<svg viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'
 };
 /* cetak/unduh per kartu dipindah ke halaman Laporan — kartu biasa tidak punya tombol sendiri lagi */
 export function actions(id,title){ return ''; }
@@ -43,6 +46,44 @@ export function printHead(){
 }
 export function bindTips(root){
   [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });
+}
+
+/* ================= cari di tabel bertingkat (lompat + sorot, mirip Ctrl+F) ================= */
+export function bindTreeSearch(root){
+  [].forEach.call(root.querySelectorAll('[data-search-input]'),function(inp){
+    var id=inp.getAttribute('data-search-input');
+    var host=document.getElementById(id);
+    var table=host&&host.querySelector('.tbl-grid');
+    var countEl=root.querySelector('[data-search-count="'+id+'"]');
+    var prevBtn=root.querySelector('[data-search-prev="'+id+'"]');
+    var nextBtn=root.querySelector('[data-search-next="'+id+'"]');
+    var matches=[], idx=-1;
+    function clear(){ matches.forEach(function(el){ el.classList.remove('search-hit','search-hit-active'); }); }
+    function updateCount(){ if(!countEl) return; countEl.textContent=matches.length?((idx+1)+'/'+matches.length):(inp.value.trim()?'0/0':''); }
+    function goTo(i){
+      if (!matches.length) return;
+      if (idx>=0&&matches[idx]) matches[idx].classList.remove('search-hit-active');
+      idx=((i%matches.length)+matches.length)%matches.length;
+      matches[idx].classList.add('search-hit-active');
+      matches[idx].scrollIntoView({block:'center',behavior:'smooth'});
+      updateCount();
+    }
+    function run(){
+      clear(); matches=[]; idx=-1;
+      var q=inp.value.trim().toLowerCase();
+      if (q&&table){
+        [].forEach.call(table.querySelectorAll('td:first-child'),function(td){
+          if (td.textContent.toLowerCase().indexOf(q)>=0){ matches.push(td); td.classList.add('search-hit'); }
+        });
+      }
+      updateCount();
+      if (matches.length) goTo(0);
+    }
+    inp.oninput=run;
+    inp.onkeydown=function(e){ if (e.key==='Enter'){ e.preventDefault(); goTo(idx+(e.shiftKey?-1:1)); } };
+    if (prevBtn) prevBtn.onclick=function(){ goTo(idx-1); };
+    if (nextBtn) nextBtn.onclick=function(){ goTo(idx+1); };
+  });
 }
 
 /* ================= modal ================= */
@@ -84,7 +125,10 @@ export function tree(id,R,levels){
     });
   })(root);
   var legend='<div class="st-legend noprint"><span><span class="st-badge st-good">'+IC.stGood+'</span>Sesuai jadwal</span><span><span class="st-badge st-warn">'+IC.stWarn+'</span>Perlu percepatan</span><span><span class="st-badge st-crit">'+IC.stCrit+'</span>Kritis — melebihi pagu / tertinggal jauh</span></div>';
-  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-expandall="'+id+'">Buka semua</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+legend+'</div>'+
+  var search='<span class="tree-search">'+IC.search+'<input type="text" data-search-input="'+id+'" placeholder="Cari nama…" aria-label="Cari nama"><span class="tree-search-count" data-search-count="'+id+'"></span>'+
+    '<button type="button" class="icon" data-search-prev="'+id+'" aria-label="Hasil sebelumnya">'+IC.up+'</button>'+
+    '<button type="button" class="icon" data-search-next="'+id+'" aria-label="Hasil berikutnya">'+IC.down+'</button></span>';
+  return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-expandall="'+id+'">Buka semua</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+search+legend+'</div>'+
     '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
