@@ -39,8 +39,12 @@ export function renderNav(){
   $('nav').innerHTML=h;
   var s=sess(), role={ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'}[s.role];
   var scopeNote=s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.';
-  $('who').innerHTML='<b>'+esc(role)+'</b>'+esc(s.email)+'<br>'+scopeNote+
-    '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-pw>Ubah sandi</button><button class="btn" type="button" data-out>Keluar</button></div>';
+  $('who').innerHTML='<div class="who-full"><b>'+esc(role)+'</b>'+esc(s.email)+'<br>'+scopeNote+
+    '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-pw>Ubah sandi</button><button class="btn" type="button" data-out>Keluar</button></div></div>'+
+    /* versi ikon untuk menu yang diciutkan */
+    '<div class="who-mini"><span class="who-av" title="'+esc(role+' · '+s.email)+'" aria-label="'+esc(role+' · '+s.email)+'" role="img">'+esc((s.email||'?').charAt(0).toUpperCase())+'</span>'+
+    '<button class="icon" type="button" data-pw title="Ubah sandi" aria-label="Ubah sandi"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></svg></button>'+
+    '<button class="icon" type="button" data-out title="Keluar" aria-label="Keluar"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg></button></div>';
 
   /* navigasi bawah ala aplikasi native (mobile) */
   var mainPages=BOTTOM_MAIN.map(function(id){ return visible.filter(function(p){return p.id===id;})[0]; }).filter(Boolean);
