@@ -393,6 +393,8 @@ tr.leaf td{color:var(--ink2)}
   .bottomnav button{font-size:11px}
 }
 @media (max-width:640px){
+  /* pilih periode & Filter: di HP potret jadi baris sendiri di atas, tidak menimpa judul kartu */
+  #pageTools{position:static;order:-1;width:100%;justify-content:flex-end}
   .types{grid-template-columns:minmax(0,1fr)}
   .jrow{grid-template-columns:minmax(0,1fr)}
   .jbar{grid-template-columns:40px minmax(0,1fr)}
