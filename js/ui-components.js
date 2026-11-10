@@ -44,8 +44,31 @@ export function printHead(){
     '<div class="kop-garis"></div>'+
   '</div>';
 }
+/* tooltip: mouse (ikut kursor), sentuh (ketuk untuk buka/tutup) & keyboard (muncul saat elemen difokus) */
+var tipOwner=null;
+function tipNearEl(el,html){ var r=el.getBoundingClientRect(); showTip({clientX:r.left+Math.min(r.width/2,60),clientY:r.bottom-6},html); tipOwner=el; }
+function closeTip(){ hideTip(); tipOwner=null; }
+document.addEventListener('pointerdown',function(e){ if(tipOwner && e.pointerType!=='mouse' && !e.target.closest('[data-tip]')) closeTip(); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape' && tipOwner) closeTip(); });
+window.addEventListener('scroll',function(){ if(tipOwner) closeTip(); },{passive:true,capture:true});
 export function bindTips(root){
-  [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){ var html=TIPS[+el.getAttribute('data-tip')]; el.addEventListener('mousemove',function(e){showTip(e,html);}); el.addEventListener('mouseleave',hideTip); });
+  [].forEach.call(root.querySelectorAll('[data-tip]'),function(el){
+    var html=TIPS[+el.getAttribute('data-tip')];
+    var clickable=el.matches('button,a,[data-goa2],[data-unit]');
+    el.addEventListener('pointermove',function(e){ if(e.pointerType==='mouse'){ showTip(e,html); tipOwner=el; } });
+    el.addEventListener('pointerleave',function(e){ if(e.pointerType==='mouse') closeTip(); });
+    /* sentuh: ketuk pertama membuka, ketuk lagi menutup; elemen yang bisa diklik tetap menjalankan aksinya */
+    el.addEventListener('pointerup',function(e){
+      if (e.pointerType==='mouse' || clickable) return;
+      if (tipOwner===el) closeTip(); else { showTip(e,html); tipOwner=el; }
+    });
+    if (!el.matches('button,a,input,select,textarea')) el.setAttribute('tabindex','0');
+    el.addEventListener('focus',function(){
+      var kb=true; try{ kb=el.matches(':focus-visible'); }catch(err){}
+      if (kb){ tipNearEl(el,html); el.setAttribute('aria-describedby','tip'); }
+    });
+    el.addEventListener('blur',function(){ if(tipOwner===el) closeTip(); el.removeAttribute('aria-describedby'); });
+  });
 }
 
 /* ================= cari di tabel bertingkat (lompat + sorot, mirip Ctrl+F) ================= */
