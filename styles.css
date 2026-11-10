@@ -10,6 +10,7 @@
   --good:#0ca30c; --good-ink:#0a6b1f; --warn:#fab219; --warn-ink:#8a5a00; --crit:#d03b3b; --crit-ink:#b22a2a;
   --field:rgba(255,255,255,.7);
   --grid-bg:#ffffff; --grid-head:#eef2f2; --grid-zebra:#f7fafa; --grid-line:#d7e2e2;
+  --surface:#f9fbfb;
   --lv-kro:#7b2fbe; --lv-ro:#c62828; --lv-komp:#856300; --lv-sub:#1565c0;
   --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
@@ -28,6 +29,7 @@
     --good-ink:#3fcf52; --warn-ink:#fab219; --crit-ink:#f07b7b;
     --field:rgba(8,26,29,.6);
     --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
+    --surface:#10272b;
     --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0;
     color-scheme:dark;
   }
@@ -44,6 +46,7 @@
   --good-ink:#3fcf52; --warn-ink:#fab219; --crit-ink:#f07b7b;
   --field:rgba(8,26,29,.6);
   --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
+  --surface:#10272b;
   --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0;
   color-scheme:dark;
 }
@@ -191,6 +194,8 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .card:hover{box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 18px 40px -22px rgba(16,52,58,.4)}
 :root[data-theme="dark"] .card:hover{box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 46px -22px rgba(0,0,0,.75)}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .card:hover{box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 46px -22px rgba(0,0,0,.75)} }
+/* kartu/modal berisi tabel angka: permukaan padat tanpa blur — lebih mudah dibaca & ringan dirender */
+@media screen{ .glass:has(.tbl){background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none} }
 .card-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
 .card-h h2{margin:0;font-size:15.5px;font-weight:700;letter-spacing:-.01em}
 .card-h p{margin:2px 0 0;color:var(--muted);font-size:12.5px;max-width:62ch}
