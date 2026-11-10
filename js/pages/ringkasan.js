@@ -54,7 +54,7 @@ export function renderRingkasan(){
         '<span class="share">'+pc(t.pagu?g.pagu/t.pagu:0)+' <small>dari pagu induk</small></span>'+
         '<span class="num" style="font-size:12px;color:var(--ink2)">'+rpk(g.pagu)+'</span>'+
         '<span class="mini-split" aria-hidden="true"><i style="flex:'+rm.pagu+';background:var(--rm)"></i><i style="flex:'+pn.pagu+';background:var(--pnbp)"></i></span>'+
-        '<span style="font-size:11.5px;color:var(--muted)">RM '+rpk(rm.pagu)+' · PNBP '+rpk(pn.pagu)+'</span>'+
+        '<span style="font-size:12px;color:var(--muted)">RM '+rpk(rm.pagu)+' · PNBP '+rpk(pn.pagu)+'</span>'+
         '<span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span style="font-size:12px;color:var(--ink2)">Realisasi</span><span class="pct">'+pc(g.p)+'</span></span>'+
         track(g.p,'var(--real)')+'</button>'; }).join('')+'</div>';
   h+='<div class="two">'+card('c-src','Pagu induk per sumber dana','Porsi terhadap pagu induk dan capaian realisasi masing-masing sumber dana.',srcBody)+

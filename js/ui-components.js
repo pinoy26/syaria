@@ -120,7 +120,7 @@ export function tree(id,R,levels){
       out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="lvl">'+c.lvl+'</span><span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf"><td><span style="padding-left:'+(ind+44)+'px;display:inline-block"><span class="code">'+esc(r.no)+'</span> '+esc(r.item)+' <span class="chip" style="font-size:10.5px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf"><td><span style="padding-left:'+(ind+44)+'px;display:inline-block"><span class="code">'+esc(r.no)+'</span> '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
       }); else walk(c);
     });
   })(root);
