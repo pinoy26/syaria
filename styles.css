@@ -220,10 +220,10 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .hero-hd{grid-column:1/-1;margin:0}
 .hero-hd:empty{display:none}
 .hero2 #pageTools{position:static;width:100%;justify-content:flex-end}
-.banner{--bn-real:var(--real);--bn-real-ink:#fff;--bn-sisa:var(--grid-head);--bn-sisa-ink:var(--ink);--bn-rest:color-mix(in srgb, var(--muted) 26%, transparent);
+.banner{--bn-real:var(--real);--bn-real-ink:#fff;--bn-sisa:var(--grid-head);--bn-sisa-ink:var(--ink);--bn-rest:#f0ad1f;
   position:relative;overflow:hidden;border-radius:16px;padding:22px 26px 18px;background:radial-gradient(circle at 92% -30%, var(--accent-soft), transparent 55%), var(--glass-strong);border:1px solid var(--line);color:var(--ink);display:flex;flex-direction:column;gap:12px;min-width:0}
-:root[data-theme="dark"] .banner{--bn-real-ink:#06282b}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .banner{--bn-real-ink:#06282b} }
+:root[data-theme="dark"] .banner{--bn-real-ink:#06282b;--bn-rest:#d99a17}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .banner{--bn-real-ink:#06282b;--bn-rest:#d99a17} }
 .bn-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:14px 20px;position:relative;z-index:1}
 .bn-lbl{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13.5px;font-weight:600}
 .bn-cap{font-size:12px;font-weight:600;padding:1px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
