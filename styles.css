@@ -299,15 +299,8 @@ button.rz-row:hover{border-color:var(--accent);transform:translateY(-1px);box-sh
 .rz-v+.rz-v{border-left:1px solid var(--line-strong)}
 .rz-lbl{font-size:12px;color:var(--ink2);font-weight:600;white-space:nowrap}
 .rz-lbl small{font-weight:500;color:var(--muted)}
-.rz-v b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(15px,1vw,18px);font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.rz-v b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(10px,calc(1.95vw - 11.8px),19px);font-weight:700;letter-spacing:-.03em;white-space:nowrap}
 .rz-v b.neg{color:var(--crit-ink)}
-/* laptop 1101–1499px: dua kartu berdampingan terlalu sempit untuk tiga angka sejajar berukuran besar —
-   Pagu & Realisasi tetap sejajar, Sisa anggaran turun ke baris kedua dengan garis pemisah */
-@media (min-width:1101px) and (max-width:1499px){
-  .rz-vals{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .rz-v b{font-size:16px}
-  .rz-v:nth-child(3){grid-column:1/-1;border-left:0;border-top:1px solid var(--line-strong);padding:8px 0 0;margin-top:8px}
-}
 @media (max-width:1100px){ .rz-v b{font-size:17px} }
 /* kotak warna identitas jenis belanja */
 .cat-sw{display:inline-block;width:12px;height:12px;border-radius:3px;flex:none;margin-right:6px;vertical-align:-1px}
@@ -448,6 +441,7 @@ tr.leaf td{color:var(--ink2)}
 .st-legend .st-badge svg{width:11px;height:11px}
 
 .two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:18px}
+.two.eq{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
 .tip{position:fixed;z-index:50;pointer-events:none;display:none;max-width:300px;padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.5;background:var(--glass-strong);border:1px solid var(--glass-border);box-shadow:0 10px 30px -12px rgba(0,0,0,.4);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--ink)}
 .tip b{font-weight:700}
@@ -487,7 +481,7 @@ button.btn .spin{margin-top:0}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end}
 .drop{border:1.5px dashed var(--line-strong);border-radius:14px;padding:18px;text-align:center;color:var(--ink2);font-size:13px}
 
-@media (max-width:1100px){.two,.three{grid-template-columns:minmax(0,1fr)}.hero,.hero.hero2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.two,.two.eq,.three{grid-template-columns:minmax(0,1fr)}.hero,.hero.hero2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:900px){
   .app{padding-inline:16px}
   .side-host,.side-peek{display:none}
