@@ -54,11 +54,11 @@ export function renderRingkasan(){
   /* baris kedua: khusus REALISASI per sumber dana & per jenis belanja — angka ditulis penuh */
   var realRow=function(nm,g,col,attrs,tag){
     tag=tag||'div';
+    var v=function(lbl,val,cls){ return '<span class="rz-v"><span class="rz-lbl">'+lbl+'</span><b'+(cls?' class="'+cls+'"':'')+'>'+RP(val)+'</b></span>'; };
     return '<'+tag+' class="rz-row"'+(attrs||'')+tipAttr(tipOf(nm.replace(/<[^>]*>/g,''),g))+'>'+
-      '<span class="rz-hd"><span class="nm">'+nm+'</span><span class="rz-pct">'+pc(g.p)+'</span></span>'+
+      '<span class="rz-hd"><span class="nm">'+nm+'</span><span class="rz-pct">'+pc(g.p)+' <small>terealisasi</small></span></span>'+
       track(g.p,col)+
-      '<span class="rz-amt"><span class="rz-lbl">Realisasi</span><b class="rz-big">'+RP(g.sd)+'</b></span>'+
-      '<span class="rz-meta"><span>Pagu <b>'+RP(g.pagu)+'</b></span><span>Sisa <b'+(g.sisa<0?' class="neg"':'')+'>'+RP(g.sisa)+'</b></span></span>'+
+      '<span class="rz-vals">'+v('Pagu',g.pagu)+v('Realisasi',g.sd)+v('Sisa anggaran',g.sisa,g.sisa<0?'neg':'')+'</span>'+
     '</'+tag+'>';
   };
   var srcBody='<div class="rz-list">'+bySrc.map(function(s){
@@ -69,8 +69,8 @@ export function renderRingkasan(){
   var typesBody='<div class="rz-list">'+byA2.map(function(g){
       return realRow('<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
     }).join('')+'</div>';
-  h+='<div class="two">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
-    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>';
+  h+=card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
+    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody);
 
   var cells=[]; byA2.forEach(function(g){ ['RM','PNP'].forEach(function(s){ cells.push(sum(g.rows.filter(function(r){return r.sumber===s;}))); }); });
   var max=Math.max.apply(null,cells.map(function(c){return c.pagu;}).concat([1]));
@@ -105,6 +105,36 @@ export function renderRingkasan(){
   var minus=R.filter(function(r){return r.sisa<0;}), ms=sum(minus);
   var gs=group(R,function(r){return r.ro+'|'+r.sub;}), s0=gs.filter(function(g){return g.sd===0&&g.pagu>0;});
   var lowK=group(R,function(r){return r.komp;}).filter(function(g){return g.pagu>=1e8;}).sort(function(a,b){return a.p-b.p;})[0];
+
+  /* porsi pagu terhadap pagu induk: diagram donat + keterangan berangka penuh */
+  var donut=function(parts,label){
+    var R0=64, C=2*Math.PI*R0, gap=parts.length>1?3:0, off=0, tot=parts.reduce(function(a,x){return a+Math.max(0,x.v);},0)||1;
+    var top=parts.slice().sort(function(a,b){return b.v-a.v;})[0];
+    var segs=parts.map(function(x){ var len=Math.max(0,x.v)/tot*C, d=Math.max(0,len-gap);
+      var el='<circle class="dn-seg" cx="90" cy="90" r="'+R0+'" fill="none" stroke="'+x.col+'" stroke-width="30" stroke-dasharray="'+d.toFixed(2)+' '+(C-d).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 90 90)"'+tipAttr(x.tip)+'/>';
+      off+=len; return el; }).join('');
+    return '<svg class="dn" viewBox="0 0 180 180" role="img" aria-label="'+esc(label)+'">'+
+      '<circle cx="90" cy="90" r="'+R0+'" fill="none" stroke="var(--track)" stroke-width="30"/>'+segs+
+      '<text x="90" y="88" text-anchor="middle" class="dn-big">'+pc(top.v/tot)+'</text>'+
+      '<text x="90" y="108" text-anchor="middle" class="dn-sm">'+esc(top.short)+'</text></svg>';
+  };
+  var legRow=function(col,nm,g,extra){
+    return '<div class="dn-row"><span class="dn-sw" style="background:'+col+'"></span><div class="dn-txt">'+
+      '<div class="dn-hd"><span class="nm">'+nm+'</span><span class="dn-pct">'+pc(t.pagu?g.pagu/t.pagu:0)+'</span></div>'+
+      '<div class="dn-val"><small>Rp</small> '+rp(g.pagu)+'</div>'+(extra||'')+'</div></div>';
+  };
+  var porsiSrc='<div class="dn-wrap">'+donut(bySrc.map(function(x){ return {v:x.pagu,col:srcCol(x.key),short:srcName(x.key),tip:tipOf(srcName(x.key),x)}; }),'Porsi pagu per sumber dana')+
+    '<div class="dn-legend">'+bySrc.map(function(x){ return legRow(srcCol(x.key),esc(srcName(x.key)),x); }).join('')+'</div></div>';
+  var catCol=function(k){ return 'var(--cat-'+(k==='51'?1:k==='52'?2:3)+')'; };
+  var porsiType='<div class="dn-wrap">'+donut(byA2.map(function(g){ return {v:g.pagu,col:catCol(g.key),short:'Akun '+g.key,tip:tipOf(g.key+' '+A2(g.key),g)}; }),'Porsi pagu per jenis belanja')+
+    '<div class="dn-legend">'+byA2.map(function(g){
+      var rm=sum(g.rows.filter(function(r){return r.sumber==='RM';})), pn=sum(g.rows.filter(function(r){return r.sumber==='PNP';}));
+      return legRow(catCol(g.key),'<span class="code">'+g.key+'</span> '+esc(A2(g.key)),g,'<div class="dn-sub">RM <b><small>Rp</small> '+rp(rm.pagu)+'</b> · PNBP <b><small>Rp</small> '+rp(pn.pagu)+'</b></div>');
+    }).join('')+'</div></div>';
+  h+='<div class="two">'+card('c-porsi-src','Porsi pagu per sumber dana','Bagian masing-masing sumber dana dari pagu induk.',porsiSrc)+
+    card('c-porsi-type','Porsi pagu per jenis belanja','Bagian masing-masing jenis belanja dari pagu induk, beserta pembagian RM dan PNBP.',porsiType)+'</div>';
+
+  /* paling bawah: hal yang perlu ditindaklanjuti */
   h+=card('c-alert','Perlu perhatian','Hal yang memerlukan tindak lanjut. Rincian lengkap di menu Perlu Perhatian.',
     '<div class="alerts">'+
       '<div class="alert"><span class="pill '+(minus.length?'st-crit':'st-good')+'"><i></i>'+(minus.length?'Pagu minus':'Tidak ada pagu minus')+'</span><span class="v">'+(minus.length?rpk(-ms.sisa):'Rp 0')+'</span><span class="t">'+minus.length+' detail realisasi melebihi pagu'+(minus.length?' — perlu revisi DIPA':'')+'</span></div>'+
@@ -112,24 +142,6 @@ export function renderRingkasan(){
       '<div class="alert"><span class="pill st-warn"><i></i>Sub komponen 0%</span><span class="v">'+s0.length+' dari '+gs.length+'</span><span class="t">sub komponen belum ada realisasi</span></div>'+
       (lowK?'<div class="alert"><span class="pill '+status(lowK.p,WAKTU)[0]+'"><i></i>Komponen terendah</span><span class="v">'+pc(lowK.p)+'</span><span class="t">'+lowK.key+' '+esc(D.komp[lowK.key])+' · sisa '+rpk(lowK.sisa)+'</span></div>':'')+
     '</div>');
-
-  /* paling bawah: porsi pagu terhadap pagu induk (dipindah dari baris kedua) */
-  var porsiRow=function(nm,g,extra){
-    return '<div class="rz-row"'+tipAttr(tipOf(nm.replace(/<[^>]*>/g,''),g))+'>'+
-      '<span class="rz-hd"><span class="nm">'+nm+'</span><span class="rz-pct">'+pc(t.pagu?g.pagu/t.pagu:0)+' <small>dari pagu induk</small></span></span>'+
-      '<span class="rz-amt"><span class="rz-lbl">Pagu</span><b class="rz-big">'+RP(g.pagu)+'</b></span>'+(extra||'')+'</div>';
-  };
-  var porsiSrc='<div class="split" role="img" aria-label="Komposisi pagu per sumber dana">'+bySrc.map(function(s){ var w=t.pagu?s.pagu/t.pagu:0;
-      return '<div style="flex:'+Math.max(w,0.0001)+';background:'+srcCol(s.key)+'"'+tipAttr(tipOf(srcName(s.key),s))+'>'+(w>0.14?srcName(s.key)+' · '+pc(w):'')+'</div>'; }).join('')+'</div>'+
-    '<div class="rz-list">'+bySrc.map(function(s){ return porsiRow('<i class="dot" style="background:'+srcCol(s.key)+'"></i>'+esc(srcName(s.key)),s); }).join('')+'</div>';
-  var porsiType='<div class="rz-list">'+byA2.map(function(g){
-      var rm=sum(g.rows.filter(function(r){return r.sumber==='RM';})), pn=sum(g.rows.filter(function(r){return r.sumber==='PNP';}));
-      return porsiRow('<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,
-        '<span class="mini-split" aria-hidden="true"><i style="flex:'+rm.pagu+';background:var(--rm)"></i><i style="flex:'+pn.pagu+';background:var(--pnbp)"></i></span>'+
-        '<span class="rz-meta"><span><i class="dot" style="display:inline-block;background:var(--rm);margin-right:6px"></i>RM <b>'+RP(rm.pagu)+'</b></span><span><i class="dot" style="display:inline-block;background:var(--pnbp);margin-right:6px"></i>PNBP <b>'+RP(pn.pagu)+'</b></span></span>');
-    }).join('')+'</div>';
-  h+='<div class="two">'+card('c-porsi-src','Porsi pagu per sumber dana','Bagian masing-masing sumber dana dari pagu induk.',porsiSrc)+
-    card('c-porsi-type','Porsi pagu per jenis belanja','Bagian masing-masing jenis belanja dari pagu induk, beserta pembagian RM dan PNBP.',porsiType)+'</div>';
   return h+'</div>';
 }
 export function trendKey(){ return JSON.stringify(S.f); }
