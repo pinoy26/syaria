@@ -1,7 +1,7 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
 import { $, esc, rp, pc, tgl, toast, errMsg } from '../utils.js';
 import { S, FAK_ORDER, DB, sess } from '../state.js';
-import { card } from '../ui-components.js';
+import { card, openModal } from '../ui-components.js';
 import { SB } from '../api.js';
 import { refresh } from '../nav.js';
 import { reboot, loadData } from '../main.js';
@@ -20,7 +20,7 @@ export function renderKelola(){
   var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (sumber dana)</option></select></label>'+
     '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi data<input type="date" id="upTgl"></label>'+
     '<label class="f" for="upFile">File Excel (.xlsx / .xls)<input type="file" id="upFile" accept=".xlsx,.xls"></label>'+
-    '<div><button class="btn primary" type="button" id="btnUp">Unggah &amp; proses</button></div></div><div id="upMsg" class="note" style="margin-top:12px;white-space:pre-wrap"></div>'+
+    '<div><button class="btn primary" type="button" id="btnUp">Unggah &amp; proses</button></div></div><div id="upMsg" class="status-box" role="status" aria-live="polite" hidden></div>'+
     '<p class="note">Setelah revisi DIPA/POK: unggah RKK terlebih dahulu, lalu Laporan Ketersediaan Dana. Mengunggah ulang tanggal yang sama akan menggantikan data tanggal tersebut.</p>';
   var log='<div class="tbl"><table><thead><tr><th>Posisi</th><th>Diunggah</th><th>File</th><th class="n">Detail</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th><th>Cek</th><th></th></tr></thead><tbody>'+
     A.periods.slice().reverse().map(function(p){ var ok=Number(p.cekPagu)===0&&Number(p.cekReal)===0&&p.cekPagu!==''; return '<tr><td><b>'+tgl(p.periode)+'</b></td><td>'+esc(p.diunggah)+'<br><span class="note">'+esc(p.pengunggah)+'</span></td><td>'+esc(p.file)+'</td><td class="n">'+rp(p.jumlah)+'</td><td class="n">'+rp(p.pagu)+'</td><td class="n">'+rp(p.sd)+'</td><td class="n">'+pc(p.persen)+'</td><td><span class="pill '+(ok?'st-good':'st-crit')+'"><i></i>'+(ok?'Cocok':'Periksa')+'</span></td><td><button class="btn" type="button" data-delp="'+p.periode+'">Hapus</button></td></tr>'; }).join('')+'</tbody></table></div>';
@@ -41,33 +41,61 @@ function bindKelolaData(){
   $('btnUp').onclick=doUpload;
   [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){ b.onclick=function(){
     if(!confirm('Hapus data posisi '+tgl(b.dataset.delp)+'? Tindakan ini tidak bisa dibatalkan.')) return;
-    b.disabled=true; SB.hapusPeriode(b.dataset.delp).then(function(r){ toast(r.pesan); reboot(); }).catch(function(e){ b.disabled=false; toast(errMsg(e)); });
+    b.disabled=true; SB.hapusPeriode(b.dataset.delp).then(function(r){ toast(r.pesan,'ok'); reboot(); }).catch(function(e){ b.disabled=false; toast('Gagal menghapus: '+errMsg(e),'err'); });
   }; });
-  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope).then(function(r){ $('mapMsg').textContent=r.pesan; S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); }); };
+  /* hasil ditampilkan lewat notifikasi: loadData memuat ulang halaman sehingga #mapMsg ikut hilang */
+  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope).then(function(r){ toast(r.pesan||'Aturan unit kerja berhasil diterapkan.','ok'); S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); toast('Gagal menerapkan aturan: '+errMsg(e),'err'); }); };
   $('btnRemap').onclick=function(){ remap('terbaru',this); };
   $('btnRemapAll').onclick=function(){ if(confirm('Terapkan aturan terbaru ke SEMUA posisi data? Data lama akan ikut dipetakan ulang.')) remap('semua',this); };
 }
+/* kotak status di bawah formulir unggah: 'busy' (sedang diproses), 'ok', 'err' */
+function upStatus(type,text){
+  var m=$('upMsg'); if(!m) return;
+  m.className='status-box s-'+type; m.hidden=false;
+  m.innerHTML=(type==='busy'?'<span class="spin" aria-hidden="true"></span>':'')+'<span></span>';
+  m.lastChild.textContent=text;
+}
+function upButton(busy){
+  var b=$('btnUp'); if(!b) return;
+  b.disabled=busy; b.innerHTML=busy?'<span class="spin" aria-hidden="true"></span>Memproses…':'Unggah &amp; proses';
+}
+function upGagal(text){
+  upButton(false); upStatus('err',text);
+  toast('Unggahan gagal. Lihat keterangan di bawah formulir unggah.','err');
+}
+/* hasil sukses ditampilkan di jendela tersendiri: halaman Kelola Data dimuat ulang setelah unggah sehingga kotak status ikut hilang */
+function upBerhasil(r, namaFile){
+  var daftar=function(judul,isi){ return isi&&isi.length?'<div class="done-list"><b>'+esc(judul)+' ('+isi.length+')</b><ul>'+isi.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>':''; };
+  /* tetap berhasil tersimpan, tetapi ada selisih total / catatan yang perlu dicek admin */
+  var perluCek=(r.peringatan&&r.peringatan.length) || /PERHATIAN|belum punya sumber dana/.test(r.pesan||'');
+  openModal('<div class="done"><div class="done-ic'+(perluCek?' warn':'')+'">'+(perluCek?'<svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>':'<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>')+'</div>'+
+    '<h3>'+(perluCek?'Unggahan tersimpan — mohon diperiksa':'Unggahan berhasil')+'</h3><p class="note" style="margin:0">'+esc(namaFile)+'</p><p style="margin:4px 0 0">'+esc(r.pesan||'File berhasil diproses.')+'</p>'+
+    daftar('Sub komponen baru dibanding posisi sebelumnya',r.subBaru)+
+    daftar('Catatan pembacaan',r.peringatan)+
+    '<button type="button" class="btn primary" data-modal-close>Tutup</button></div>');
+  toast((perluCek?'Unggahan tersimpan, tetapi ada catatan yang perlu diperiksa: ':'Unggahan berhasil: ')+namaFile, perluCek?'info':'ok');
+}
 function doUpload(){
-  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value, msg=$('upMsg'), btn=$('btnUp');
-  if (!f){ msg.textContent='Pilih file terlebih dahulu.'; return; }
-  if (jenis==='REALISASI' && !tg){ msg.textContent='Isi tanggal posisi data.'; return; }
-  if (typeof XLSX==='undefined'){ msg.textContent='Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'; return; }
-  btn.disabled=true; msg.textContent='Membaca file…';
+  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value;
+  if (!f){ upStatus('err','Pilih file Excel terlebih dahulu.'); return; }
+  if (jenis==='REALISASI' && !tg){ upStatus('err','Isi tanggal posisi data.'); return; }
+  if (typeof XLSX==='undefined'){ upGagal('Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
+  upButton(true); upStatus('busy','Membaca file '+f.name+'…');
   var rd=new FileReader();
+  rd.onerror=function(){ upGagal('File tidak bisa dibaca dari perangkat.'); };
   rd.onload=function(e){
     try{
       var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       var rowsX=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''}).map(function(r){ var k=r.length; while(k>0&&r[k-1]==='') k--; return r.slice(0,k); });
-      msg.textContent='Memproses '+rowsX.length+' baris di server…';
+      upStatus('busy','Memproses '+rp(rowsX.length)+' baris di server… Mohon tunggu, jangan tutup halaman ini.');
       SB.unggah(jenis,tg,f.name,rowsX).then(function(r){
-        var t=r.pesan;
-        if (r.subBaru && r.subBaru.length) t+='\n\nSub komponen baru dibanding posisi sebelumnya ('+r.subBaru.length+'):\n• '+r.subBaru.join('\n• ');
-        if (r.peringatan && r.peringatan.length) t+='\n\nCatatan pembacaan:\n• '+r.peringatan.join('\n• ');
-        msg.textContent=t; btn.disabled=false; $('upFile').value='';
+        upButton(false); upStatus('ok',r.pesan||'File berhasil diproses.');
+        var inp=$('upFile'); if(inp) inp.value='';
+        upBerhasil(r, f.name);
         S.admin=null; S.trend={}; S.cmp=null;
         reboot(r.periode, true);
-      }).catch(function(x){ btn.disabled=false; msg.textContent='Gagal: '+errMsg(x); });
-    } catch(ex){ btn.disabled=false; msg.textContent='File tidak bisa dibaca: '+ex.message; }
+      }).catch(function(x){ upGagal('Gagal mengunggah: '+errMsg(x)); });
+    } catch(ex){ upGagal('File tidak bisa dibaca: '+ex.message+'. Pastikan file adalah ekspor Excel dari SAKTI.'); }
   };
   rd.readAsArrayBuffer(f);
 }
@@ -98,7 +126,7 @@ function bindKelolaUser(units){
   if (!$('uPeran')) return;
   [].forEach.call(document.querySelectorAll('[data-del]'),function(b){ b.onclick=function(){
     if(!confirm('Hapus akun '+b.dataset.email+'? Tindakan ini tidak bisa dibatalkan.')) return;
-    b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e)); });
+    b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast('Gagal menghapus akun: '+errMsg(e),'err'); });
   }; });
   var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
   var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };
@@ -117,13 +145,13 @@ function bindKelolaUser(units){
     $('uFormTitle').textContent='Ubah pengguna '+u[0];
   }; });
   [].forEach.call(document.querySelectorAll('[data-act]'),function(b){ b.onclick=function(){
-    b.disabled=true; SB.aktifkan(b.dataset.act, b.dataset.on==='1').then(function(r){ toast(r.pesan); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e)); });
+    b.disabled=true; SB.aktifkan(b.dataset.act, b.dataset.on==='1').then(function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err'); });
   }; });
   $('btnSaveUser').onclick=function(){
     var btn=this, edit=!!$('uRow').value;
     btn.disabled=true; $('userMsg').textContent=edit?'Menyimpan…':'Membuat akun…';
-    var selesai=function(r){ toast(r.pesan); S.admin=null; refresh(); };
-    var gagal=function(e){ btn.disabled=false; $('userMsg').textContent=errMsg(e); };
+    var selesai=function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); };
+    var gagal=function(e){ btn.disabled=false; $('userMsg').textContent=errMsg(e); toast(errMsg(e),'err'); };
     if (edit){
       SB.simpanPengguna($('uRow').value,$('uPeran').value,$('uKat').value,$('uUnit').value,$('uKet').value).then(selesai).catch(gagal);
       return;

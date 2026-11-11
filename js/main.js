@@ -5,6 +5,7 @@ import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
+import { bukaUbahSandi } from './akun.js';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -73,11 +74,10 @@ $('moreSheet').addEventListener('click',function(e){
 $('sheetBd').addEventListener('click',closeSheet);
 document.addEventListener('click',function(e){
   if (e.target.closest('[data-out]')) { SB.keluar(); return; }
-  if (e.target.closest('[data-pw]')) {
-    var baru=prompt('Kata sandi baru (minimal 8 karakter):'); if(baru===null) return;
-    SB.gantiSandi(baru).then(function(r){ toast(r.pesan); }).catch(function(e){ toast(errMsg(e)); });
-  }
+  if (e.target.closest('[data-pw]')) { if (sheetOpen()) closeSheet(); bukaUbahSandi(); }
 });
+/* Escape menutup jendela (modal) yang sedang terbuka */
+document.addEventListener('keydown',function(e){ if (e.key==='Escape' && !$('modal').hidden) closeModal(); });
 
 /* ---------- mulai ---------- */
 export function mulai(){
