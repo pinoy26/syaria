@@ -1,22 +1,33 @@
 /* js/pages/analisis.js — Unit Kerja, Sumber Dana, Jenis Belanja, Struktur DIPA */
 import { esc, rp, rpk, pc, group, sum } from '../utils.js';
-import { FAK_ORDER, SRC, rows, pill, A2 } from '../state.js';
-import { card, actions, track, printHead, treeCard, LV } from '../ui-components.js';
+import { FAK_ORDER, FAK_FULL, SRC, S, WAKTU, rows, pill, A2 } from '../state.js';
+import { card, actions, track, trackIdeal, printHead, treeCard, LV } from '../ui-components.js';
 
 /* ================= halaman analisis ================= */
 export function unitSort(a,b){ var ka=a.key.split('|'),kb=b.key.split('|'); if(ka[0]!==kb[0]) return ka[0]==='Fakultas'?-1:1; var ia=FAK_ORDER.indexOf(ka[1]),ib=FAK_ORDER.indexOf(kb[1]); if(ia>=0&&ib>=0) return ia-ib; return b.pagu-a.pagu; }
 export function renderUnit(){
   var R=rows();
   var gu=group(R,function(r){return r.kat+'|'+r.unit;}).sort(unitSort);
-  var cards=gu.map(function(g){
+  var unitCard=function(g){
     var p=g.key.split('|');
     return '<button type="button" class="unit-card" data-unit="'+esc(g.key)+'">'+
-      '<span class="note">'+esc(p[0])+'</span><span class="nm">'+esc(p[1])+'</span>'+
-      track(g.p,'var(--real)')+
+      '<span class="nm" title="'+esc(FAK_FULL[p[1]]||p[1])+'">'+esc(p[1])+'</span>'+
+      trackIdeal(g.p)+
       '<span class="row"><span class="pct">'+pc(g.p)+'</span><span class="note num">'+rpk(g.pagu)+'</span></span></button>';
+  };
+  /* dikelompokkan per kategori (Fakultas lebih dulu), masing-masing dengan subtotal */
+  var kats=[]; gu.forEach(function(g){ var k=g.key.split('|')[0]; if(kats.indexOf(k)<0) kats.push(k); });
+  var sections=kats.map(function(k){
+    var gs=gu.filter(function(g){ return g.key.split('|')[0]===k; });
+    var t=sum([].concat.apply([],gs.map(function(g){ return g.rows; })));
+    return '<section class="unit-sec" aria-label="'+esc(k)+'">'+
+      '<div class="unit-sec-hd"><div><h3>'+esc(k)+'</h3><span class="note">'+gs.length+' unit · pagu '+rpk(t.pagu)+' · realisasi '+rpk(t.sd)+' · sisa '+rpk(t.sisa)+'</span></div>'+
+        '<div class="unit-sec-bar">'+trackIdeal(t.p)+'<span class="pct">'+pc(t.p)+'</span></div></div>'+
+      '<div class="unit-grid">'+gs.map(unitCard).join('')+'</div></section>';
   }).join('');
+  var legend='<div class="legend unit-legend"><span><span class="sw" style="background:linear-gradient(90deg,var(--crit),var(--warn),var(--good));width:42px"></span>Merah → hijau: makin dekat ke ideal</span><span><span class="sw tick"></span>Garis ideal (waktu berjalan '+pc(WAKTU)+')</span></div>';
   return '<div class="page-sec grid">'+printHead()+
-    card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.','<div class="unit-grid">'+cards+'</div>')+'</div>';
+    card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.',legend+sections)+'</div>';
 }
 export function unitModalHtml(key){
   var gu=group(rows(),function(r){return r.kat+'|'+r.unit;});
@@ -36,10 +47,16 @@ export function unitModalHtml(key){
     '</div>'+
     '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" data-goto-rincian="'+esc(key)+'">Lihat rincian lengkap →</button></div>';
 }
+/* dua urutan penelusuran: dari unit (Fakultas/Rektorat ke bawah) atau dari KRO (melihat sebaran satu KRO ke unit-unit) */
 export function renderUnitRincian(){
-  var R=rows();
-  return '<div class="page-sec grid">'+printHead()+
-    treeCard('t-unit','Rincian unit kerja','Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun])+'</div>';
+  var R=rows(), kro=S.unitView==='kro';
+  var sw='<div class="seg-row noprint"><span class="note">Urutan penelusuran</span><div class="seg" role="group" aria-label="Urutan penelusuran">'+
+    '<button type="button" data-unitview="unit" aria-pressed="'+!kro+'">Mulai dari unit</button>'+
+    '<button type="button" data-unitview="kro" aria-pressed="'+kro+'">Mulai dari KRO</button></div></div>';
+  var tc=kro
+    ? treeCard('t-unit-kro','Sebaran KRO ke unit kerja','KRO → Unit → RO → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kro,LV.katunit,LV.ro,LV.komp,LV.sub,LV.akun],undefined,sw)
+    : treeCard('t-unit','Rincian unit kerja','Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',R,[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun],undefined,sw);
+  return '<div class="page-sec grid">'+printHead()+tc+'</div>';
 }
 export function renderSumber(){
   var R=rows(), T=sum(R);

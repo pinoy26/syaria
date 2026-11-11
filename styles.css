@@ -457,6 +457,19 @@ button.btn .spin{margin-top:0}
 .unit-card.on{border-color:var(--accent);background:var(--accent-soft)}
 .unit-card .nm{font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .unit-card .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* Unit Kerja: dikelompokkan per kategori (Fakultas / Rektorat) dengan subtotal */
+.unit-sec+.unit-sec{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.unit-sec-hd{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;margin-bottom:12px}
+.unit-sec-hd h3{margin:0 0 2px;font-size:15px;font-weight:800;letter-spacing:-.01em}
+.unit-sec-bar{display:flex;align-items:center;gap:12px;flex:1 1 220px;max-width:420px}
+.unit-sec-bar .track{flex:1}
+.unit-legend{margin:0 0 16px}
+/* tombol pilihan bersegmen (mis. urutan penelusuran Rincian Unit Kerja) */
+.seg-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:14px}
+.seg{display:inline-flex;padding:3px;border-radius:999px;border:1px solid var(--line-strong);background:var(--glass-strong);gap:2px}
+.seg button{border:0;background:none;color:var(--ink2);font:600 12.5px var(--sans);padding:6px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .unit-detail{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
 .unit-detail-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .unit-detail-hd h3{margin:0;font-size:14px;font-weight:700}

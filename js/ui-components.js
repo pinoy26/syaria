@@ -33,6 +33,18 @@ export function track(p,color){
   var grad='linear-gradient(90deg, color-mix(in srgb, '+c+' 35%, transparent), '+c+')';
   return '<span class="track"><span class="fill" style="width:'+Math.min(100,Math.max(0,p*100))+'%;background:'+grad+'"></span><span class="mark" style="left:calc('+(WAKTU*100)+'% - 1px)"></span></span>';
 }
+/* batang realisasi bergradasi merah → kuning → hijau, dipatok ke lebar penuh track:
+   hijau tepat di garis ideal (waktu berjalan), mengikuti ambang status (≥ −5 poin hijau, −5…−20 kuning, < −20 merah).
+   Batang yang masih pendek hanya memperlihatkan bagian merah/kuning; melebihi pagu tetap merah. */
+export function trackIdeal(p){
+  var w=Math.min(100,Math.max(0,p*100)), W=WAKTU*100, bg;
+  if (p>1.0001) bg='var(--crit)';
+  else {
+    var a=Math.max(0,W-25), b=Math.max(a,W-12.5), c=Math.max(b,W-5);
+    bg='linear-gradient(90deg, var(--crit) 0%, var(--crit) '+a.toFixed(1)+'%, var(--warn) '+b.toFixed(1)+'%, var(--good) '+c.toFixed(1)+'%, var(--good) 100%) 0 0 / '+(w>0?(10000/w).toFixed(2):100)+'% 100% no-repeat';
+  }
+  return '<span class="track"><span class="fill" style="width:'+w+'%;background:'+bg+'"></span><span class="mark" style="left:calc('+W+'% - 1px)"></span></span>';
+}
 export function printHead(){
   var unitNama='';
   if (S.f.unit){
@@ -155,7 +167,8 @@ export function tree(id,R,levels){
     '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
-export function treeCard(id,title,sub,R,levels,act){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,tree(id,R,levels),act); }
+/* pre: isi tambahan di atas tabel (mis. tombol pilihan urutan) */
+export function treeCard(id,title,sub,R,levels,act,pre){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,(pre||'')+tree(id,R,levels),act); }
 export function openLevel(id){
   var T=TREES[id]; if(!T) return;
   var ids={}; Object.keys(S.open).forEach(function(k){ if(S.open[k]&&k.indexOf(id+'/')===0) ids[k]=1; });
@@ -178,6 +191,11 @@ export var LV={
   akun:{lvl:'Akun',cls:'lv-akun',key:function(r){return r.akun;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.akun[k]);}},
   a2:{lvl:'Jenis',key:function(r){return r.a2;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(A2(k));}},
   a3:{lvl:'Akun 3',key:function(r){return r.a3;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(A3(k));}},
+  /* unit lengkap dengan kategorinya — dipakai saat penelusuran dimulai dari KRO */
+  katunit:{lvl:'Unit',key:function(r){return r.kat+'|'+r.unit;},
+    label:function(k){ var p=k.split('|'); return FAK_FULL[p[1]] ? '<b>'+esc(p[1])+'</b> <span class="note">'+FAK_FULL[p[1]]+'</span>' : '<span class="note">'+esc(p[0])+'</span> <b>'+esc(p[1])+'</b>'; },
+    sort:function(a,b){ var pa=a.split('|'),pb=b.split('|'); if(pa[0]!==pb[0]) return pa[0]==='Fakultas'?-1:pb[0]==='Fakultas'?1:(pa[0]<pb[0]?-1:1);
+      var ia=FAK_ORDER.indexOf(pa[1]),ib=FAK_ORDER.indexOf(pb[1]); if(ia>=0&&ib>=0) return ia-ib; if(ia>=0||ib>=0) return ia>=0?-1:1; return pa[1]<pb[1]?-1:1; }},
   kat:{lvl:'Kategori',key:function(r){return r.kat;},label:function(k){return esc(k);},sort:function(a,b){return a==='Fakultas'?-1:b==='Fakultas'?1:(a<b?-1:1);}},
   unit:{lvl:'Unit',key:function(r){return r.unit;},label:function(k){return '<b>'+esc(k)+'</b>'+(FAK_FULL[k]?' <span class="note">'+FAK_FULL[k]+'</span>':'');},sort:function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0||ib>=0)return (ia<0?99:ia)-(ib<0?99:ib);return a<b?-1:1;}},
   src:{lvl:'Sumber',key:function(r){return r.sumber||'?';},label:function(k){return SRC[k]||'Belum dipetakan';},sort:function(a,b){return a==='RM'?-1:b==='RM'?1:0;}}

@@ -55,7 +55,7 @@ $('modal').addEventListener('click',function(e){
     var key=g.getAttribute('data-goto-rincian'), parts=key.split('|');
     S.f.unit=key; S.f.a2=''; S.f.a3=''; S.cmp=null;
     closeModal();
-    S.page='unit-rincian'; S.open={};
+    S.page='unit-rincian'; S.open={}; S.unitView='unit';
     S.open['t-unit/'+parts[0]]=true; S.open['t-unit/'+parts[0]+'/'+parts[1]]=true;
     refresh(); window.scrollTo(0,0);
   }
