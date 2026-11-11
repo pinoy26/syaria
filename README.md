@@ -19,7 +19,7 @@ js/
   theme.js           Toggle mode gelap/terang
   auth.js            Halaman masuk (login)
   export.js          Unduh PDF & cetak kartu
-  pages/             Satu berkas per halaman (Ringkasan, Unit Kerja/Sumber Dana/Jenis Belanja/DIPA, Riwayat & Revisi, Perlu Perhatian/Rincian, Kelola Data)
+  pages/             Satu berkas per halaman (Ringkasan, Unit Kerja/Sumber Dana/Jenis Belanja/DIPA, Riwayat & Revisi, Perlu Perhatian, Laporan, Kelola Data)
 ```
 
 Kode memakai modul ES bawaan browser (`import`/`export`) — tidak perlu bundler/build step apa pun, cukup file statis.
@@ -44,7 +44,7 @@ Isi [config.js](config.js) dengan data project Supabase Anda (Supabase → Proje
 ## Fitur
 
 - Login & sesi berbasis peran (Admin keuangan, Pimpinan, Unit) dengan cakupan data dibatasi RLS Supabase.
-- Ringkasan, tren penyerapan, analisis per unit/sumber dana/jenis belanja/struktur DIPA, riwayat & perbandingan revisi antar-periode, daftar "perlu perhatian", rincian & ekspor CSV.
+- Ringkasan, tren penyerapan, analisis per unit/sumber dana/jenis belanja/struktur DIPA, riwayat & perbandingan revisi antar-periode, daftar "perlu perhatian", laporan dengan unduhan PDF & Excel.
 - Kelola data (khusus admin): unggah laporan SAKTI, atur pengguna & hak akses.
 - Ekspor PDF per-kartu maupun cetak laporan lengkap.
 - Mode gelap/terang manual (tersimpan per perangkat) dan navigasi yang menyesuaikan ukuran layar — sidebar di desktop, bottom tab bar ala aplikasi native di HP.

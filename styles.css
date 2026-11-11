@@ -316,7 +316,6 @@ tr.tree td:first-child{white-space:nowrap}
 .code{font-family:var(--mono);font-size:12px;color:var(--ink2)}
 tr.l0 td{font-weight:700}
 tr.leaf td{color:var(--ink2)}
-.pager{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
 
 /* tabel rincian anggaran — panel padat bergaris penuh, kepala & kolom pertama menempel saat digulir */
 .tbl-grid{overflow:auto;max-height:78vh;border-radius:10px;border:1px solid var(--grid-line);background:var(--grid-bg)}
