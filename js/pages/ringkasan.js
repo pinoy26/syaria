@@ -1,7 +1,7 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, rpk, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js';
 import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js';
-import { card, actions, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js';
 import { SB } from '../api.js';
 
 /* ================= RINGKASAN ================= */
@@ -66,8 +66,11 @@ export function renderRingkasan(){
     }).join('')+'</div>';
   var byA2=group(R,function(r){return r.a2;}).sort(function(a,b){return a.key<b.key?-1:1;});
   var icons={'51':IC.people,'52':IC.box,'53':IC.build};
+  /* warna identitas jenis belanja (sama di kartu realisasi, grafik, dan donat porsi) */
+  var catCol=function(k){ return 'var(--cat-'+(k==='51'?1:k==='52'?2:3)+')'; };
+  var catSw=function(k){ return '<span class="cat-sw" style="background:'+catCol(k)+'" aria-hidden="true"></span>'; };
   var typesBody='<div class="rz-list">'+byA2.map(function(g){
-      return realRow('<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
+      return realRow(catSw(g.key)+'<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
     }).join('')+'</div>';
   h+='<div class="two">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
     card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>';
@@ -76,11 +79,11 @@ export function renderRingkasan(){
   var max=Math.max.apply(null,cells.map(function(c){return c.pagu;}).concat([1]));
   var jBody='<div class="legend"><span><i class="sw ghost" style="background:var(--rm)"></i><i class="sw" style="background:var(--rm);margin-left:-4px"></i>RM — pagu (pudar) &amp; realisasi</span><span><i class="sw ghost" style="background:var(--pnbp)"></i><i class="sw" style="background:var(--pnbp);margin-left:-4px"></i>PNBP — pagu (pudar) &amp; realisasi</span></div><div class="jchart">'+
     byA2.map(function(g){
-      return '<div class="jrow"><div class="lab"><b>'+g.key+' · '+esc(A2(g.key))+'</b><span>Pagu '+rpk(g.pagu)+' · realisasi '+pc(g.p)+'</span></div><div class="jbars">'+
+      return '<div class="jrow"><div class="lab"><b>'+catSw(g.key)+g.key+' · '+esc(A2(g.key))+'</b><span>Pagu <span class="num">Rp '+rp(g.pagu)+'</span><br>realisasi '+pc(g.p)+'</span></div><div class="jbars">'+
         ['RM','PNP'].map(function(s){ var c=sum(g.rows.filter(function(r){return r.sumber===s;})), col=s==='RM'?'rm':'pnbp', lab=s==='RM'?'RM':'PNBP';
           if (!c.pagu) return '<div class="jbar none"><span class="tag">'+lab+'</span><span class="bar"></span><span class="val">tidak ada pagu</span></div>';
           return '<div class="jbar"'+tipAttr(tipOf(g.key+' '+A2(g.key)+' · '+SRC[s],c))+'><span class="tag">'+lab+'</span><span class="bar"><span class="p" style="width:'+(c.pagu/max*100)+'%;background:var(--'+col+')"></span><span class="r" style="width:'+(Math.min(c.sd,c.pagu)/max*100)+'%;background:var(--'+col+')"></span></span>'+
-            '<span class="val"><b>'+rpk(c.sd)+'</b> / '+rpk(c.pagu)+' · <b>'+pc(c.p)+'</b></span></div>';
+            '<span class="val"><b>Rp '+rp(c.sd)+'</b> / Rp '+rp(c.pagu)+' · <b>'+pc(c.p)+'</b></span></div>';
         }).join('')+'</div></div>';
     }).join('')+'</div>';
   h+=card('c-jenis','Pagu &amp; realisasi per jenis belanja menurut sumber dana','Bilah pudar = pagu, bilah pekat = realisasi. Skala sama untuk semua baris.',jBody);
@@ -91,10 +94,10 @@ export function renderRingkasan(){
     var gu=group(R,function(r){return r.kat+'|'+r.unit;});
     var fak=gu.filter(function(g){return g.key.indexOf('Fakultas|')===0;}).sort(function(a,b){return FAK_ORDER.indexOf(a.key.split('|')[1])-FAK_ORDER.indexOf(b.key.split('|')[1]);});
     var rek=gu.filter(function(g){return g.key.indexOf('Fakultas|')!==0;}).sort(function(a,b){return b.pagu-a.pagu;});
-    var ub=function(g){ var n=g.key.split('|')[1]; return '<div class="ubar"'+tipAttr(tipOf(n+(FAK_FULL[n]?' — '+FAK_FULL[n]:''),g))+'><span class="n">'+esc(n)+' <span class="note num">'+rpk(g.pagu)+'</span></span>'+track(g.p,'var(--real)')+'<span class="pct">'+pc(g.p)+'</span></div>'; };
+    var ub=function(g){ var n=g.key.split('|')[1]; return '<div class="ubar"'+tipAttr(tipOf(n+(FAK_FULL[n]?' — '+FAK_FULL[n]:''),g))+'><span class="n"><span class="un">'+esc(n)+'</span><span class="note num">Rp '+rp(g.pagu)+'</span></span>'+track(g.p,'var(--real)')+'<span class="pct">'+pc(g.p)+'</span></div>'; };
     var fs=sum([].concat.apply([],fak.map(function(g){return g.rows;}))), rs=sum([].concat.apply([],rek.map(function(g){return g.rows;})));
-    unitBody=legend+'<div class="ubars">'+(fak.length?'<div class="sec">Fakultas · '+rpk(fs.pagu)+' · '+pc(fs.p)+'</div>'+fak.map(ub).join(''):'')+
-      (rek.length?'<div class="sec">Rektorat · '+rpk(rs.pagu)+' · '+pc(rs.p)+'</div>'+rek.map(ub).join(''):'')+'</div>';
+    unitBody=legend+'<div class="ubars">'+(fak.length?'<div class="sec">Fakultas · Rp '+rp(fs.pagu)+' · '+pc(fs.p)+'</div>'+fak.map(ub).join(''):'')+
+      (rek.length?'<div class="sec">Rektorat · Rp '+rp(rs.pagu)+' · '+pc(rs.p)+'</div>'+rek.map(ub).join(''):'')+'</div>';
   } else {
     var gk=group(R,function(r){return r.komp;}).sort(function(a,b){return a.key<b.key?-1:1;});
     unitBody=legend+'<div class="ubars">'+gk.map(function(g){ return '<div class="ubar"'+tipAttr(tipOf(g.key+' '+D.komp[g.key],g))+'><span class="n">'+g.key+' '+esc(D.komp[g.key])+'</span>'+track(g.p,'var(--real)')+'<span class="pct">'+pc(g.p)+'</span></div>'; }).join('')+'</div>';
@@ -125,7 +128,6 @@ export function renderRingkasan(){
   };
   var porsiSrc='<div class="dn-wrap">'+donut(bySrc.map(function(x){ return {v:x.pagu,col:srcCol(x.key),short:srcName(x.key),tip:tipOf(srcName(x.key),x)}; }),'Porsi pagu per sumber dana')+
     '<div class="dn-legend">'+bySrc.map(function(x){ return legRow(srcCol(x.key),esc(srcName(x.key)),x); }).join('')+'</div></div>';
-  var catCol=function(k){ return 'var(--cat-'+(k==='51'?1:k==='52'?2:3)+')'; };
   var porsiType='<div class="dn-wrap">'+donut(byA2.map(function(g){ return {v:g.pagu,col:catCol(g.key),short:'Akun '+g.key,tip:tipOf(g.key+' '+A2(g.key),g)}; }),'Porsi pagu per jenis belanja')+
     '<div class="dn-legend">'+byA2.map(function(g){
       var rm=sum(g.rows.filter(function(r){return r.sumber==='RM';})), pn=sum(g.rows.filter(function(r){return r.sumber==='PNP';}));
@@ -137,10 +139,10 @@ export function renderRingkasan(){
   /* paling bawah: hal yang perlu ditindaklanjuti */
   h+=card('c-alert','Perlu perhatian','Hal yang memerlukan tindak lanjut. Rincian lengkap di menu Perlu Perhatian.',
     '<div class="alerts">'+
-      '<div class="alert"><span class="pill '+(minus.length?'st-crit':'st-good')+'"><i></i>'+(minus.length?'Pagu minus':'Tidak ada pagu minus')+'</span><span class="v">'+(minus.length?rpk(-ms.sisa):'Rp 0')+'</span><span class="t">'+minus.length+' detail realisasi melebihi pagu'+(minus.length?' — perlu revisi DIPA':'')+'</span></div>'+
-      '<div class="alert"><span class="pill st-warn"><i></i>Belum terealisasi</span><span class="v">'+rp(t.n0)+' detail</span><span class="t">pagu '+rpk(sum(R.filter(function(r){return r.sd===0&&r.pagu>0;})).pagu)+' belum diserap sama sekali</span></div>'+
+      '<div class="alert"><span class="pill '+(minus.length?'st-crit':'st-good')+'"><i></i>'+(minus.length?'Pagu minus':'Tidak ada pagu minus')+'</span><span class="v">'+(minus.length?'Rp '+rp(-ms.sisa):'Rp 0')+'</span><span class="t">'+minus.length+' detail realisasi melebihi pagu'+(minus.length?' — perlu revisi DIPA':'')+'</span></div>'+
+      '<div class="alert"><span class="pill st-warn"><i></i>Belum terealisasi</span><span class="v">'+rp(t.n0)+' detail</span><span class="t">pagu Rp '+rp(sum(R.filter(function(r){return r.sd===0&&r.pagu>0;})).pagu)+' belum diserap sama sekali</span></div>'+
       '<div class="alert"><span class="pill st-warn"><i></i>Sub komponen 0%</span><span class="v">'+s0.length+' dari '+gs.length+'</span><span class="t">sub komponen belum ada realisasi</span></div>'+
-      (lowK?'<div class="alert"><span class="pill '+status(lowK.p,WAKTU)[0]+'"><i></i>Komponen terendah</span><span class="v">'+pc(lowK.p)+'</span><span class="t">'+lowK.key+' '+esc(D.komp[lowK.key])+' · sisa '+rpk(lowK.sisa)+'</span></div>':'')+
+      (lowK?'<div class="alert"><span class="pill '+status(lowK.p,WAKTU)[0]+'"><i></i>Komponen terendah</span><span class="v">'+pc(lowK.p)+'</span><span class="t">'+lowK.key+' '+esc(D.komp[lowK.key])+' · sisa Rp '+rp(lowK.sisa)+'</span></div>':'')+
     '</div>');
   return h+'</div>';
 }
