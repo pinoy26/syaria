@@ -237,7 +237,7 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .bn-box span{font-size:12.5px;font-weight:600}
 .bn-box b{font-size:clamp(18px,1.75vw,25px)}
 .bn-real{background:var(--bn-real);color:var(--bn-real-ink)}
-.bn-sisa{background:var(--bn-sisa);color:var(--bn-sisa-ink);border:1px solid var(--line-strong)}
+.bn-sisa{background:var(--bn-rest);color:#2a1d00}
 .bn-pct{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 20px;font-size:14px;font-weight:600;position:relative;z-index:1}
 .bn-pct b{font-family:var(--mono);font-size:clamp(20px,2vw,26px);margin-left:6px;letter-spacing:-.03em}
 .bn-bar{position:relative;z-index:1;height:30px;border-radius:9px;background:var(--bn-rest);overflow:hidden}
