@@ -1,5 +1,5 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, rpk, pc, poin, tgl, tglPendek, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js';
+import { $, esc, rp, rpk, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js';
 import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js';
 import { card, actions, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js';
 import { SB } from '../api.js';
@@ -21,16 +21,27 @@ function gauge(p){
 export function renderRingkasan(){
   var R=rows(), t=sum(R);
   var h='<div class="page-sec grid">'+printHead();
-  h+='<section class="glass hero" id="c-hero"><div>'+
-    '<div class="card-h" style="margin:0"><div class="eyebrow">Pagu induk · '+esc(unitCaption())+'</div>'+actions('c-hero','Ringkasan pagu induk')+'</div>'+
-    '<div class="big"><small>Rp</small>'+rp(t.pagu)+'</div>'+
-    '<div class="spell">≈ '+rpk(t.pagu)+' · pagu revisi yang berlaku per '+tgl(DB.periode)+'</div>'+
-    '<div class="stats">'+
-      '<div class="stat"><div class="l">Realisasi s.d. '+tglPendek(DB.periode)+'</div><div class="v">'+rpk(t.sd)+'</div><div class="d">Rp '+rp(t.sd)+'</div></div>'+
-      '<div class="stat"><div class="l">Realisasi periode ini</div><div class="v">'+rpk(t.ini)+'</div><div class="d">'+poin(t.pagu?t.ini/t.pagu:0)+'</div></div>'+
-      '<div class="stat"><div class="l">Sisa anggaran</div><div class="v">'+rpk(t.sisa)+'</div><div class="d">'+pc(t.pagu?t.sisa/t.pagu:0)+' dari pagu</div></div>'+
-      '<div class="stat"><div class="l">Lock pagu</div><div class="v">'+rpk(t.lock)+'</div><div class="d">dalam proses revisi</div></div>'+
-    '</div></div>'+
+  /* header: banner Total Pagu / Realisasi / Sisa + batang komposisi, gauge realisasi vs waktu di samping */
+  var pSisa=t.pagu?t.sisa/t.pagu:0, wBar=Math.min(100,Math.max(0,t.p*100));
+  var tglPanjang=(+DB.periode.split('-')[2])+' '+blnTahun(DB.periode);
+  var info='<span class="bn-i" tabindex="0" role="img" aria-label="Pagu revisi yang berlaku per '+esc(tglPanjang)+'" title="Pagu revisi yang berlaku per '+esc(tglPanjang)+'"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>';
+  h+='<section class="glass hero hero2" id="c-hero"><div class="card-h hero-hd"></div>'+
+    '<div class="banner">'+
+      '<div class="bn-top">'+
+        '<div class="bn-pagu"><div class="bn-lbl">Total Pagu '+info+'<span class="bn-cap">'+esc(unitCaption())+'</span></div>'+
+          '<div class="bn-amt"><small>Rp</small>'+rp(t.pagu)+'</div></div>'+
+        '<div class="bn-boxes">'+
+          '<div class="bn-box bn-real"><span>Realisasi Belanja</span><b><small>Rp</small>'+rp(t.sd)+'</b></div>'+
+          '<div class="bn-box bn-sisa"><span>Sisa Pagu</span><b><small>Rp</small>'+(t.sisa<0?'−':'')+rp(Math.abs(t.sisa))+'</b></div>'+
+        '</div></div>'+
+      '<div class="bn-pct"><span>Total Realisasi Belanja <b>'+pc(t.p)+'</b></span><span>Sisa Pagu <b>'+pc(pSisa)+'</b></span></div>'+
+      '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"><em>'+pc(t.p)+'</em></span></div>'+
+      '<div class="bn-foot">'+
+        '<span class="bn-leg"><i></i><span>Realisasi periode ini<br><b><small>Rp</small> '+rp(t.ini)+'</b> <span class="bn-sub">'+poin(t.pagu?t.ini/t.pagu:0)+'</span></span></span>'+
+        (t.lock?'<span class="bn-leg bn-lock"><i></i><span>Lock pagu (proses revisi)<br><b><small>Rp</small> '+rp(t.lock)+'</b></span></span>':'')+
+        '<span class="bn-date">Data per '+esc(tglPanjang)+'</span>'+
+      '</div>'+
+    '</div>'+
     '<div class="gauge">'+gauge(t.p)+pill(t.p)+
       '<div class="gauge-legend"><span><i class="sw" style="background:var(--real)"></i>Realisasi</span><span><i class="sw tick"></i>Waktu berjalan</span></div>'+
       (isUnitUser()?'<div class="note">Pembanding: capaian satker '+pc(DB.satkerPersen)+'</div>':'')+
