@@ -232,6 +232,18 @@ SB.hapusPengguna = function(id){
     return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dihapus.' };
   });
 };
+/* ---------- ganti kata sandi pengguna lain (lewat Edge Function, khusus super admin) ---------- */
+SB.aturSandi = function(id, password){
+  return SBC.functions.invoke('admin-set-password', { body: { id: id, password: password } }).then(function(r){
+    if (r.data && r.data.error) throw new Error(r.data.error);
+    if (r.error){
+      var ctx = r.error.context;
+      if (ctx && typeof ctx.json === 'function') return ctx.json().then(function(j){ throw new Error((j && j.error) || r.error.message); });
+      throw new Error(r.error.message);
+    }
+    return { ok: true, pesan: (r.data && r.data.pesan) || 'Kata sandi diganti.' };
+  });
+};
 SB.aktifkan = function(id, aktif){
   return SBC.from('pengguna').update({ aktif: aktif }).eq('id', id)
     .then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'Status pengguna diperbarui.' }; });

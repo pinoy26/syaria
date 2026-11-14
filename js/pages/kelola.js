@@ -5,6 +5,7 @@ import { card, openModal } from '../ui-components.js';
 import { SB } from '../api.js';
 import { refresh } from '../nav.js';
 import { reboot, loadData } from '../main.js';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -112,12 +113,13 @@ export function renderKelolaUser(){
       return '<tr><td>'+esc(u[0])+'</td><td>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</td><td>'+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'Seluruh satker')+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td>'+aksi+'</tr>'; }).join('')+'</tbody></table></div>';
   var form='<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
     '<label class="f" for="uEmail">Email pengguna<input type="text" id="uEmail" placeholder="nama@kampus.ac.id"></label>'+
-    '<label class="f" for="uPassword" id="uPasswordWrap">Kata sandi awal<input type="password" id="uPassword" placeholder="Minimal 8 karakter" autocomplete="new-password"></label>'+
+    '<label class="f" for="uPassword" id="uPasswordWrap"><span id="uPwLabel">Kata sandi awal</span><span class="pw-wrap"><input type="password" id="uPassword" placeholder="Minimal 8 karakter" autocomplete="new-password">'+
+      '<button type="button" class="icon pw-eye" id="uPwEye" aria-label="Tampilkan kata sandi" aria-pressed="false" title="Tampilkan kata sandi">'+IC_EYE+'</button></span></label>'+
     '<label class="f" for="uPeran">Peran<select id="uPeran"><option value="UNIT">Fakultas / unit</option><option value="PIMPINAN">Pimpinan</option><option value="ADMIN">Admin keuangan</option></select></label>'+
     '<label class="f" for="uKat">Kategori<select id="uKat"><option value="Fakultas">Fakultas</option><option value="Rektorat">Rektorat</option></select></label>'+
     '<label class="f" for="uUnit">Unit<select id="uUnit"></select></label>'+
     '<label class="f" for="uKet">Keterangan<input type="text" id="uKet" placeholder="Jabatan / catatan"></label>'+
-    '<p class="note" style="grid-column:1/-1;margin:0">Mengubah pengguna yang sudah ada (lewat tombol <b>Ubah</b>) tidak mengubah kata sandinya — kosongkan kolom kata sandi, kolom itu hanya dipakai saat membuat akun baru.</p>'+
+    '<p class="note" style="grid-column:1/-1;margin:0" id="uPwNote">Saat mengubah pengguna (tombol <b>Ubah</b>), isi kolom kata sandi hanya bila ingin menggantinya — kosongkan untuk mempertahankan kata sandi lama. Sampaikan kata sandi baru langsung kepada pengguna.</p>'+
     '<div class="tools"><button class="btn primary" type="button" id="btnSaveUser">Buat pengguna baru</button><button class="btn" type="button" id="btnClearUser">Kosongkan</button></div></div><div id="userMsg" class="note" style="margin-top:8px"></div>';
   setTimeout(function(){ bindKelolaUser(units); },0);
   return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin dan pimpinan melihat seluruh satker; pengguna unit hanya melihat cakupannya.',users+form)+'</div>';
@@ -131,9 +133,19 @@ function bindKelolaUser(units){
   var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
   var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };
   $('uKat').onchange=function(){ fillUnits(''); }; $('uPeran').onchange=peranChange; fillUnits(''); peranChange();
+  var lihatSandi=function(on){
+    var b=$('uPwEye'); $('uPassword').type=on?'text':'password';
+    b.innerHTML=on?IC_EYE_OFF:IC_EYE; b.setAttribute('aria-pressed',on?'true':'false');
+    b.setAttribute('aria-label',on?'Sembunyikan kata sandi':'Tampilkan kata sandi'); b.title=b.getAttribute('aria-label');
+  };
+  $('uPwEye').onclick=function(){ lihatSandi($('uPassword').type==='password'); };
   var mode=function(){
-    var edit=!!$('uRow').value;
-    $('uEmail').readOnly=edit; $('uPasswordWrap').hidden=edit; if(edit) $('uPassword').value='';
+    var edit=!!$('uRow').value, sendiri=edit && $('uEmail').value===sess().email;
+    $('uEmail').readOnly=edit; $('uPassword').value=''; lihatSandi(false);
+    /* akun sendiri diganti lewat menu Ubah sandi (perlu sesi pemiliknya) */
+    $('uPasswordWrap').hidden=sendiri;
+    $('uPwLabel').textContent=edit?'Kata sandi baru (opsional)':'Kata sandi awal';
+    $('uPassword').placeholder=edit?'Kosongkan bila tidak diganti':'Minimal 8 karakter';
     $('btnSaveUser').textContent=edit?'Simpan perubahan':'Buat pengguna baru';
   };
   var clear=function(){ $('uRow').value=''; $('uEmail').value=''; $('uPassword').value=''; $('uKet').value=''; $('uPeran').value='UNIT'; $('uKat').value='Fakultas'; fillUnits(''); peranChange(); mode(); $('uFormTitle').textContent='Tambah pengguna'; };
@@ -153,7 +165,13 @@ function bindKelolaUser(units){
     var selesai=function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); };
     var gagal=function(e){ btn.disabled=false; $('userMsg').textContent=errMsg(e); toast(errMsg(e),'err'); };
     if (edit){
-      SB.simpanPengguna($('uRow').value,$('uPeran').value,$('uKat').value,$('uUnit').value,$('uKet').value).then(selesai).catch(gagal);
+      var id=$('uRow').value, sandiBaru=$('uPasswordWrap').hidden?'':$('uPassword').value;
+      if (sandiBaru && sandiBaru.length<8){ gagal(new Error('Kata sandi baru minimal 8 karakter, atau kosongkan bila tidak diganti.')); return; }
+      SB.simpanPengguna(id,$('uPeran').value,$('uKat').value,$('uUnit').value,$('uKet').value).then(function(r){
+        if (!sandiBaru) return r;
+        $('userMsg').textContent='Mengganti kata sandi…';
+        return SB.aturSandi(id,sandiBaru).then(function(){ return { ok:true, pesan:'Pengguna disimpan dan kata sandinya diganti.' }; });
+      }).then(selesai).catch(gagal);
       return;
     }
     var email=$('uEmail').value.trim(), pass=$('uPassword').value;
