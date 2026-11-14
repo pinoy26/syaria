@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611141419';
-import { parseRealisasi, parseRKK } from './parser.js?v=202611141419';
+import { BOOT } from './state.js?v=202611141458';
+import { parseRealisasi, parseRKK } from './parser.js?v=202611141458';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -252,11 +252,21 @@ SB.hapusPeriode = function(periode){
   return SBC.rpc('hapus_periode', { p_periode: periode }).then(function(r){
     if (r.error) throw r.error; return { ok: true, pesan: 'Data posisi ' + periode + ' dihapus.' }; });
 };
-SB.terapkanUlang = function(scope){
-  var terbaru = BOOT && BOOT.periods.length ? BOOT.periods[BOOT.periods.length - 1].periode : null;
-  return SBC.rpc('terapkan_ulang_pemetaan', { p_periode: scope === 'semua' ? null : terbaru }).then(function(r){
-    if (r.error) throw r.error;
-    return { ok: true, pesan: 'Pemetaan diterapkan ulang ke ' + r.data.baris + ' baris' + (scope === 'semua' ? ' (semua posisi).' : ' (posisi terbaru).') };
+/* "semua" dibatasi ke tahun anggaran posisi terbaru: aturan pemetaan tahun berjalan tidak boleh mengubah data
+   tahun anggaran sebelumnya. Fungsi database dipanggil per posisi (p_periode), tidak pernah dengan null (= semua tahun). */
+SB.terapkanUlang = function(scope, onProgres){
+  var ps = BOOT && BOOT.periods.length ? BOOT.periods : [], terbaru = ps.length ? ps[ps.length - 1].periode : null;
+  if (!terbaru) return Promise.reject(new Error('Belum ada data posisi.'));
+  var th = terbaru.slice(0, 4);
+  var target = scope === 'semua' ? ps.filter(function(p){ return p.periode.slice(0, 4) === th; }).map(function(p){ return p.periode; }) : [terbaru];
+  var total = 0;
+  return target.reduce(function(rantai, per, i){
+    return rantai.then(function(){
+      if (onProgres) onProgres(i + 1, target.length, per);
+      return SBC.rpc('terapkan_ulang_pemetaan', { p_periode: per }).then(function(r){ if (r.error) throw r.error; total += (r.data && r.data.baris) || 0; });
+    });
+  }, Promise.resolve()).then(function(){
+    return { ok: true, pesan: 'Pemetaan diterapkan ulang ke ' + total + ' baris' + (scope === 'semua' ? ' (' + target.length + ' posisi tahun anggaran ' + th + ').' : ' (posisi terbaru).') };
   });
 };
 SB.gantiSandi = function(baru){

@@ -1,18 +1,18 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611141419';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611141419';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611141419';
-import { THEME_BTN } from './theme.js?v=202611141419';
-import { renderFilters } from './filters.js?v=202611141419';
-import { pdfCard, printCard, printAll } from './export.js?v=202611141419';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611141419';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611141419';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611141419';
-import { renderPerhatian } from './pages/perhatian.js?v=202611141419';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611141419';
-import { renderLaporan } from './pages/laporan.js?v=202611141419';
-import { renderKelolaBerita } from './pages/berita.js?v=202611141419';
-import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611141419';
+import { $, esc } from './utils.js?v=202611141458';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611141458';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611141458';
+import { THEME_BTN } from './theme.js?v=202611141458';
+import { renderFilters } from './filters.js?v=202611141458';
+import { pdfCard, printCard, printAll } from './export.js?v=202611141458';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611141458';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611141458';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611141458';
+import { renderPerhatian } from './pages/perhatian.js?v=202611141458';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611141458';
+import { renderLaporan } from './pages/laporan.js?v=202611141458';
+import { renderKelolaBerita } from './pages/berita.js?v=202611141458';
+import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611141458';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -109,8 +109,10 @@ export function refresh(){
   var toolsEl=$('pageTools');
   if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
   /* halaman Laporan meminjam pemilih posisi data ke formulirnya; kembalikan ke tempatnya sebelum isi halaman diganti */
-  var selP=$('selPeriode'), rumahP=document.querySelector('#pageTools label[for="selPeriode"]');
-  if (selP && rumahP && !rumahP.contains(selP)) rumahP.appendChild(selP);
+  ['selTahun','selPeriode'].forEach(function(id){
+    var el=$(id), rumah=document.querySelector('#pageTools label[for="'+id+'"]');
+    if (el && rumah && !rumah.contains(el)) rumah.appendChild(el);
+  });
   $('page').innerHTML=p.r();
   var pg=$('page');
   var firstHd=pg.querySelector('.card-h');

@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141419';
-import { S, FAK_ORDER, DB, sess } from '../state.js?v=202611141419';
-import { card, openModal } from '../ui-components.js?v=202611141419';
-import { SB } from '../api.js?v=202611141419';
-import { refresh } from '../nav.js?v=202611141419';
-import { reboot, loadData } from '../main.js?v=202611141419';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141419';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141458';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141458';
+import { card, openModal } from '../ui-components.js?v=202611141458';
+import { SB } from '../api.js?v=202611141458';
+import { refresh } from '../nav.js?v=202611141458';
+import { reboot, loadData } from '../main.js?v=202611141458';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141458';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -18,6 +18,7 @@ function ensureAdmin(){
 /* ================= Kelola Data: unggah, riwayat, aturan unit kerja ================= */
 export function renderKelola(){
   var A=ensureAdmin(); if (!A) return '<div class="loading">Memuat data admin…</div>';
+  var thAktif=A.periods.length?String(A.periods[A.periods.length-1].periode).slice(0,4):'';
   var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (sumber dana)</option></select></label>'+
     '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi data<input type="date" id="upTgl"></label>'+
     '<label class="f" for="upFile">File Excel (.xlsx / .xls)<input type="file" id="upFile" accept=".xlsx,.xls"></label>'+
@@ -27,8 +28,8 @@ export function renderKelola(){
     A.periods.slice().reverse().map(function(p){ var ok=Number(p.cekPagu)===0&&Number(p.cekReal)===0&&p.cekPagu!==''; return '<tr><td><b>'+tgl(p.periode)+'</b></td><td>'+esc(p.diunggah)+'<br><span class="note">'+esc(p.pengunggah)+'</span></td><td>'+esc(p.file)+'</td><td class="n">'+rp(p.jumlah)+'</td><td class="n">'+rp(p.pagu)+'</td><td class="n">'+rp(p.sd)+'</td><td class="n">'+pc(p.persen)+'</td><td><span class="pill '+(ok?'st-good':'st-crit')+'"><i></i>'+(ok?'Cocok':'Periksa')+'</span></td><td><button class="btn" type="button" data-delp="'+p.periode+'">Hapus</button></td></tr>'; }).join('')+'</tbody></table></div>';
   var rules='<div class="tbl"><table><thead><tr><th>KRO</th><th>Komponen</th><th>Jenis aturan</th><th>Kode</th><th>Kategori</th><th>Unit</th><th>Keterangan</th></tr></thead><tbody>'+
     A.rules.map(function(r){ return '<tr>'+r.map(function(c,i){ return '<td'+(i===3?' class="code"':'')+'>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'+
-    '<div class="tools" style="margin-top:12px"><a class="link" href="'+esc(A.sheetUrl)+'" target="_blank" rel="noopener">Ubah aturan di sheet Ref_Unit ›</a><button class="btn" type="button" id="btnRemap">Terapkan ke posisi terbaru</button><button class="btn" type="button" id="btnRemapAll">Terapkan ke semua posisi</button></div>'+
-    '<p class="note">Urutan: kode lengkap → huruf pertama → komponen → selain itu Rektorat. Terapkan ke semua posisi hanya untuk memperbaiki salah pemetaan — perubahan pemilik kode setelah revisi cukup berlaku untuk posisi terbaru.</p><div id="mapMsg" class="note"></div>';
+    '<div class="tools" style="margin-top:12px"><a class="link" href="'+esc(A.sheetUrl)+'" target="_blank" rel="noopener">Ubah aturan di sheet Ref_Unit ›</a><button class="btn" type="button" id="btnRemap">Terapkan ke posisi terbaru</button><button class="btn" type="button" id="btnRemapAll">Terapkan ke semua posisi TA '+thAktif+'</button></div>'+
+    '<p class="note">Urutan: kode lengkap → huruf pertama → komponen → selain itu Rektorat. Terapkan ke semua posisi hanya untuk memperbaiki salah pemetaan dan hanya berlaku untuk tahun anggaran '+thAktif+' — data tahun anggaran sebelumnya tidak ikut diubah. Perubahan pemilik kode setelah revisi cukup berlaku untuk posisi terbaru.</p><div id="mapMsg" class="note"></div>';
   setTimeout(bindKelolaData,0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
     card('k-log','Riwayat unggahan','Cek harus "Cocok": total detail sama dengan baris JUMLAH SELURUHNYA pada laporan.',log)+
@@ -47,9 +48,9 @@ function bindKelolaData(){
     });
   }; });
   /* hasil ditampilkan lewat notifikasi: loadData memuat ulang halaman sehingga #mapMsg ikut hilang */
-  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope).then(function(r){ toast(r.pesan||'Aturan unit kerja berhasil diterapkan.','ok','Aturan unit kerja diterapkan'); S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); toast(errMsg(e),'err','Gagal menerapkan aturan'); }); };
+  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope,function(i,n,per){ if($('mapMsg')) $('mapMsg').textContent='Memproses posisi '+i+' dari '+n+' ('+tgl(per)+')…'; }).then(function(r){ toast(r.pesan||'Aturan unit kerja berhasil diterapkan.','ok','Aturan unit kerja diterapkan'); S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); toast(errMsg(e),'err','Gagal menerapkan aturan'); }); };
   $('btnRemap').onclick=function(){ remap('terbaru',this); };
-  $('btnRemapAll').onclick=function(){ var btn=this; tanya({ judul:'Terapkan ke semua posisi data?', pesan:'Aturan terbaru akan diterapkan ke SEMUA posisi data. Data lama ikut dipetakan ulang.', ya:'Terapkan', bahaya:false }).then(function(ya){ if(ya) remap('semua',btn); }); };
+  $('btnRemapAll').onclick=function(){ var btn=this; var th=(BOOT.periods.length?BOOT.periods[BOOT.periods.length-1].periode:'').slice(0,4); tanya({ judul:'Terapkan ke semua posisi TA '+th+'?', pesan:'Aturan terbaru akan diterapkan ke semua posisi data tahun anggaran '+th+'. Data tahun anggaran sebelumnya tidak ikut diubah.', ya:'Terapkan', bahaya:false }).then(function(ya){ if(ya) remap('semua',btn); }); };
 }
 /* kotak status di bawah formulir unggah: 'busy' (sedang diproses), 'ok', 'err' */
 function upStatus(type,text){

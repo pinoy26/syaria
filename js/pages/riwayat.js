@@ -1,10 +1,10 @@
 /* js/pages/riwayat.js — Riwayat & Revisi */
-import { $, esc, rp, pc, poin, tgl, group, sum, errMsg } from '../utils.js?v=202611141419';
-import { S, BOOT, DB, rows } from '../state.js?v=202611141419';
-import { card, printHead } from '../ui-components.js?v=202611141419';
-import { unitSort } from './analisis.js?v=202611141419';
-import { trendKey } from './ringkasan.js?v=202611141419';
-import { SB } from '../api.js?v=202611141419';
+import { $, esc, rp, pc, poin, tgl, group, sum, errMsg } from '../utils.js?v=202611141458';
+import { S, BOOT, DB, rows } from '../state.js?v=202611141458';
+import { card, printHead } from '../ui-components.js?v=202611141458';
+import { unitSort } from './analisis.js?v=202611141458';
+import { trendKey } from './ringkasan.js?v=202611141458';
+import { SB } from '../api.js?v=202611141458';
 
 /* ================= riwayat & revisi ================= */
 export function renderRiwayat(){
@@ -13,11 +13,13 @@ export function renderRiwayat(){
   var gerak='<div class="tbl"><table><thead><tr><th>Unit kerja</th><th class="n">Pagu</th><th class="n">s.d. periode lalu</th><th class="n">%</th><th class="n">Periode ini</th><th class="n">s.d. '+tgl(cur)+'</th><th class="n">%</th><th class="n">Kenaikan</th></tr></thead><tbody>'+
     gu.map(function(g){ var p0=g.pagu?g.lalu/g.pagu:0; return '<tr><td><span class="note">'+esc(g.key.split('|')[0])+'</span> <b>'+esc(g.key.split('|')[1])+'</b></td><td class="n">'+rp(g.pagu)+'</td><td class="n">'+rp(g.lalu)+'</td><td class="n">'+pc(p0)+'</td><td class="n">'+rp(g.ini)+'</td><td class="n">'+rp(g.sd)+'</td><td class="n">'+pc(g.p)+'</td><td class="n">'+poin(g.p-p0)+'</td></tr>'; }).join('')+'</tbody></table></div>';
   var rev;
-  var older=ps.filter(function(p){return p.periode<cur;});
+  /* pembanding hanya dari tahun anggaran yang sama: DIPA tahun lalu bukan "revisi" dari DIPA tahun ini */
+  var th=cur.slice(0,4);
+  var older=ps.filter(function(p){return p.periode<cur && p.periode.slice(0,4)===th;});
   if (!older.length){
-    rev='<div class="empty">Belum ada posisi data sebelum '+tgl(cur)+'. Perbandingan revisi muncul otomatis setelah ada dua tanggal posisi.</div>';
+    rev='<div class="empty">Belum ada posisi data lain di tahun anggaran '+th+' sebelum '+tgl(cur)+'. Perbandingan revisi muncul otomatis setelah ada dua tanggal posisi dalam tahun anggaran yang sama.</div>';
   } else {
-    var p1=S.cmpP1 && S.cmpP1<cur ? S.cmpP1 : older[older.length-1].periode;
+    var p1=S.cmpP1 && S.cmpP1<cur && S.cmpP1.slice(0,4)===th ? S.cmpP1 : older[older.length-1].periode;
     rev='<div class="form noprint" style="margin-bottom:14px;max-width:560px"><label class="f" for="cmpP1">Dibandingkan dengan posisi<select id="cmpP1">'+older.slice().reverse().map(function(p){return '<option value="'+p.periode+'"'+(p.periode===p1?' selected':'')+'>'+tgl(p.periode)+'</option>';}).join('')+'</select></label><div class="note" style="padding-bottom:8px">Posisi terbaru: <b>'+tgl(cur)+'</b> (pilih di bagian atas)</div></div><div id="cmpBox"><div class="loading" style="padding:30px 0">Membandingkan…</div></div>';
     S.cmpWant={p1:p1,p2:cur};
   }

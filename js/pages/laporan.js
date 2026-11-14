@@ -1,8 +1,8 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF langsung (jsPDF) & Excel */
-import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611141419';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611141419';
-import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611141419';
-import { refresh } from '../nav.js?v=202611141419';
+import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611141458';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611141458';
+import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611141458';
+import { refresh } from '../nav.js?v=202611141458';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
@@ -71,7 +71,8 @@ export function renderLaporan(){
     '<fieldset class="lap-box"><legend>Pilihan Cetak</legend><div class="lap-rows">'+unitField()+'</div></fieldset>'+
     '<fieldset class="lap-box"><legend>Pilih Jenis, Level dan Periode</legend><div class="lap-rows">'+
       '<div class="lap-row" role="radiogroup" aria-labelledby="lapJenisLbl"><span class="lap-lbl" id="lapJenisLbl">Jenis laporan</span><div class="lap-radio">'+radio+'</div></div>'+
-      levelField(J)+'<label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></fieldset>'+
+      levelField(J)+'<label class="f" for="selTahun">Tahun anggaran<span id="lfTahunSlot"></span></label>'+
+      '<label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></fieldset>'+
     '<fieldset class="lap-box"><legend>Filter</legend><div class="lap-rows">'+chainFields()+'</div></fieldset>'+
     '<div class="tools lap-aksi"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
@@ -88,6 +89,8 @@ function bindLaporan(){
   if (lvlSel) lvlSel.onchange=function(){ levelIdx=+lvlSel.value; refresh(); };
   var periodeSel=document.getElementById('selPeriode'), slot=document.getElementById('lfPeriodeSlot');
   if (periodeSel && slot && !slot.contains(periodeSel)) slot.appendChild(periodeSel);
+  var tahunSel=document.getElementById('selTahun'), slotT=document.getElementById('lfTahunSlot');
+  if (tahunSel && slotT && !slotT.contains(tahunSel)) slotT.appendChild(tahunSel);
   var btnX=document.getElementById('btnUnduhExcel'); if (btnX) btnX.onclick=unduhExcel;
   var btnPdf=document.getElementById('btnLapPdf'); if (btnPdf) btnPdf.onclick=unduhPdf;
 }

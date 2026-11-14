@@ -1,12 +1,12 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611141419';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js?v=202611141419';
-import { SB, SBC, sbInit } from './api.js?v=202611141419';
-import { closeModal } from './ui-components.js?v=202611141419';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611141419';
-import { tampilMasuk } from './auth.js?v=202611141419';
-import { bukaUbahSandi } from './akun.js?v=202611141419';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611141419';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611141458';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js?v=202611141458';
+import { SB, SBC, sbInit } from './api.js?v=202611141458';
+import { closeModal } from './ui-components.js?v=202611141458';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611141458';
+import { tampilMasuk } from './auth.js?v=202611141458';
+import { bukaUbahSandi } from './akun.js?v=202611141458';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611141458';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -20,9 +20,16 @@ export function loadData(periode){
   $('page').innerHTML='<div class="loading">Memuat data posisi '+tgl(periode)+'…</div>';
   return SB.data(periode).then(function(d){ setData(d); S.open={}; refresh(); }).catch(function(e){ $('page').innerHTML='<div class="glass card">'+esc(errMsg(e))+'</div>'; });
 }
+/* pemilih Tahun Anggaran + Posisi data: daftar posisi hanya berisi tanggal di tahun anggaran terpilih,
+   berlabel tanggal lengkap agar beberapa unggahan dalam satu bulan bisa dibedakan */
+function tahunDari(p){ return String(p||'').slice(0,4); }
 export function fillPeriods(sel){
-  var ps=BOOT.periods;
-  $('selPeriode').innerHTML=ps.length?ps.slice().reverse().map(function(p){return '<option value="'+p.periode+'"'+(p.periode===sel?' selected':'')+'>'+blnTahun(p.periode)+'</option>';}).join(''):'<option>—</option>';
+  var ps=BOOT.periods, th=sel?tahunDari(sel):(ps.length?tahunDari(ps[ps.length-1].periode):'');
+  var tahun=[]; ps.forEach(function(p){ var y=tahunDari(p.periode); if(tahun.indexOf(y)<0) tahun.push(y); });
+  tahun.sort().reverse();
+  $('selTahun').innerHTML=tahun.length?tahun.map(function(y){ return '<option value="'+y+'"'+(y===th?' selected':'')+'>TA '+y+'</option>'; }).join(''):'<option>—</option>';
+  var dalam=ps.filter(function(p){ return tahunDari(p.periode)===th; });
+  $('selPeriode').innerHTML=dalam.length?dalam.slice().reverse().map(function(p){ return '<option value="'+p.periode+'"'+(p.periode===sel?' selected':'')+'>'+tgl(p.periode)+'</option>'; }).join(''):'<option>—</option>';
 }
 export function reboot(periode, keepPage){
   return SB.boot().then(function(b){
@@ -34,6 +41,12 @@ export function reboot(periode, keepPage){
   });
 }
 $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
+/* ganti tahun anggaran: langsung buka posisi terbaru di tahun itu */
+$('selTahun').onchange=function(){
+  var y=this.value, dalam=BOOT.periods.filter(function(p){ return tahunDari(p.periode)===y; });
+  if (!dalam.length) return;
+  var p=dalam[dalam.length-1].periode; S.cmp=null; S.cmpP1=null; fillPeriods(p); loadData(p);
+};
 $('btnFilterToggle').onclick=function(){ if (filterDrawerOpen()) closeFilterDrawer(); else openFilterDrawer(); };
 $('filtersBd').addEventListener('click',closeFilterDrawer);
 $('filters').addEventListener('click',function(e){ if (e.target.closest('[data-filter-close]')) closeFilterDrawer(); });
