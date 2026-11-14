@@ -104,7 +104,8 @@ export function refresh(){
     var n=activeFilterCount(), c=$('fcount');
     if (c){ c.hidden=!n; c.textContent=n; }
   }
-  $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
+  /* kotak judul halaman sudah tidak ada: judul halaman tampil di tab browser */
+  document.title=(p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t)+' · LENTERA';
   var toolsEl=$('pageTools');
   if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
   /* halaman Laporan meminjam pemilih posisi data ke formulirnya; kembalikan ke tempatnya sebelum isi halaman diganti */

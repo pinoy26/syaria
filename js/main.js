@@ -6,7 +6,7 @@ import { closeModal } from './ui-components.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 import { bukaUbahSandi } from './akun.js';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl, tampilTeksBerjalan } from './berita.js';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -86,7 +86,6 @@ export function mulai(){
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
     $('brandSub').textContent = (b.satker || '') + (b.kode ? ' · Satker ' + b.kode : '');
-    tampilTeksBerjalan(b.teksBerjalan);
     muatBeritaDasbor().then(bukaDariUrl);
     var ps = b.periods;
     fillPeriods(ps.length ? ps[ps.length - 1].periode : null);

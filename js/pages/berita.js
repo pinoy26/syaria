@@ -1,10 +1,10 @@
 /* js/pages/berita.js — Kelola Berita & Pengumuman (admin keuangan & super admin) */
 import { $, esc, toast, tanya, errMsg } from '../utils.js';
-import { S, BOOT, FAK_ORDER, isSuperAdmin } from '../state.js';
+import { S, FAK_ORDER } from '../state.js';
 import { card } from '../ui-components.js';
 import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js';
 import { refresh } from '../nav.js';
-import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor, tampilTeksBerjalan } from '../berita.js';
+import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js';
 
 /* list: semua berita; units: {kategori:[unit…]}; edit: berita yang sedang diubah (null = tulis baru); sasaran: [{kategori,unit}] */
 var K = { list: null, units: null, edit: null, sasaran: [], memuat: false };
@@ -44,11 +44,7 @@ function untukSiapa(b){
 export function renderKelolaBerita(){
   if (!K.list){ muat(); return '<div class="loading">Memuat berita…</div>'; }
   setTimeout(bind, 0);
-  var ticker = isSuperAdmin() ? card('b-ticker', 'Teks pengumuman berjalan',
-      'Tampil bergerak di judul setiap halaman dasbor (huruf merah, tebal, miring) untuk semua pengguna yang masuk. Kosongkan lalu simpan untuk menyembunyikannya.',
-      '<div class="b-form"><label class="f" for="tkTeks">Teks<input type="text" id="tkTeks" maxlength="300" placeholder="Contoh: Batas pengajuan SPM-LS tanggal 15 Desember 2026" value="' + esc((BOOT && BOOT.teksBerjalan) || '') + '"></label>' +
-      '<div class="tools"><button type="button" class="btn primary" id="tkSimpan">Simpan teks berjalan</button><button type="button" class="btn" id="tkHapus">Kosongkan</button></div></div>') : '';
-  return '<div class="page-sec grid">' + ticker +
+  return '<div class="page-sec grid">' +
     card('b-form', K.edit ? 'Ubah berita' : 'Tulis berita',
       'Berita <b>publik</b> tampil di halaman login dan bisa dibaca siapa saja — jangan cantumkan data anggaran internal. Berita <b>internal</b> hanya tampil setelah pengguna masuk.', formHtml()) +
     card('b-list', 'Daftar berita', 'Draf, berita terjadwal, dan berita kedaluwarsa hanya terlihat oleh admin.', listHtml()) + '</div>';
@@ -138,21 +134,7 @@ function cariBerita(id){ return K.list.filter(function(b){ return String(b.id) =
 function awalHari(s){ var a = s.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2]).toISOString(); }
 function akhirHari(s){ var a = s.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2], 23, 59, 59).toISOString(); }
 
-function bindTicker(){
-  if (!$('tkSimpan')) return;
-  var simpanTk = function(teks, btn){
-    btn.disabled = true;
-    SB.simpanTeksBerjalan(teks).then(function(){
-      btn.disabled = false; if (BOOT) BOOT.teksBerjalan = teks; tampilTeksBerjalan(teks);
-      if ($('tkTeks')) $('tkTeks').value = teks;
-      toast(teks ? 'Teks berjalan sudah tampil di judul halaman.' : 'Teks berjalan dikosongkan dan disembunyikan.', 'ok', teks ? 'Teks berjalan disimpan' : 'Teks berjalan dikosongkan');
-    }).catch(function(e){ btn.disabled = false; toast(errMsg(e), 'err', 'Gagal menyimpan teks berjalan'); });
-  };
-  $('tkSimpan').onclick = function(){ simpanTk($('tkTeks').value.replace(/\s+/g, ' ').trim(), this); };
-  $('tkHapus').onclick = function(){ simpanTk('', this); };
-}
 function bind(){
-  bindTicker();
   if (!$('bForm')) return;
   var publikChange = function(){ var pub = document.querySelector('input[name=bPublik]:checked').value === '1'; $('bSasaranWrap').hidden = pub; };
   [].forEach.call(document.querySelectorAll('input[name=bPublik]'), function(r){ r.onchange = publikChange; });
