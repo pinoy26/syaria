@@ -141,15 +141,21 @@ button.icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-widt
 .filters-hd{display:flex;align-items:center;justify-content:space-between}
 .filters-hd b{font-size:14.5px}
 .filters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 12px;align-items:end}
-.lap-box{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px;background:var(--glass)}
+/* Laporan: susunan ala SAKTI — bagian bertajuk tab, isian per baris (label kiri, pilihan kanan) */
+.lap-form{max-width:1040px;width:100%;margin-inline:auto;box-sizing:border-box}
+.lap-box{border:1px solid var(--line);border-radius:12px;padding:16px 18px 18px;margin:22px 0 0;background:var(--glass);min-width:0}
+.lap-box legend{font-size:13.5px;font-weight:700;color:var(--ink);padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--glass-strong)}
+.lap-rows{display:grid;gap:10px}
+.lap-form .lap-rows label.f,.lap-row{display:grid;grid-template-columns:minmax(140px,220px) minmax(0,1fr);align-items:center;gap:6px 16px}
+.lap-form .lap-rows label.f{font-size:13.5px;text-transform:none;letter-spacing:0;color:var(--ink);font-weight:600}
+.lap-lbl{font-size:13.5px;font-weight:600;color:var(--ink)}
+.lap-form .lap-rows select{width:100%;box-sizing:border-box;padding:9px 10px;font-size:13.5px}
+.lap-radio{display:flex;flex-wrap:wrap;gap:8px 22px}
+.lap-radio label{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink2)}
+.lap-radio input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.lap-aksi{margin-top:18px}
 .lap-prn{display:none}
-.lap-box .eyebrow{margin-bottom:12px}
-.lap-box .filters-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-.lap-periode-row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-.lap-radio{display:flex;flex-wrap:wrap;gap:10px 22px}
-.lap-radio label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2)}
-.lap-radio input{accent-color:var(--accent)}
-.lap-periode-row label.f{min-width:160px}
+@media (max-width:640px){ .lap-form .lap-rows label.f,.lap-row{grid-template-columns:minmax(0,1fr);gap:4px} .lap-box{padding:12px} }
 .filters-grid .wide{grid-column:span 2}
 .filters-actions{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-top:14px;border-top:1px solid var(--line)}
 @media (max-width:420px){ .filters-grid,.filters-grid .wide{grid-template-columns:minmax(0,1fr);grid-column:auto} }

@@ -1,5 +1,5 @@
 /* js/export.js — cetak kartu / laporan lengkap (cetak asli browser, bukan tangkapan layar) */
-import { $, toast } from './utils.js?v=202611141322';
+import { $, toast } from './utils.js?v=202611141356';
 
 /* ================= orientasi cetak dinamis ================= */
 function printStyleTag(){

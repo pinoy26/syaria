@@ -1,9 +1,9 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF (cetak asli browser) & Excel */
-import { esc } from '../utils.js?v=202611141322';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js?v=202611141322';
-import { treeCard, tree, printHead, LV, IC } from '../ui-components.js?v=202611141322';
-import { pdfCard } from '../export.js?v=202611141322';
-import { refresh } from '../nav.js?v=202611141322';
+import { esc } from '../utils.js?v=202611141356';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js?v=202611141356';
+import { treeCard, tree, printHead, LV, IC } from '../ui-components.js?v=202611141356';
+import { pdfCard } from '../export.js?v=202611141356';
+import { refresh } from '../nav.js?v=202611141356';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
@@ -67,12 +67,14 @@ export function renderLaporan(){
   var J=JENIS.filter(function(x){return x.id===active;})[0]||JENIS[0];
   var P=pilihLevel(J);
   var radio=JENIS.map(function(x){ return '<label><input type="radio" name="lapJenis" value="'+x.id+'"'+(x.id===active?' checked':'')+'>'+esc(x.t)+'</label>'; }).join('');
-  var form='<div class="glass card noprint"><div class="card-h"><div><h2>Laporan</h2><p>Pilih satuan kerja, jenis laporan, level, periode dan filter, lalu unduh.</p></div></div>'+
-    '<div class="lap-box"><div class="eyebrow">Pilihan Cetak</div><div class="filters-grid">'+unitField()+'</div></div>'+
-    '<div class="lap-box"><div class="eyebrow">Jenis Laporan &amp; Periode</div><div class="lap-radio">'+radio+'</div>'+
-      '<div class="lap-periode-row">'+levelField(J)+'<label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></div>'+
-    '<div class="lap-box"><div class="eyebrow">Filter</div><div class="filters-grid">'+chainFields()+'</div></div>'+
-    '<div class="tools" style="margin-top:16px"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
+  /* susunan ala SAKTI: bagian bertajuk tab, tiap isian satu baris (label kiri, pilihan kanan), tersusun ke bawah */
+  var form='<div class="glass card noprint lap-form"><div class="card-h"><div><h2>Laporan</h2><p>Pilih satuan kerja, jenis laporan, level, periode dan filter, lalu unduh.</p></div></div>'+
+    '<fieldset class="lap-box"><legend>Pilihan Cetak</legend><div class="lap-rows">'+unitField()+'</div></fieldset>'+
+    '<fieldset class="lap-box"><legend>Pilih Jenis, Level dan Periode</legend><div class="lap-rows">'+
+      '<div class="lap-row" role="radiogroup" aria-labelledby="lapJenisLbl"><span class="lap-lbl" id="lapJenisLbl">Jenis laporan</span><div class="lap-radio">'+radio+'</div></div>'+
+      levelField(J)+'<label class="f" for="selPeriode">Posisi data<span id="lfPeriodeSlot"></span></label></div></fieldset>'+
+    '<fieldset class="lap-box"><legend>Filter</legend><div class="lap-rows">'+chainFields()+'</div></fieldset>'+
+    '<div class="tools lap-aksi"><button class="btn primary" type="button" id="btnLapPdf">'+IC.pdf+' Unduh PDF</button>'+
     '<button class="btn" type="button" id="btnUnduhExcel">'+IC.box+' Unduh Excel</button></div></div>';
   var prn='<section class="glass card lap-prn" id="lap-prn"><div class="card-h"><div><h2>'+esc(J.t)+'</h2><p>'+esc(J.sub)+'</p></div></div><div id="lapPrnBody"></div></section>';
   setTimeout(bindLaporan,0);
