@@ -156,6 +156,16 @@ export function muatBeritaLogin(){
   }).catch(function(){ /* berita gagal dimuat: halaman login tetap berfungsi seperti biasa */ });
 }
 
+/* ================= teks pengumuman berjalan di judul halaman dasbor ================= */
+export function tampilTeksBerjalan(teks){
+  var box = $('ticker'), track = $('tickerTrack'); if (!box) return;
+  teks = String(teks || '').replace(/\s+/g, ' ').trim();
+  box.hidden = !teks;
+  track.textContent = teks;
+  /* kecepatan baca tetap: makin panjang teks makin lama satu putaran (12–90 detik) */
+  track.style.setProperty('--dur', Math.min(90, Math.max(12, teks.length * 0.22)).toFixed(1) + 's');
+}
+
 /* ================= dasbor: lonceng berisi semua berita yang tayang ================= */
 var DASBOR = { items: [] };
 export function muatBeritaDasbor(){

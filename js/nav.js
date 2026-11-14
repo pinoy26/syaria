@@ -84,7 +84,6 @@ export function refresh(){
     if (c){ c.hidden=!n; c.textContent=n; }
   }
   $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
-  $('crumb').textContent=p.g+' · '+BOOT.satker;
   var toolsEl=$('pageTools');
   if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
   $('page').innerHTML=p.r();
