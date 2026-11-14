@@ -631,11 +631,8 @@ tr.b-sedang td{background:var(--accent-soft)}
 
 /* ================= header atas & menu horizontal (menggantikan sidebar) ================= */
 /* header menempel di atas saat digulir (sticky), selebar layar, warna solid */
-:root{--tb-bg:#0b4a58;--tb-gold:#f2b33d}
-:root[data-theme="dark"]{--tb-bg:#0a2f39}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--tb-bg:#0a2f39} }
 html{scroll-padding-top:84px}
-.topbar{position:sticky;top:0;z-index:30;margin:0 calc(-1 * var(--app-pad)) 18px;padding:calc(env(safe-area-inset-top,0px) + 10px) var(--app-pad) 10px;background:var(--tb-bg);color:#fff;border-bottom:2px solid var(--tb-gold);box-shadow:0 8px 22px -14px rgba(0,0,0,.55)}
+.topbar{position:sticky;top:0;z-index:30;margin:0 calc(-1 * var(--app-pad)) 18px;padding:calc(env(safe-area-inset-top,0px) + 10px) var(--app-pad) 10px;background:var(--glass-strong);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--glass-border);box-shadow:0 8px 22px -16px rgba(16,52,58,.45)}
 .tb-row{display:flex;align-items:center;gap:18px}
 .topbar .brand{padding:0;flex:none;min-width:0}
 .topbar .brand small{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -760,18 +757,17 @@ button.btn.lg-lupa{margin-top:12px}
 .lg-box .logo-deret-img{height:38px}
 @media (max-width:560px){ .logo-deret-img{height:40px} }
 
-/* isi header di atas latar solid gelap: teks & ikon putih, aksen emas */
-.topbar .brand b{color:#fff}
-.topbar .brand small{color:rgba(255,255,255,.72)}
-.topbar .hn-btn{color:rgba(255,255,255,.86)}
-.topbar .hn-btn:hover,.topbar .hn-btn[aria-expanded="true"]{background:rgba(255,255,255,.12);color:#fff}
-.topbar .hn-btn.on{color:#fff;background:rgba(255,255,255,.14);box-shadow:inset 0 -2px 0 var(--tb-gold)}
-.topbar .tb-tools button.icon{color:rgba(255,255,255,.82)}
-.topbar .tb-tools button.icon:hover{color:#fff;background:rgba(255,255,255,.12)}
-.topbar .tb-ubtn{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff}
-.topbar .tb-ubtn:hover{border-color:var(--tb-gold)}
-.topbar .tb-uname small{color:rgba(255,255,255,.7)}
-.topbar .who-av{background:var(--tb-gold);color:#3a2600}
-.topbar .nw-badge{box-shadow:0 0 0 2px var(--tb-bg)}
-.topbar :focus-visible{outline-color:var(--tb-gold)}
+/* ================= kartu Total Pagu (Ringkasan): warna solid, bukan kaca ================= */
+:root{--hero-bg:#0b4a58}
+:root[data-theme="dark"]{--hero-bg:#0a3540}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--hero-bg:#0a3540} }
+.hero.hero2{background:var(--hero-bg);border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px -24px rgba(6,40,48,.75)}
+/* warna terang hanya untuk isi kartu (tombol Filter & pemilih posisi di pojok tetap berwarna normal) */
+.hero2 .banner,.hero2 .gauge{--ink:#fff;--ink2:rgba(255,255,255,.84);--muted:rgba(255,255,255,.7);--line:rgba(255,255,255,.16);--track:rgba(255,255,255,.18);--accent:#f2b33d;--accent-soft:rgba(242,179,61,.2);--real:#6fdbe0}
+/* pakai ID agar mengalahkan aturan .banner mode gelap (:root[data-theme=dark] .banner) */
+#c-hero .banner{--bn-real:#14306a;--bn-real-ink:#fff;--bn-rest:#f2b33d;background:none;border:0;color:#fff}
+.hero2 .bn-sisa{color:#2a1d00}
+.hero2 .bn-box{box-shadow:0 14px 28px -16px rgba(0,0,0,.7)}
+.hero2 .bn-lock i{background:repeating-linear-gradient(45deg,#fff 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1.5px #fff}
+.hero2 .gauge-legend .sw.tick{background:#fff}
 
