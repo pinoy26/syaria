@@ -136,24 +136,23 @@ function bukaDaftar(items, judul, opsi){
   };
 }
 
-/* ================= halaman login: 5 berita publik terbaru ================= */
-var LOGIN_BATAS = 5;
-export function muatBeritaLogin(){
-  SB.beritaTayang(true, LOGIN_BATAS).then(function(r){
-    var host = $('gateNews');
-    if (!host || !r.items.length) return;
-    host.innerHTML = '<div class="gn-hd"><span class="eyebrow">Berita &amp; Pengumuman</span><h2 id="gnJudul">Informasi terbaru</h2></div>' +
-      '<div class="nw-list">' + r.items.map(function(b){ return itemHtml(b, false); }).join('') + '</div>' +
-      (r.total > r.items.length ? '<div class="tools nw-ft"><button type="button" class="btn" id="gnSemua">Lihat semua (' + r.total + ')</button></div>' : '');
-    host.hidden = false;
-    $('gate').classList.add('has-news');
+/* ================= beranda publik: 6 berita publik terbaru ================= */
+var BERANDA_BATAS = 6;
+export function muatBeritaBeranda(onAda){
+  SB.beritaTayang(true, BERANDA_BATAS).then(function(r){
+    var host = $('lpBerita'), sec = $('lpBeritaSec');
+    if (!host || !sec || !r.items.length) return;
+    host.innerHTML = '<div class="lp-nw">' + r.items.map(function(b){ return itemHtml(b, false); }).join('') + '</div>' +
+      (r.total > r.items.length ? '<div class="tools nw-ft lp-nw-ft"><button type="button" class="btn" id="lpSemua">Lihat semua (' + r.total + ')</button></div>' : '');
+    sec.hidden = false;
     bindItems(host, r.items, function(b, el){ bukaHalamanBerita(b, el); });
-    if ($('gnSemua')) $('gnSemua').onclick = function(){
+    if ($('lpSemua')) $('lpSemua').onclick = function(){
       var t = this; t.disabled = true;
       SB.beritaTayang(true).then(function(s){ t.disabled = false; bukaDaftar(s.items, 'Semua berita', { asal: t }); })
         .catch(function(e){ t.disabled = false; toast(errMsg(e), 'err', 'Berita gagal dimuat'); });
     };
-  }).catch(function(){ /* berita gagal dimuat: halaman login tetap berfungsi seperti biasa */ });
+    if (onAda) onAda();
+  }).catch(function(){ /* berita gagal dimuat: beranda tetap tampil tanpa bagian berita */ });
 }
 
 /* ================= teks pengumuman berjalan di judul halaman dasbor ================= */
@@ -167,12 +166,12 @@ export function tampilTeksBerjalan(teks){
 }
 
 /* ================= dasbor: lonceng berisi semua berita yang tayang ================= */
-var DASBOR = { items: [] };
+var DASBOR = { items: [], dimuat: false };
 export function muatBeritaDasbor(){
   RD.tandai = function(b){ tandaiDibaca([b.id]); tampilBel(); };
   return SB.beritaTayang(false).then(function(r){ DASBOR.items = r.items; })
     .catch(function(){ DASBOR.items = []; })
-    .then(tampilBel);
+    .then(function(){ DASBOR.dimuat = true; tampilBel(); isiPanelBerita(); });
 }
 function tampilBel(){
   var b = $('btnBerita'); if (!b) return;
@@ -182,4 +181,19 @@ function tampilBel(){
   var lbl = 'Berita & pengumuman' + (n ? ' (' + n + ' belum dibaca)' : '');
   b.setAttribute('aria-label', lbl); b.title = lbl;
 }
-export function bukaBeritaDasbor(){ bukaDaftar(DASBOR.items, 'Berita & pengumuman', { tandaiBaru: true, onBerubah: tampilBel, asal: $('btnBerita') }); }
+/* panel Berita & Pengumuman di sisi kanan Ringkasan: 5 berita teratas (yang disematkan lebih dulu) */
+var PANEL_BATAS = 5;
+export function isiPanelBerita(){
+  var h = $('rkBerita'); if (!h || !DASBOR.dimuat) return;
+  var list = DASBOR.items.slice(0, PANEL_BATAS);
+  if (!list.length){ h.innerHTML = '<div class="empty rk-kosong">Belum ada berita atau pengumuman.</div>'; return; }
+  h.innerHTML = '<div class="nw-list">' + list.map(function(b){ return itemHtml(b, !sudahDibaca(b.id)); }).join('') + '</div>' +
+    (DASBOR.items.length > PANEL_BATAS ? '<div class="tools nw-ft"><button type="button" class="btn" id="rkSemua">Lihat semua (' + DASBOR.items.length + ')</button></div>' : '');
+  bindItems(h, list, function(b, el){
+    tandaiDibaca([b.id]); tampilBel();
+    el.classList.remove('baru'); var d = el.querySelector('.nw-dot'); if (d) d.remove();
+    bukaHalamanBerita(b, el);
+  });
+  if ($('rkSemua')) $('rkSemua').onclick = bukaBeritaDasbor;
+}
+export function bukaBeritaDasbor(){ bukaDaftar(DASBOR.items, 'Berita & pengumuman', { tandaiBaru: true, onBerubah: function(){ tampilBel(); isiPanelBerita(); }, asal: $('btnBerita') }); }

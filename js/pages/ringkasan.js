@@ -72,8 +72,10 @@ export function renderRingkasan(){
   var typesBody='<div class="rz-list">'+byA2.map(function(g){
       return realRow(catSw(g.key)+'<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
     }).join('')+'</div>';
-  h+='<div class="two eq">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
-    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>';
+  /* dua sisi: kiri realisasi (sumber dana di atas, jenis belanja di bawah), kanan berita & pengumuman */
+  h+='<div class="rk-split"><div class="rk-main">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
+    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>'+
+    '<div class="rk-side noprint">'+card('c-berita','Berita &amp; Pengumuman','Informasi terbaru dari admin keuangan.','<div id="rkBerita"><div class="loading" style="padding:24px 0">Memuat berita…</div></div>','')+'</div></div>';
 
   var cells=[]; byA2.forEach(function(g){ ['RM','PNP'].forEach(function(s){ cells.push(sum(g.rows.filter(function(r){return r.sumber===s;}))); }); });
   var max=Math.max.apply(null,cells.map(function(c){return c.pagu;}).concat([1]));

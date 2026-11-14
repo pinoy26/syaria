@@ -37,17 +37,6 @@ $('selPeriode').onchange=function(){ S.cmp=null; loadData(this.value); };
 $('btnFilterToggle').onclick=function(){ if (filterDrawerOpen()) closeFilterDrawer(); else openFilterDrawer(); };
 $('filtersBd').addEventListener('click',closeFilterDrawer);
 $('filters').addEventListener('click',function(e){ if (e.target.closest('[data-filter-close]')) closeFilterDrawer(); });
-/* sidebar desktop: selalu tampil, bisa diciutkan jadi deret ikon (kelas awal dipasang skrip di <head> agar tak berkedip) */
-function setSideMini(mini){
-  document.documentElement.classList.toggle('side-mini',mini);
-  var b=$('btnSidePeek');
-  b.setAttribute('aria-expanded',mini?'false':'true');
-  b.setAttribute('aria-label',mini?'Lebarkan menu':'Ciutkan menu');
-  b.title=mini?'Lebarkan menu':'Ciutkan menu';
-  try { localStorage.setItem('dasbor-sidebar-mini', mini?'1':'0'); } catch(e){}
-}
-setSideMini(document.documentElement.classList.contains('side-mini'));
-$('btnSidePeek').onclick=function(){ setSideMini(!document.documentElement.classList.contains('side-mini')); };
 $('modalBd').addEventListener('click',closeModal);
 $('modal').addEventListener('click',function(e){
   if (e.target.closest('[data-modal-close]')) { closeModal(); return; }

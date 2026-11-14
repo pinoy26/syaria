@@ -1,32 +1,147 @@
-/* js/auth.js — halaman masuk (login gate) */
+/* js/auth.js — halaman depan publik (beranda) & halaman masuk.
+   Alur: beranda → tombol "Masuk" → halaman masuk (#masuk). Tombol kembali browser/HP kembali ke beranda. */
 import { $, esc, errMsg, perluKonfirmasi } from './utils.js';
-import { BOOT } from './state.js';
 import { THEME_BTN } from './theme.js';
 import { SBC } from './api.js';
 import { mulai } from './main.js';
-import { muatBeritaLogin } from './berita.js';
+import { muatBeritaBeranda } from './berita.js';
 
+var HASH_MASUK = '#masuk';
+var VIEW = '';
+var TAHUN = new Date().getFullYear();
+var MARK = '<div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>';
+var BRAND = '<div class="brand">' + MARK + '<div><b>Monitoring Anggaran</b><small>Dasbor Anggaran &amp; Realisasi</small></div></div>';
+var IC_PANAH = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+var IC_KEMBALI = '<svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>';
+
+var FITUR = [
+  ['Monitoring Realisasi', 'Pantau pagu, realisasi, dan sisa anggaran per sumber dana, jenis belanja, hingga unit kerja.',
+    '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>'],
+  ['Peringatan Dini', 'Tandai sub komponen yang belum terserap, realisasi melebihi pagu, dan capaian di bawah target waktu.',
+    '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>'],
+  ['Riwayat &amp; Revisi', 'Bandingkan pagu antarposisi data untuk melihat pergeseran anggaran akibat revisi DIPA dan POK.',
+    '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>'],
+  ['Laporan', 'Cetak dan unduh laporan realisasi yang siap pakai untuk pimpinan dan unit kerja.',
+    '<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>']
+];
+
+/* latar gambar utama beranda: panel kaca & grafik abstrak (digambar sendiri, bukan aset pihak lain) */
+var HERO_ART = '<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+  '<defs><linearGradient id="lpG1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe7e2" stop-opacity=".55"/><stop offset="1" stop-color="#4a8fd8" stop-opacity=".08"/></linearGradient>' +
+  '<linearGradient id="lpG2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".6"/><stop offset="1" stop-color="#ff9a6b" stop-opacity=".05"/></linearGradient></defs>' +
+  '<g transform="rotate(-18 520 300)">' +
+    '<rect x="380" y="40" width="300" height="300" rx="34" fill="url(#lpG1)" stroke="#bff6f2" stroke-opacity=".5"/>' +
+    '<rect x="470" y="170" width="300" height="300" rx="34" fill="url(#lpG1)" stroke="#bff6f2" stroke-opacity=".35"/>' +
+    '<rect x="560" y="-40" width="240" height="240" rx="30" fill="url(#lpG2)" stroke="#ffe3a8" stroke-opacity=".55"/>' +
+    '<rect x="300" y="300" width="220" height="220" rx="28" fill="url(#lpG1)" stroke="#bff6f2" stroke-opacity=".25"/>' +
+  '</g>' +
+  '<g opacity=".55" stroke="#e8fffd" stroke-width="3" fill="none" stroke-linecap="round"><path d="M430 470 L500 420 L560 440 L640 360 L720 380"/></g>' +
+  '<g fill="#e8fffd" opacity=".35"><rect x="452" y="500" width="22" height="50" rx="5"/><rect x="486" y="476" width="22" height="74" rx="5"/><rect x="520" y="456" width="22" height="94" rx="5"/><rect x="554" y="430" width="22" height="120" rx="5"/></g>' +
+'</svg>';
+
+/* ilustrasi panel kiri halaman masuk: kartu dasbor, grafik batang, donat, dokumen, koin Rp */
+var LOGIN_ART = '<svg viewBox="0 0 520 420" aria-hidden="true">' +
+  '<g transform="translate(40 30)">' +
+    '<rect x="20" y="40" width="300" height="200" rx="22" fill="#ffffff" fill-opacity=".14" stroke="#ffffff" stroke-opacity=".35"/>' +
+    '<rect x="44" y="64" width="120" height="12" rx="6" fill="#fff" fill-opacity=".55"/>' +
+    '<rect x="44" y="86" width="80" height="8" rx="4" fill="#fff" fill-opacity=".3"/>' +
+    '<g fill="#ffffff"><rect x="52" y="170" width="26" height="46" rx="6" fill-opacity=".45"/><rect x="92" y="146" width="26" height="70" rx="6" fill-opacity=".6"/><rect x="132" y="126" width="26" height="90" rx="6" fill-opacity=".75"/><rect x="172" y="108" width="26" height="108" rx="6" fill="#ffd166"/></g>' +
+    '<circle cx="262" cy="160" r="38" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="16"/>' +
+    '<circle cx="262" cy="160" r="38" fill="none" stroke="#ffd166" stroke-width="16" stroke-dasharray="170 239" transform="rotate(-90 262 160)" stroke-linecap="round"/>' +
+    '<rect x="250" y="210" width="200" height="140" rx="20" fill="#ffffff" fill-opacity=".9"/>' +
+    '<rect x="274" y="236" width="110" height="12" rx="6" fill="#0a6a70" fill-opacity=".8"/>' +
+    '<rect x="274" y="260" width="150" height="8" rx="4" fill="#0a6a70" fill-opacity=".3"/>' +
+    '<rect x="274" y="278" width="130" height="8" rx="4" fill="#0a6a70" fill-opacity=".3"/>' +
+    '<rect x="274" y="306" width="70" height="24" rx="12" fill="#0a6a70"/>' +
+    '<circle cx="70" cy="300" r="40" fill="#ffd166"/><circle cx="70" cy="300" r="31" fill="none" stroke="#e0a82e" stroke-width="3"/>' +
+    '<text x="70" y="311" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="28" fill="#9a6b00">Rp</text>' +
+    '<path d="M150 330 l26 -18 l20 12 l34 -30" stroke="#ffffff" stroke-opacity=".7" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '</g></svg>';
+
+/* ================= titik masuk ================= */
 export function tampilMasuk(catatan){
   $('app').hidden = true; $('boot').hidden = true; $('gate').hidden = false;
-  $('gate').classList.remove('has-news');
-  /* kartu login + kolom berita publik (kolom berita baru muncul bila ada berita yang tayang) */
+  if (catatan || location.hash === HASH_MASUK){
+    if (location.hash !== HASH_MASUK) history.replaceState({ gate: 'masuk' }, '', HASH_MASUK);
+    halamanMasuk(catatan);
+  } else halamanBeranda();
+}
+function keMasuk(){ history.pushState({ gate: 'masuk' }, '', HASH_MASUK); halamanMasuk(); }
+function keBeranda(){
+  if (history.state && history.state.gate === 'masuk' && history.length > 1) history.back();
+  else { history.replaceState(null, '', location.pathname + location.search); halamanBeranda(); }
+}
+window.addEventListener('popstate', function(){
+  if ($('gate').hidden) return;
+  if (location.hash === HASH_MASUK){ if (VIEW !== 'masuk') halamanMasuk(); }
+  else if (!/^#berita-\d+$/.test(location.hash) && VIEW !== 'beranda') halamanBeranda();
+});
+document.addEventListener('click', function(e){
+  if ($('gate').hidden) return;
+  if (e.target.closest('[data-ke-masuk]')) keMasuk();
+  else if (e.target.closest('[data-ke-beranda]')) keBeranda();
+});
+
+/* ================= beranda publik ================= */
+function halamanBeranda(){
+  VIEW = 'beranda';
   $('gate').innerHTML =
-    '<div class="glass gate">' + THEME_BTN +
-    '<div class="brand" style="justify-content:center;margin-bottom:14px"><div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>' +
-    '<div style="text-align:left"><b>Dasbor Anggaran</b><small>' + esc((BOOT && BOOT.satker) || 'Monitoring Anggaran & Realisasi') + '</small></div></div>' +
-    '<h2 style="margin:0 0 6px">Masuk</h2>' +
-    '<p class="note" style="margin:0 0 16px">' + esc(catatan || 'Masukkan email dan kata sandi yang diberikan admin keuangan.') + '</p>' +
-    '<form id="loginForm" style="display:grid;gap:12px;text-align:left">' +
-    '<label class="f" for="lgId">Email<input type="email" id="lgId" autocomplete="username" required></label>' +
-    '<label class="f" for="lgPw">Kata sandi<input type="password" id="lgPw" autocomplete="current-password" required></label>' +
-    '<button class="btn primary" type="submit" id="lgBtn" style="justify-content:center">Masuk</button>' +
-    '<div id="lgMsg" class="note"></div></form>' +
-    '<div class="tools" style="margin-top:14px;justify-content:center"><button class="btn" type="button" id="lgLupa">Lupa kata sandi</button></div>' +
-    '<p class="note" style="margin-top:14px">Belum punya akun? Akun dibuatkan oleh admin keuangan.</p></div>' +
-    '<section class="glass gate-news" id="gateNews" aria-labelledby="gnJudul" hidden></section>';
+    '<div class="lp">' +
+      '<header class="lp-top"><div class="lp-in">' + BRAND +
+        '<div class="lp-act">' + THEME_BTN + '<button type="button" class="btn primary lp-masuk" data-ke-masuk>Masuk' + IC_PANAH + '</button></div></div></header>' +
+      '<section class="lp-hero"><div class="lp-art">' + HERO_ART + '</div>' +
+        '<div class="lp-in lp-hero-in">' +
+          '<span class="lp-kicker">Dasbor Anggaran &amp; Realisasi Satker</span>' +
+          '<h1>Platform Terpadu untuk <em>Monitoring</em> Pagu, Realisasi, dan Revisi Anggaran</h1>' +
+          '<p>Data Laporan Ketersediaan Dana dan Rincian Kertas Kerja dari SAKTI diolah menjadi ringkasan yang mudah dibaca pimpinan dan unit kerja.</p>' +
+          '<div class="lp-cta"><button type="button" class="btn primary" data-ke-masuk>Masuk ke Dasbor' + IC_PANAH + '</button>' +
+            '<button type="button" class="btn lp-ghost" id="lpKeBerita" hidden>Berita terbaru</button></div>' +
+        '</div></section>' +
+      '<section class="lp-fitur" aria-label="Fitur"><div class="lp-in lp-grid">' + FITUR.map(function(f){
+          return '<div class="lp-f"><div class="lp-f-hd"><span class="lp-f-ic"><svg viewBox="0 0 24 24">' + f[2] + '</svg></span><h3>' + f[0] + '</h3></div><p>' + f[1] + '</p></div>';
+        }).join('') + '</div></section>' +
+      '<section class="lp-berita" id="lpBeritaSec" aria-labelledby="lpBeritaJudul" hidden><div class="lp-in">' +
+        '<div class="lp-sec-hd"><span class="eyebrow">Berita &amp; Pengumuman</span><h2 id="lpBeritaJudul">Informasi terbaru</h2></div>' +
+        '<div id="lpBerita"></div></div></section>' +
+      '<footer class="lp-foot"><div class="lp-in"><span>© ' + TAHUN + ' · Dasbor Anggaran &amp; Realisasi</span><span>Data bersumber dari SAKTI</span></div></footer>' +
+    '</div>';
+  window.scrollTo(0, 0);
+  muatBeritaBeranda(function(){
+    var b = $('lpKeBerita'); if (!b) return;
+    b.hidden = false; b.onclick = function(){ $('lpBeritaSec').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  });
+}
+
+/* ================= halaman masuk ================= */
+function halamanMasuk(catatan){
+  VIEW = 'masuk';
+  $('gate').innerHTML =
+    '<div class="lg">' +
+      '<aside class="lg-side"><div class="lg-side-in">' +
+        '<h1>Satu Dasbor untuk Seluruh Anggaran</h1>' +
+        '<p>Memantau pagu, realisasi, dan revisi anggaran satker dalam satu tempat.</p></div>' +
+        '<div class="lg-ilus">' + LOGIN_ART + '</div></aside>' +
+      '<main class="lg-main">' +
+        '<div class="lg-top"><button type="button" class="btn lg-back" data-ke-beranda>' + IC_KEMBALI + 'Beranda</button>' + THEME_BTN + '</div>' +
+        '<div class="lg-box">' + BRAND +
+          '<div class="lg-card">' +
+            '<h2>Masuk ke Dasbor</h2>' +
+            '<p class="note lg-note">' + esc(catatan || 'Masukkan email dan kata sandi yang diberikan admin keuangan.') + '</p>' +
+            '<form id="loginForm" class="lg-form">' +
+              '<label class="f" for="lgId">Email<input type="email" id="lgId" autocomplete="username" required></label>' +
+              '<label class="f" for="lgPw">Kata sandi<input type="password" id="lgPw" autocomplete="current-password" required></label>' +
+              '<button class="btn primary lg-btn" type="submit" id="lgBtn">Masuk</button>' +
+              '<div id="lgMsg" class="note" role="status" aria-live="polite"></div></form>' +
+            '<button class="btn lg-lupa" type="button" id="lgLupa">Lupa kata sandi</button>' +
+            '<p class="note lg-akun">Belum punya akun? Akun dibuatkan oleh admin keuangan.</p>' +
+          '</div>' +
+          '<p class="lg-foot">© ' + TAHUN + ' · Dasbor Anggaran &amp; Realisasi</p>' +
+        '</div></main>' +
+    '</div>';
+  window.scrollTo(0, 0);
   $('lgLupa').onclick = function(){
     var em = $('lgId').value.trim();
-    if (!em) { $('lgMsg').textContent = 'Isi email dulu, lalu klik Lupa kata sandi.'; return; }
+    if (!em) { $('lgMsg').textContent = 'Isi email dulu, lalu klik Lupa kata sandi.'; $('lgId').focus(); return; }
     SBC.auth.resetPasswordForEmail(em, { redirectTo: location.href.split('#')[0] })
       .then(function(r){ if (r.error) throw r.error; $('lgMsg').textContent = 'Tautan penggantian kata sandi dikirim ke ' + em + '. Bila tidak sampai, minta admin mengganti kata sandi Anda.'; })
       .catch(function(e){ $('lgMsg').textContent = errMsg(e); });
@@ -36,7 +151,9 @@ export function tampilMasuk(catatan){
     var b = $('lgBtn'); b.disabled = true; $('lgMsg').textContent = 'Memeriksa…';
     SBC.auth.signInWithPassword({ email: $('lgId').value.trim(), password: $('lgPw').value }).then(function(r){
       if (r.error) throw r.error;
-      $('gate').hidden = true; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
+      history.replaceState(null, '', location.pathname + location.search);
+      VIEW = '';
+      $('gate').hidden = true; $('gate').innerHTML = ''; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
       mulai();
     }).catch(function(x){
       b.disabled = false;
@@ -45,5 +162,4 @@ export function tampilMasuk(catatan){
     });
   };
   $('lgId').focus();
-  muatBeritaLogin();
 }
