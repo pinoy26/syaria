@@ -65,7 +65,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 .backdrop i:nth-child(3){width:46vw;height:46vw;left:28vw;bottom:-26vw;background:var(--blob3)}
 .backdrop svg{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
 
-.app{position:relative;z-index:1;max-width:98vw;margin:0 auto;padding-inline:clamp(20px,2.5vw,44px);padding-block:20px 48px}
+.app{--app-pad:clamp(20px,2.5vw,44px);position:relative;z-index:1;max-width:none;margin:0 auto;padding-inline:var(--app-pad);padding-block:0 48px}
 .glass{background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-radius:20px}
 
 .brand{display:flex;gap:11px;align-items:center;padding:0 6px}
@@ -450,7 +450,7 @@ button.btn.danger{background:var(--crit);color:#fff;border-color:var(--crit);box
 
 @media (max-width:1100px){.two,.two.eq,.three{grid-template-columns:minmax(0,1fr)}.hero,.hero.hero2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:900px){
-  .app{padding-inline:16px}
+  .app{--app-pad:16px}
   .side-host,.side-peek{display:none}
   .main{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px)}
   .bottomnav{display:flex}
@@ -630,7 +630,12 @@ tr.b-sedang td{background:var(--accent-soft)}
 @media print{ .modal,.modal-backdrop{display:none!important} }
 
 /* ================= header atas & menu horizontal (menggantikan sidebar) ================= */
-.topbar{position:relative;z-index:30;margin-bottom:18px;padding:10px 16px;border-radius:18px;background:var(--glass-strong)}
+/* header menempel di atas saat digulir (sticky), selebar layar, warna solid */
+:root{--tb-bg:#0b4a58;--tb-gold:#f2b33d}
+:root[data-theme="dark"]{--tb-bg:#0a2f39}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--tb-bg:#0a2f39} }
+html{scroll-padding-top:84px}
+.topbar{position:sticky;top:0;z-index:30;margin:0 calc(-1 * var(--app-pad)) 18px;padding:calc(env(safe-area-inset-top,0px) + 10px) var(--app-pad) 10px;background:var(--tb-bg);color:#fff;border-bottom:2px solid var(--tb-gold);box-shadow:0 8px 22px -14px rgba(0,0,0,.55)}
 .tb-row{display:flex;align-items:center;gap:18px}
 .topbar .brand{padding:0;flex:none;min-width:0}
 .topbar .brand small{display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -660,13 +665,13 @@ tr.b-sedang td{background:var(--accent-soft)}
 .tb-uinfo b{color:var(--ink);font-size:13px}
 .who-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:14px;flex:none}
 @media (max-width:1280px){ .tb-uname{display:none} .tb-ubtn{padding-right:8px} .hn-btn{padding:8px 9px} .topbar .brand small{display:none} }
-@media (max-width:900px){ .hnav,.tb-user{display:none} .topbar{padding:8px 12px;margin-bottom:14px} }
+@media (max-width:900px){ .hnav,.tb-user{display:none} .topbar{padding-block:calc(env(safe-area-inset-top,0px) + 8px) 8px;margin-bottom:14px} html{scroll-padding-top:70px} }
 @media print{ .topbar{display:none!important} }
 
 /* ================= Ringkasan: dua sisi (realisasi | berita) ================= */
 .rk-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:18px;align-items:start}
 .rk-main{display:grid;gap:18px;min-width:0}
-.rk-side{position:sticky;top:16px;min-width:0}
+.rk-side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);min-width:0}
 .rk-kosong{padding:20px 8px}
 @media (max-width:1100px){ .rk-split{grid-template-columns:minmax(0,1fr)} .rk-side{position:static} }
 @media print{ .rk-split{display:block} .rk-main{display:block} }
@@ -754,4 +759,19 @@ button.btn.lg-lupa{margin-top:12px}
 .lg-box .logo-deret{padding-block:4px}
 .lg-box .logo-deret-img{height:38px}
 @media (max-width:560px){ .logo-deret-img{height:40px} }
+
+/* isi header di atas latar solid gelap: teks & ikon putih, aksen emas */
+.topbar .brand b{color:#fff}
+.topbar .brand small{color:rgba(255,255,255,.72)}
+.topbar .hn-btn{color:rgba(255,255,255,.86)}
+.topbar .hn-btn:hover,.topbar .hn-btn[aria-expanded="true"]{background:rgba(255,255,255,.12);color:#fff}
+.topbar .hn-btn.on{color:#fff;background:rgba(255,255,255,.14);box-shadow:inset 0 -2px 0 var(--tb-gold)}
+.topbar .tb-tools button.icon{color:rgba(255,255,255,.82)}
+.topbar .tb-tools button.icon:hover{color:#fff;background:rgba(255,255,255,.12)}
+.topbar .tb-ubtn{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff}
+.topbar .tb-ubtn:hover{border-color:var(--tb-gold)}
+.topbar .tb-uname small{color:rgba(255,255,255,.7)}
+.topbar .who-av{background:var(--tb-gold);color:#3a2600}
+.topbar .nw-badge{box-shadow:0 0 0 2px var(--tb-bg)}
+.topbar :focus-visible{outline-color:var(--tb-gold)}
 

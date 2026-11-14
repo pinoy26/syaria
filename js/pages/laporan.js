@@ -1,9 +1,9 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF (cetak asli browser) & Excel */
-import { esc } from '../utils.js?v=202611141310';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js?v=202611141310';
-import { treeCard, tree, printHead, LV, IC } from '../ui-components.js?v=202611141310';
-import { pdfCard } from '../export.js?v=202611141310';
-import { refresh } from '../nav.js?v=202611141310';
+import { esc } from '../utils.js?v=202611141319';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, scoped, applyF, isUnitUser, sess, subName, rows } from '../state.js?v=202611141319';
+import { treeCard, tree, printHead, LV, IC } from '../ui-components.js?v=202611141319';
+import { pdfCard } from '../export.js?v=202611141319';
+import { refresh } from '../nav.js?v=202611141319';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
