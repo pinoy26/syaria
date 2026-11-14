@@ -9,8 +9,14 @@ import { muatBeritaBeranda } from './berita.js';
 var HASH_MASUK = '#masuk';
 var VIEW = '';
 var TAHUN = new Date().getFullYear();
-var MARK = '<div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l7-5 7 5v10"/><path d="M9 20v-5h6v5"/></svg></div>';
-var BRAND = '<div class="brand">' + MARK + '<div><b>Monitoring Anggaran</b><small>Dasbor Anggaran &amp; Realisasi</small></div></div>';
+/* logo aplikasi LENTERA (ikon lentera, dibuat sendiri) */
+var MARK = '<div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h6M12 2.5v2"/><path d="M8.5 6.5h7l1.5 2.5v8.5l-1.5 2.5h-7L7 17.5V9z"/><path d="M12 10.5c1.4 1.3 1.6 3.3 0 4.8-1.6-1.5-1.4-3.5 0-4.8z"/><path d="M9 22h6"/></svg></div>';
+var BRAND = '<div class="brand lentera">' + MARK + '<div><b>LENTERA</b><small>Layanan Perencanaan Anggaran Terintegrasi</small></div></div>';
+var TAGLINE = 'Menerangi Perencanaan, Menyatukan Anggaran';
+/* logo instansi: berkas resmi diletakkan di folder assets/ (disembunyikan otomatis bila belum ada) */
+function logo(file, alt, cls){ return '<img class="' + (cls || 'logo-inst') + '" src="assets/' + file + '" alt="' + alt + '" onerror="this.hidden=true">'; }
+var LOGO_INSTANSI = '<div class="tb-logos">' + logo('logo-kemenag.png', 'Kementerian Agama') + logo('logo-iain-ternate.png', 'IAIN Ternate') + '</div>';
+var LOGO_DERET = '<div class="logo-deret">' + logo('logo-kemenag.png', 'Kementerian Agama', 'logo-deret-img') + logo('logo-iain-ternate.png', 'IAIN Ternate', 'logo-deret-img') + logo('logo-pusaka.png', 'Pusaka Kementerian Agama', 'logo-deret-img') + logo('logo-kemenag-berdampak.png', 'Kemenag Berdampak', 'logo-deret-img') + '</div>';
 var IC_PANAH = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 var IC_KEMBALI = '<svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>';
 
@@ -87,14 +93,14 @@ function halamanBeranda(){
   VIEW = 'beranda';
   $('gate').innerHTML =
     '<div class="lp">' +
-      '<header class="lp-top"><div class="lp-in">' + BRAND +
+      '<header class="lp-top"><div class="lp-in"><div class="lp-id">' + LOGO_INSTANSI + BRAND + '</div>' +
         '<div class="lp-act">' + THEME_BTN + '<button type="button" class="btn primary lp-masuk" data-ke-masuk>Masuk' + IC_PANAH + '</button></div></div></header>' +
       '<section class="lp-hero"><div class="lp-art">' + HERO_ART + '</div>' +
         '<div class="lp-in lp-hero-in">' +
-          '<span class="lp-kicker">Dasbor Anggaran &amp; Realisasi Satker</span>' +
-          '<h1>Platform Terpadu untuk <em>Monitoring</em> Pagu, Realisasi, dan Revisi Anggaran</h1>' +
-          '<p>Data Laporan Ketersediaan Dana dan Rincian Kertas Kerja dari SAKTI diolah menjadi ringkasan yang mudah dibaca pimpinan dan unit kerja.</p>' +
-          '<div class="lp-cta"><button type="button" class="btn primary" data-ke-masuk>Masuk ke Dasbor' + IC_PANAH + '</button>' +
+          '<span class="lp-kicker">LENTERA · ' + TAGLINE + '</span>' +
+          '<h1>Layanan Perencanaan Anggaran Terintegrasi untuk <em>Monitoring</em> Pagu, Realisasi, dan Revisi</h1>' +
+          '<p>Data Laporan Ketersediaan Dana dan Rincian Kertas Kerja dari SAKTI diolah menjadi ringkasan yang mudah dibaca pimpinan dan unit kerja IAIN Ternate.</p>' +
+          '<div class="lp-cta"><button type="button" class="btn primary" data-ke-masuk>Masuk ke LENTERA' + IC_PANAH + '</button>' +
             '<button type="button" class="btn lp-ghost" id="lpKeBerita" hidden>Berita terbaru</button></div>' +
         '</div></section>' +
       '<section class="lp-fitur" aria-label="Fitur"><div class="lp-in lp-grid">' + FITUR.map(function(f){
@@ -103,7 +109,8 @@ function halamanBeranda(){
       '<section class="lp-berita" id="lpBeritaSec" aria-labelledby="lpBeritaJudul" hidden><div class="lp-in">' +
         '<div class="lp-sec-hd"><span class="eyebrow">Berita &amp; Pengumuman</span><h2 id="lpBeritaJudul">Informasi terbaru</h2></div>' +
         '<div id="lpBerita"></div></div></section>' +
-      '<footer class="lp-foot"><div class="lp-in"><span>© ' + TAHUN + ' · Dasbor Anggaran &amp; Realisasi</span><span>Data bersumber dari SAKTI</span></div></footer>' +
+      '<section class="lp-mitra"><div class="lp-in">' + LOGO_DERET + '</div></section>' +
+      '<footer class="lp-foot"><div class="lp-in"><span>© ' + TAHUN + ' · LENTERA — Layanan Perencanaan Anggaran Terintegrasi · IAIN Ternate</span><span>Data bersumber dari SAKTI</span></div></footer>' +
     '</div>';
   window.scrollTo(0, 0);
   muatBeritaBeranda(function(){
@@ -118,14 +125,14 @@ function halamanMasuk(catatan){
   $('gate').innerHTML =
     '<div class="lg">' +
       '<aside class="lg-side"><div class="lg-side-in">' +
-        '<h1>Satu Dasbor untuk Seluruh Anggaran</h1>' +
-        '<p>Memantau pagu, realisasi, dan revisi anggaran satker dalam satu tempat.</p></div>' +
+        '<h1>Menerangi Perencanaan, Menyatukan Anggaran</h1>' +
+        '<p>LENTERA — Layanan Perencanaan Anggaran Terintegrasi. Memantau pagu, realisasi, dan revisi anggaran dalam satu tempat.</p></div>' +
         '<div class="lg-ilus">' + LOGIN_ART + '</div></aside>' +
       '<main class="lg-main">' +
         '<div class="lg-top"><button type="button" class="btn lg-back" data-ke-beranda>' + IC_KEMBALI + 'Beranda</button>' + THEME_BTN + '</div>' +
-        '<div class="lg-box">' + BRAND +
+        '<div class="lg-box">' + LOGO_INSTANSI + BRAND +
           '<div class="lg-card">' +
-            '<h2>Masuk ke Dasbor</h2>' +
+            '<h2>Masuk ke LENTERA</h2>' +
             '<p class="note lg-note">' + esc(catatan || 'Masukkan email dan kata sandi yang diberikan admin keuangan.') + '</p>' +
             '<form id="loginForm" class="lg-form">' +
               '<label class="f" for="lgId">Email<input type="email" id="lgId" autocomplete="username" required></label>' +
@@ -135,7 +142,8 @@ function halamanMasuk(catatan){
             '<button class="btn lg-lupa" type="button" id="lgLupa">Lupa kata sandi</button>' +
             '<p class="note lg-akun">Belum punya akun? Akun dibuatkan oleh admin keuangan.</p>' +
           '</div>' +
-          '<p class="lg-foot">© ' + TAHUN + ' · Dasbor Anggaran &amp; Realisasi</p>' +
+          LOGO_DERET +
+          '<p class="lg-foot">© ' + TAHUN + ' · LENTERA · IAIN Ternate</p>' +
         '</div></main>' +
     '</div>';
   window.scrollTo(0, 0);

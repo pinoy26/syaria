@@ -48,10 +48,11 @@ export function renderNav(){
   }).join('');
   var s=sess(), role=ROLE_NAME[s.role]||'';
   var scopeNote=s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.';
-  /* menu pengguna di kanan atas */
+  /* kotak akun di kanan atas (nama + satker + ikon pengaturan), seperti susunan MyIntress */
+  var nama=(s.nama||s.email||'').toUpperCase(), sub=BOOT.kode?('SATKER - '+BOOT.kode):role;
   $('who').innerHTML='<button type="button" class="tb-ubtn" data-hn="user" aria-expanded="false" aria-haspopup="true" aria-label="Menu akun '+esc(s.email)+'">'+
-      '<span class="who-av" aria-hidden="true">'+esc((s.email||'?').charAt(0).toUpperCase())+'</span>'+
-      '<span class="tb-uname"><b>'+esc(role)+'</b><small>'+esc(s.email)+'</small></span>'+IC_CHEV+'</button>'+
+      '<span class="tb-uname"><b>'+esc(nama)+'</b><small>'+esc(sub)+'</small></span>'+
+      '<svg class="tb-gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>'+
     '<div class="hn-menu tb-umenu glass" hidden><div class="tb-uinfo"><b>'+esc(role)+'</b>'+esc(s.email)+'<span class="note">'+scopeNote+'</span></div>'+
       '<button type="button" data-pw><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></svg>Ubah sandi</button>'+
       '<button type="button" data-out><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>Keluar</button></div>';
@@ -83,6 +84,36 @@ document.addEventListener('click',function(e){
   if (!e.target.closest('.hn-menu') || e.target.closest('button')) tutupMenu();
 });
 document.addEventListener('keydown',function(e){ if (e.key==='Escape') tutupMenu(); });
+/* ================= cari menu di header ================= */
+function halamanTerlihat(){ return PAGES.filter(function(p){ return (!p.admin||isAdmin()) && (!p.superadmin||isSuperAdmin()) && (DB||p.noData); }); }
+export function tutupCariMenu(){ var h=$('cariHasil'), i=$('cariMenu'); if(h) h.hidden=true; if(i){ i.value=''; i.setAttribute('aria-expanded','false'); } }
+(function(){
+  var inp=$('cariMenu'), box=$('cariHasil'); if(!inp||!box) return;
+  inp.setAttribute('aria-controls','cariHasil'); inp.setAttribute('aria-expanded','false');
+  var tampil=function(){
+    var q=inp.value.trim().toLowerCase();
+    if (!q){ box.hidden=true; inp.setAttribute('aria-expanded','false'); return; }
+    var hasil=halamanTerlihat().filter(function(p){ return (p.t+' '+p.g).toLowerCase().indexOf(q)>=0; }).slice(0,8);
+    box.innerHTML=hasil.length
+      ? hasil.map(function(p){ return '<button type="button" data-page="'+p.id+'"><svg viewBox="0 0 24 24">'+p.ic+'</svg><span>'+esc(p.t)+'<small>'+esc(p.g)+'</small></span></button>'; }).join('')
+      : '<div class="tb-kosong">Menu "'+esc(inp.value.trim())+'" tidak ditemukan.</div>';
+    box.hidden=false; inp.setAttribute('aria-expanded','true');
+  };
+  inp.addEventListener('input',tampil);
+  inp.addEventListener('focus',tampil);
+  inp.addEventListener('keydown',function(e){
+    if (e.key==='Enter'){ e.preventDefault(); var b=box.querySelector('[data-page]'); if(b) b.click(); }
+    else if (e.key==='Escape') tutupCariMenu();
+    else if (e.key==='ArrowDown'){ var f=box.querySelector('button'); if(f){ e.preventDefault(); f.focus(); } }
+  });
+  box.addEventListener('keydown',function(e){
+    var bs=[].slice.call(box.querySelectorAll('button')), i=bs.indexOf(document.activeElement);
+    if (e.key==='ArrowDown' && i<bs.length-1){ e.preventDefault(); bs[i+1].focus(); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); if(i>0) bs[i-1].focus(); else inp.focus(); }
+    else if (e.key==='Escape'){ tutupCariMenu(); inp.focus(); }
+  });
+  document.addEventListener('click',function(e){ if(!e.target.closest('.tb-cari')) { box.hidden=true; inp.setAttribute('aria-expanded','false'); } });
+})();
 export function openFilterDrawer(){ $('filters').hidden=false; $('filtersBd').hidden=false; requestAnimationFrame(function(){ $('filters').classList.add('open'); $('filtersBd').classList.add('open'); }); var b=$('btnFilterToggle'); if(b){ b.setAttribute('aria-expanded','true'); b.classList.add('on'); } }
 export function closeFilterDrawer(){ $('filters').classList.remove('open'); $('filtersBd').classList.remove('open'); setTimeout(function(){ $('filters').hidden=true; $('filtersBd').hidden=true; },220); var b=$('btnFilterToggle'); if(b){ b.setAttribute('aria-expanded','false'); b.classList.remove('on'); } }
 export function filterDrawerOpen(){ return $('filters').classList.contains('open'); }
@@ -104,9 +135,13 @@ export function refresh(){
     var n=activeFilterCount(), c=$('fcount');
     if (c){ c.hidden=!n; c.textContent=n; }
   }
-  $('pageTitle').textContent=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
+  var judulHal=p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t;
+  document.title=judulHal+' · LENTERA';
   var toolsEl=$('pageTools');
   if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
+  /* halaman Laporan meminjam pemilih posisi data ke formulirnya; kembalikan ke header sebelum isi halaman diganti */
+  var selP=$('selPeriode'), rumahP=document.querySelector('.tb-periode');
+  if (selP && rumahP && !rumahP.contains(selP)) rumahP.appendChild(selP);
   $('page').innerHTML=p.r();
   var pg=$('page');
   var firstHd=pg.querySelector('.card-h');
