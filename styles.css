@@ -625,32 +625,13 @@ textarea{font-size:13.5px;line-height:1.55;resize:vertical;min-height:120px}
 .nw-ring{font-size:12.5px;color:var(--ink2);line-height:1.45}
 .nw-ft{margin-top:12px}
 
-/* isi berita (jendela) */
-.nw-back{margin-bottom:10px;padding:5px 12px 5px 8px}
-.modal-hd .nw-meta{margin-bottom:4px}
-.nw-isi{white-space:pre-line;line-height:1.6;font-size:14px;overflow-wrap:anywhere}
-.nw-tautan{margin:12px 0 0}
-.nw-foto{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px}
-.nw-ph{display:block;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--track);aspect-ratio:4/3}
-.nw-ph img{width:100%;height:100%;object-fit:cover;display:block}
-.nw-dok{margin:14px 0 0;padding-left:18px;display:grid;gap:6px;font-size:13px}
 
-/* lonceng di judul halaman & banner di Ringkasan */
+/* lonceng di judul halaman */
 .page-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .pt-txt{min-width:0}
 .nw-bell{position:relative;flex:none;width:40px;height:40px}
 .nw-bell svg{width:20px;height:20px}
 .nw-badge{position:absolute;top:2px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--crit);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;line-height:1}
-.nw-banners{display:grid;gap:8px}
-.nw-banner{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--glass-strong)}
-.nw-banner.nw-penting{border-left-color:var(--crit)}
-.nw-banner.nw-tenggat{border-left-color:var(--warn)}
-.nw-banner-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;padding:0}
-.nw-banner-txt b{font-size:14px}
-.nw-banner-txt span{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nw-banner-txt:hover b{color:var(--accent)}
-@media (max-width:640px){ .nw-banner{flex-wrap:wrap} .nw-banner-txt{flex-basis:100%;order:2} .nw-banner .icon{margin-left:auto} }
-
 /* Kelola Berita */
 .b-form{display:grid;gap:14px}
 .b-box{border:1px solid var(--line);border-radius:14px;padding:10px 14px 14px;margin:0;display:grid;gap:8px;min-width:0}
@@ -668,4 +649,29 @@ label.chk input{margin:3px 0 0;accent-color:var(--accent);flex:none}
 .b-lamp li .btn{padding:4px 10px;font-size:12px;flex:none}
 tr.b-sedang td{background:var(--accent-soft)}
 @media (max-width:640px){ .b-sasaran{padding-left:0} }
+
+/* halaman baca berita: menutupi seluruh layar (di atas dasbor/login), halaman di bawahnya tetap utuh */
+.reader{position:fixed;inset:0;z-index:58;overflow-y:auto;overscroll-behavior:contain;background:var(--ground);padding:0 16px calc(32px + env(safe-area-inset-bottom,0px))}
+:root.reader-open{overflow:hidden}
+:root.reader-open body{overflow:hidden}
+.rd-bar{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:12px;max-width:820px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 0 12px;background:var(--ground)}
+.rd-bar .btn{padding:7px 14px 7px 10px}
+.rd-brand{flex:1;text-align:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rd-art{max-width:820px;margin:0 auto;padding:28px clamp(18px,4vw,40px) 32px}
+.rd-art h1{margin:10px 0 18px;font-size:clamp(22px,3vw,30px);line-height:1.25;font-weight:800;letter-spacing:-.02em;text-wrap:balance;overflow-wrap:anywhere}
+.rd-isi{white-space:pre-line;font-size:15.5px;line-height:1.75;overflow-wrap:anywhere;max-width:70ch}
+.rd-tautan{margin:18px 0 0;font-size:14.5px}
+.rd-sub{margin:26px 0 10px}
+.rd-foto{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.rd-ph{display:block;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--track);aspect-ratio:4/3}
+.rd-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.rd-ph:hover img{transform:scale(1.03)}
+.rd-dok{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rd-file{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--glass-strong);color:var(--ink);text-decoration:none}
+.rd-file:hover{border-color:var(--accent)}
+.rd-file svg{width:26px;height:26px;flex:none;stroke:var(--crit);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rd-file span{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
+.rd-file small{color:var(--muted);font-size:12px}
+@media (max-width:640px){ .rd-brand{display:none} .rd-bar{justify-content:space-between} .rd-art{padding:20px 18px 24px} .rd-isi{font-size:15px} }
+@media print{ .reader{display:none!important} }
 

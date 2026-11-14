@@ -4,7 +4,7 @@ import { S, FAK_ORDER } from '../state.js';
 import { card } from '../ui-components.js';
 import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js';
 import { refresh } from '../nav.js';
-import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaBerita, muatBeritaDasbor } from '../berita.js';
+import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js';
 
 /* list: semua berita; units: {kategori:[unit…]}; edit: berita yang sedang diubah (null = tulis baru); sasaran: [{kategori,unit}] */
 var K = { list: null, units: null, edit: null, sasaran: [], memuat: false };
@@ -89,7 +89,7 @@ function formHtml(){
         '<div id="bChips" class="b-chips"></div>' +
       '</div>' +
     '</fieldset>' +
-    '<label class="chk"><input type="checkbox" id="bSemat"' + (b.disematkan ? ' checked' : '') + '><span>Sematkan — tampil paling atas dan sebagai banner di halaman Ringkasan</span></label>' +
+    '<label class="chk"><input type="checkbox" id="bSemat"' + (b.disematkan ? ' checked' : '') + '><span>Sematkan — tampil paling atas di daftar berita</span></label>' +
     '<fieldset class="b-box"><legend class="eyebrow">Lampiran</legend>' +
       (lamp ? '<ul class="b-lamp" id="bLampLama">' + lamp + '</ul>' : '') +
       '<label class="f" for="bFile">Tambah PDF atau foto (JPG, PNG, WEBP) · maks. 10 MB per berkas<input type="file" id="bFile" multiple accept="application/pdf,image/jpeg,image/png,image/webp"></label>' +
@@ -166,7 +166,7 @@ function bind(){
       toast('Lampiran dihapus.', 'ok');
     }).catch(function(e){ b.disabled = false; toast('Gagal menghapus lampiran: ' + errMsg(e), 'err'); });
   }; });
-  [].forEach.call(document.querySelectorAll('[data-blihat]'), function(b){ b.onclick = function(){ var x = cariBerita(b.getAttribute('data-blihat')); if (x) bukaBerita(x); }; });
+  [].forEach.call(document.querySelectorAll('[data-blihat]'), function(b){ b.onclick = function(){ var x = cariBerita(b.getAttribute('data-blihat')); if (x) bukaHalamanBerita(x, b); }; });
   [].forEach.call(document.querySelectorAll('[data-bedit]'), function(b){ b.onclick = function(){
     var x = cariBerita(b.getAttribute('data-bedit')); if (!x) return;
     K.edit = JSON.parse(JSON.stringify(x)); K.sasaran = x.sasaran.map(function(s){ return { kategori: s.kategori, unit: s.unit || '' }; });

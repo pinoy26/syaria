@@ -12,7 +12,7 @@ import { renderPerhatian } from './pages/perhatian.js';
 import { renderKelola, renderKelolaUser } from './pages/kelola.js';
 import { renderLaporan } from './pages/laporan.js';
 import { renderKelolaBerita } from './pages/berita.js';
-import { tampilBanner, IC_BERITA } from './berita.js';
+import { IC_BERITA } from './berita.js';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -104,7 +104,6 @@ export function refresh(){
   [].forEach.call(pg.querySelectorAll('[data-pdf]'),function(b){ b.onclick=function(){ pdfCard(b.getAttribute('data-pdf'),b.getAttribute('data-title')); }; });
   [].forEach.call(pg.querySelectorAll('[data-printall]'),function(b){ b.onclick=printAll; });
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
-  tampilBanner();
   if (p.after) p.after();
 }
 export function keepScroll(){ var y=window.scrollY; refresh(); window.scrollTo(0,y); }

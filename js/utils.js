@@ -46,6 +46,8 @@ export function errMsg(e){
     'requires reauthentication': 'Demi keamanan, silakan keluar lalu masuk kembali, kemudian ulangi ubah kata sandi.',
     'Email rate limit exceeded': 'Batas pengiriman email Supabase tercapai. Coba lagi nanti atau matikan konfirmasi email.',
     'Signups not allowed for this instance': 'Pendaftaran mandiri sedang dimatikan. Hubungi admin keuangan.',
+    'permission denied for table': 'Akses ditolak database — biasanya karena sesi login sudah berakhir. Silakan keluar lalu masuk kembali, kemudian ulangi.',
+    'JWT expired': 'Sesi login Anda sudah berakhir. Silakan masuk kembali, lalu ulangi.',
     'Failed to fetch': 'Tidak bisa menghubungi server. Periksa koneksi internet dan isi config.js.'
   };
   for (var k in peta) if (m.indexOf(k) >= 0) return peta[k];

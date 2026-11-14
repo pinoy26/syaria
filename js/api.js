@@ -277,6 +277,12 @@ SB.beritaTayang = function(publikSaja, batas){
     return { items: (r.data || []).map(rapikanBerita), total: r.count || 0 };
   });
 };
+/* satu berita menurut id (untuk tautan langsung #berita-<id>); null bila tidak ada / tidak boleh dibaca */
+SB.beritaSatu = function(id){
+  return SBC.from('pengumuman').select(BERITA_KOLOM).eq('id', id).maybeSingle().then(function(r){
+    if (r.error) throw r.error; return r.data ? rapikanBerita(r.data) : null;
+  });
+};
 /* semua berita termasuk draf & kedaluwarsa (admin) */
 SB.beritaKelola = function(){
   return SBC.from('pengumuman').select(BERITA_KOLOM + ',pengumuman_sasaran(kategori,unit)')
@@ -287,8 +293,18 @@ SB.beritaKelola = function(){
 SB.refUnit = function(){
   return SBC.from('ref_unit').select('kategori,unit').then(function(r){ if (r.error) throw r.error; return r.data || []; });
 };
+/* pastikan masih ada sesi login sebelum menulis; tanpa sesi, permintaan terkirim sebagai pengunjung anonim
+   dan database menolaknya dengan pesan teknis "permission denied" */
+function pastikanSesi(){
+  return SBC.auth.getSession().then(function(r){
+    if (!r.data || !r.data.session) throw new Error('Sesi login Anda sudah berakhir. Silakan masuk kembali, lalu ulangi.');
+  });
+}
 /* simpan berita (baru bila id kosong) lalu ganti daftar sasarannya; mengembalikan id */
 SB.simpanBerita = function(id, data, sasaran){
+  return pastikanSesi().then(function(){ return simpanBerita(id, data, sasaran); });
+};
+function simpanBerita(id, data, sasaran){
   var q = id ? SBC.from('pengumuman').update(data).eq('id', id).select('id').single()
              : SBC.from('pengumuman').insert(data).select('id').single();
   return q.then(function(r){
@@ -301,14 +317,14 @@ SB.simpanBerita = function(id, data, sasaran){
         .then(function(i){ if (i.error) throw i.error; return pid; });
     });
   });
-};
+}
 SB.unggahLampiran = function(pid, file, urutan){
   var ext = LAMPIRAN_TIPE[file.type];
   if (!ext) return Promise.reject(new Error(file.name + ': hanya PDF, JPG, PNG, atau WEBP yang diterima.'));
   if (file.size > LAMPIRAN_MAKS) return Promise.reject(new Error(file.name + ': ukuran lebih dari 10 MB.'));
   var path = pid + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + '.' + ext;
   var bucket = SBC.storage.from('pengumuman');
-  return bucket.upload(path, file, { contentType: file.type, upsert: false }).then(function(u){
+  return pastikanSesi().then(function(){ return bucket.upload(path, file, { contentType: file.type, upsert: false }); }).then(function(u){
     if (u.error) throw u.error;
     return SBC.from('pengumuman_lampiran').insert({ pengumuman_id: pid, path: path, nama: file.name.slice(0, 200), mime: file.type, ukuran: file.size, urutan: urutan || 0 })
       .then(function(r){ if (r.error){ bucket.remove([path]); throw r.error; } });
@@ -316,14 +332,15 @@ SB.unggahLampiran = function(pid, file, urutan){
 };
 /* berkas dihapus dulu dari Storage, baru datanya — agar tidak ada berkas yatim */
 SB.hapusLampiran = function(l){
-  return SBC.storage.from('pengumuman').remove([l.path]).then(function(s){
+  return pastikanSesi().then(function(){ return SBC.storage.from('pengumuman').remove([l.path]).then(function(s){
     if (s.error) throw s.error;
     return SBC.from('pengumuman_lampiran').delete().eq('id', l.id).then(function(r){ if (r.error) throw r.error; });
+  });
   });
 };
 SB.hapusBerita = function(b){
   var paths = (b.lampiran || []).map(function(l){ return l.path; });
-  var p = paths.length ? SBC.storage.from('pengumuman').remove(paths).then(function(s){ if (s.error) throw s.error; }) : Promise.resolve();
+  var p = pastikanSesi().then(function(){ return paths.length ? SBC.storage.from('pengumuman').remove(paths).then(function(s){ if (s.error) throw s.error; }) : null; });
   return p.then(function(){ return SBC.from('pengumuman').delete().eq('id', b.id); }).then(function(r){ if (r.error) throw r.error; });
 };
 /* tautan sementara (1 jam) untuk membuka lampiran; hanya terbit bila RLS mengizinkan pembaca */

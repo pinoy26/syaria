@@ -6,7 +6,7 @@ import { closeModal } from './ui-components.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 import { bukaUbahSandi } from './akun.js';
-import { muatBeritaDasbor, bukaBeritaDasbor } from './berita.js';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -87,7 +87,7 @@ export function mulai(){
     $('boot').hidden = true;
     setBoot(b);
     if (!b.session.allowed){
-      if (!b.session.email) { tampilMasuk(); return; }
+      if (!b.session.email) { tampilMasuk(); bukaDariUrl(); return; }
       tampilMasuk(b.session.tanpaCakupan
         ? 'Akun ' + b.session.email + ' sudah aktif tetapi belum diberi cakupan unit. Hubungi admin keuangan.'
         : 'Akun ' + b.session.email + ' belum diaktifkan admin keuangan.');
@@ -97,7 +97,7 @@ export function mulai(){
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
     $('brandSub').textContent = (b.satker || '') + (b.kode ? ' · Satker ' + b.kode : '');
-    muatBeritaDasbor();
+    muatBeritaDasbor().then(bukaDariUrl);
     var ps = b.periods;
     fillPeriods(ps.length ? ps[ps.length - 1].periode : null);
     if (!ps.length) { setDB(null); refresh(); return; }
@@ -108,4 +108,11 @@ export function mulai(){
   });
 }
 
-if (sbInit()) mulai();
+if (sbInit()){
+  /* sesi berakhir/gagal diperpanjang saat dasbor terbuka: kembali ke halaman login alih-alih
+     diam-diam mengirim permintaan sebagai pengunjung anonim */
+  SBC.auth.onAuthStateChange(function(ev){
+    if (ev === 'SIGNED_OUT' && !$('app').hidden){ closeModal(); tampilMasuk('Sesi Anda sudah berakhir. Silakan masuk kembali.'); }
+  });
+  mulai();
+}
