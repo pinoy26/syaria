@@ -1,18 +1,18 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js';
-import { THEME_BTN } from './theme.js';
-import { renderFilters } from './filters.js';
-import { pdfCard, printCard, printAll } from './export.js';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js';
-import { renderPerhatian } from './pages/perhatian.js';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js';
-import { renderLaporan } from './pages/laporan.js';
-import { renderKelolaBerita } from './pages/berita.js';
-import { IC_BERITA, isiPanelBerita } from './berita.js';
+import { $, esc } from './utils.js?v=202611141310';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611141310';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611141310';
+import { THEME_BTN } from './theme.js?v=202611141310';
+import { renderFilters } from './filters.js?v=202611141310';
+import { pdfCard, printCard, printAll } from './export.js?v=202611141310';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611141310';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611141310';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611141310';
+import { renderPerhatian } from './pages/perhatian.js?v=202611141310';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611141310';
+import { renderLaporan } from './pages/laporan.js?v=202611141310';
+import { renderKelolaBerita } from './pages/berita.js?v=202611141310';
+import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611141310';
 
 /* ================= navigasi ================= */
 export var PAGES=[

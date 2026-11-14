@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js';
-import { S, FAK_ORDER, DB, sess } from '../state.js';
-import { card, openModal } from '../ui-components.js';
-import { SB } from '../api.js';
-import { refresh } from '../nav.js';
-import { reboot, loadData } from '../main.js';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141310';
+import { S, FAK_ORDER, DB, sess } from '../state.js?v=202611141310';
+import { card, openModal } from '../ui-components.js?v=202611141310';
+import { SB } from '../api.js?v=202611141310';
+import { refresh } from '../nav.js?v=202611141310';
+import { reboot, loadData } from '../main.js?v=202611141310';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141310';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){

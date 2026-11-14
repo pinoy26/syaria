@@ -1,7 +1,7 @@
 /* js/filters.js — panel filter cakupan data */
-import { $, esc } from './utils.js';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, scoped, applyF, isUnitUser, sess, A2, A3, EMPTY_F, subName } from './state.js';
-import { refresh } from './nav.js';
+import { $, esc } from './utils.js?v=202611141310';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, scoped, applyF, isUnitUser, sess, A2, A3, EMPTY_F, subName } from './state.js?v=202611141310';
+import { refresh } from './nav.js?v=202611141310';
 
 function optName(k,v,r){
   var m={prog:D.program,keg:D.kegiatan,kro:D.kro,ro:D.ro,komp:D.komp}[k];

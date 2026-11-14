@@ -34,6 +34,16 @@ python3 -m http.server 8000
 
 lalu buka `http://localhost:8000`.
 
+## Sebelum commit: perbarui penanda versi
+
+GitHub Pages menyimpan berkas di cache browser hingga 10 menit. Agar pengguna tidak mendapat campuran `index.html` baru dengan modul JS lama (bisa memicu error), setiap rujukan berkas JS/CSS lokal diberi penanda versi `?v=...`. Jalankan ini **setiap kali sebelum commit** yang mengubah JS/CSS:
+
+```bash
+python3 scripts/versi.py
+```
+
+Skrip memasang versi yang sama (tanggal-jam) di `index.html` dan di semua `import` antarmodul. Jangan menulis `?v=` secara manual — setiap modul harus dirujuk dengan versi yang persis sama di semua tempat.
+
 ## Konfigurasi Supabase
 
 Isi [config.js](config.js) dengan data project Supabase Anda (Supabase → Project Settings → API):
