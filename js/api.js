@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611141458';
-import { parseRealisasi, parseRKK } from './parser.js?v=202611141458';
+import { BOOT } from './state.js?v=202611141509';
+import { parseRealisasi, parseRKK } from './parser.js?v=202611141509';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -134,16 +134,17 @@ function bandingBlok(a, b){
 }
 
 /* ---------- unggah file SAKTI ---------- */
-SB.unggah = function(jenis, tanggal, namaFile, rowsX){
+SB.unggah = function(jenis, tanggal, namaFile, rowsX, tahun){
   if (jenis === 'RKK'){
     var k = parseRKK(rowsX);
     var baris = Object.keys(k.map).map(function(key){
       var p = key.split('|');
       return { kunci: key, prog: p[0], kro: p[1], ro: p[2], sub: p[3], akun: p[4], sumber: k.map[key] };
     });
-    return SBC.rpc('simpan_rkk', { p_rows: baris }).then(function(r){
+    /* RKK SAKTI tidak memuat tahun anggaran: tahun dipilih admin; hanya pemetaan tahun itu yang diganti */
+    return SBC.rpc('simpan_rkk', { p_rows: baris, p_tahun: tahun }).then(function(r){
       if (r.error) throw r.error;
-      return { ok: true, pesan: 'Sumber dana diperbarui dari RKK: ' + (r.data.jumlah || baris.length) + ' akun. ' +
+      return { ok: true, pesan: 'Sumber dana TA ' + ((r.data && r.data.tahun) || tahun) + ' diperbarui dari RKK: ' + (r.data.jumlah || baris.length) + ' akun. ' +
         'Klik "Terapkan ke posisi terbaru" bila data realisasi sudah pernah diunggah.' };
     });
   }
@@ -187,7 +188,8 @@ SB.adminInfo = function(){
           file: x.nama_file, jumlah: x.jumlah_detail, pagu: x.pagu, sd: x.realisasi,
           persen: x.pagu ? x.realisasi / x.pagu : 0, cekPagu: x.cek_pagu, cekReal: x.cek_realisasi };
       }),
-      rules: (r[1].data || []).map(function(x){ return [x.kro, x.komponen, x.jenis_aturan, x.kode, x.kategori, x.unit, x.keterangan]; }),
+      /* indeks 0–6 dipakai juga oleh Kelola Pengguna (kategori=4, unit=5); tahun anggaran aturan di indeks 7 */
+      rules: (r[1].data || []).map(function(x){ return [x.kro, x.komponen, x.jenis_aturan, x.kode, x.kategori, x.unit, x.keterangan, x.tahun]; }),
       users: (r[2].data || []).map(function(u){
         var c = cak[u.id] || [];
         return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
@@ -242,6 +244,13 @@ SB.aturSandi = function(id, password){
       throw new Error(r.error.message);
     }
     return { ok: true, pesan: (r.data && r.data.pesan) || 'Kata sandi diganti.' };
+  });
+};
+/* salin aturan unit kerja ke tahun anggaran baru (titik awal yang bisa diubah) */
+SB.salinAturanUnit = function(dari, ke){
+  return SBC.rpc('salin_aturan_unit', { p_dari: dari, p_ke: ke }).then(function(r){
+    if (r.error) throw r.error;
+    return { ok: true, pesan: r.data.baris + ' aturan unit kerja TA ' + dari + ' disalin ke TA ' + ke + '. Ubah di sheet Ref_Unit bila ada perubahan pemilik kode.' };
   });
 };
 SB.aktifkan = function(id, aktif){

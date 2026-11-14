@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141458';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141458';
-import { card, openModal } from '../ui-components.js?v=202611141458';
-import { SB } from '../api.js?v=202611141458';
-import { refresh } from '../nav.js?v=202611141458';
-import { reboot, loadData } from '../main.js?v=202611141458';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141458';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141509';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141509';
+import { card, openModal } from '../ui-components.js?v=202611141509';
+import { SB } from '../api.js?v=202611141509';
+import { refresh } from '../nav.js?v=202611141509';
+import { reboot, loadData } from '../main.js?v=202611141509';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141509';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -21,14 +21,22 @@ export function renderKelola(){
   var thAktif=A.periods.length?String(A.periods[A.periods.length-1].periode).slice(0,4):'';
   var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (sumber dana)</option></select></label>'+
     '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi data<input type="date" id="upTgl"></label>'+
+    '<label class="f" for="upTahun" id="upTahunWrap" hidden>Tahun anggaran RKK<input type="number" id="upTahun" min="2000" max="2100" step="1" inputmode="numeric"></label>'+
     '<label class="f" for="upFile">File Excel (.xlsx / .xls)<input type="file" id="upFile" accept=".xlsx,.xls"></label>'+
     '<div><button class="btn primary" type="button" id="btnUp">Unggah &amp; proses</button></div></div><div id="upMsg" class="status-box" role="status" aria-live="polite" hidden></div>'+
-    '<p class="note">Setelah revisi DIPA/POK: unggah RKK terlebih dahulu, lalu Laporan Ketersediaan Dana. Mengunggah ulang tanggal yang sama akan menggantikan data tanggal tersebut.</p>';
+    '<p class="note">Setelah revisi DIPA/POK: unggah RKK terlebih dahulu, lalu Laporan Ketersediaan Dana. Mengunggah ulang tanggal yang sama akan menggantikan data tanggal tersebut. <b>Awal tahun anggaran baru:</b> unggah RKK dengan tahun anggaran baru sebelum data realisasi pertama tahun itu; RKK tahun lain tidak ikut berubah.</p>';
   var log='<div class="tbl"><table><thead><tr><th>Posisi</th><th>Diunggah</th><th>File</th><th class="n">Detail</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th><th>Cek</th><th></th></tr></thead><tbody>'+
     A.periods.slice().reverse().map(function(p){ var ok=Number(p.cekPagu)===0&&Number(p.cekReal)===0&&p.cekPagu!==''; return '<tr><td><b>'+tgl(p.periode)+'</b></td><td>'+esc(p.diunggah)+'<br><span class="note">'+esc(p.pengunggah)+'</span></td><td>'+esc(p.file)+'</td><td class="n">'+rp(p.jumlah)+'</td><td class="n">'+rp(p.pagu)+'</td><td class="n">'+rp(p.sd)+'</td><td class="n">'+pc(p.persen)+'</td><td><span class="pill '+(ok?'st-good':'st-crit')+'"><i></i>'+(ok?'Cocok':'Periksa')+'</span></td><td><button class="btn" type="button" data-delp="'+p.periode+'">Hapus</button></td></tr>'; }).join('')+'</tbody></table></div>';
-  var rules='<div class="tbl"><table><thead><tr><th>KRO</th><th>Komponen</th><th>Jenis aturan</th><th>Kode</th><th>Kategori</th><th>Unit</th><th>Keterangan</th></tr></thead><tbody>'+
+  /* aturan unit kerja per tahun anggaran: tahun data terbaru belum punya aturan sendiri → tawarkan salin */
+  var thAturan=[]; A.rules.forEach(function(r){ if(r[7]!=null && thAturan.indexOf(+r[7])<0) thAturan.push(+r[7]); }); thAturan.sort();
+  var maxAturan=thAturan.length?thAturan[thAturan.length-1]:null, thNum=+thAktif||null;
+  var salinKe=maxAturan==null?null:(thNum && thAturan.indexOf(thNum)<0 ? thNum : maxAturan+1), salinDari=maxAturan;
+  var infoAturan=(thNum && maxAturan!=null && thAturan.indexOf(thNum)<0)
+    ? '<div class="status-box s-err" style="margin-bottom:12px">Aturan unit kerja TA '+thNum+' belum ada — pemetaan data TA '+thNum+' sementara memakai aturan TA '+maxAturan+'. Salin aturan agar bisa disesuaikan untuk TA '+thNum+'.</div>' : '';
+  var rules=infoAturan+'<div class="tbl"><table><thead><tr><th>KRO</th><th>Komponen</th><th>Jenis aturan</th><th>Kode</th><th>Kategori</th><th>Unit</th><th>Keterangan</th><th>TA</th></tr></thead><tbody>'+
     A.rules.map(function(r){ return '<tr>'+r.map(function(c,i){ return '<td'+(i===3?' class="code"':'')+'>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'+
-    '<div class="tools" style="margin-top:12px"><a class="link" href="'+esc(A.sheetUrl)+'" target="_blank" rel="noopener">Ubah aturan di sheet Ref_Unit ›</a><button class="btn" type="button" id="btnRemap">Terapkan ke posisi terbaru</button><button class="btn" type="button" id="btnRemapAll">Terapkan ke semua posisi TA '+thAktif+'</button></div>'+
+    '<div class="tools" style="margin-top:12px"><a class="link" href="'+esc(A.sheetUrl)+'" target="_blank" rel="noopener">Ubah aturan di sheet Ref_Unit ›</a><button class="btn" type="button" id="btnRemap">Terapkan ke posisi terbaru</button><button class="btn" type="button" id="btnRemapAll">Terapkan ke semua posisi TA '+thAktif+'</button>'+
+      (salinKe?'<button class="btn" type="button" id="btnSalinAturan" data-dari="'+salinDari+'" data-ke="'+salinKe+'">Salin aturan TA '+salinDari+' ke TA '+salinKe+'</button>':'')+'</div>'+
     '<p class="note">Urutan: kode lengkap → huruf pertama → komponen → selain itu Rektorat. Terapkan ke semua posisi hanya untuk memperbaiki salah pemetaan dan hanya berlaku untuk tahun anggaran '+thAktif+' — data tahun anggaran sebelumnya tidak ikut diubah. Perubahan pemilik kode setelah revisi cukup berlaku untuk posisi terbaru.</p><div id="mapMsg" class="note"></div>';
   setTimeout(bindKelolaData,0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
@@ -39,7 +47,16 @@ function bindKelolaData(){
   if (!$('btnUp')) return;
   var today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
   $('upTgl').value=today;
-  $('upJenis').onchange=function(){ $('upTglWrap').hidden=this.value==='RKK'; };
+  $('upTahun').value=new Date().getFullYear();
+  $('upJenis').onchange=function(){ var rkk=this.value==='RKK'; $('upTglWrap').hidden=rkk; $('upTahunWrap').hidden=!rkk; };
+  if ($('btnSalinAturan')) $('btnSalinAturan').onclick=function(){
+    var b=this, dari=+b.dataset.dari, ke=+b.dataset.ke;
+    tanya({ judul:'Salin aturan unit kerja ke TA '+ke+'?', pesan:'Semua aturan unit kerja TA '+dari+' disalin menjadi aturan TA '+ke+'. Setelah itu aturan TA '+ke+' bisa diubah tanpa memengaruhi data TA '+dari+'.', ya:'Salin', bahaya:false }).then(function(ya){
+      if(!ya) return; b.disabled=true;
+      SB.salinAturanUnit(dari,ke).then(function(r){ toast(r.pesan,'ok','Aturan unit kerja disalin'); S.admin=null; refresh(); })
+        .catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menyalin aturan'); });
+    });
+  };
   $('btnUp').onclick=doUpload;
   [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){ b.onclick=function(){
     tanya({ judul:'Hapus data posisi '+tgl(b.dataset.delp)+'?', pesan:'Seluruh data realisasi pada tanggal posisi ini akan dihapus. Tindakan ini tidak bisa dibatalkan.', ya:'Hapus' }).then(function(ya){
@@ -76,9 +93,10 @@ function upBerhasil(r, namaFile){
     '<p class="note" style="margin:0">'+esc(namaFile)+'</p>'+daftar('Sub komponen baru dibanding posisi sebelumnya',r.subBaru)+daftar('Catatan pembacaan',r.peringatan)));
 }
 function doUpload(){
-  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value;
+  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value, tahun=parseInt($('upTahun').value,10);
   if (!f){ upStatus('err','Pilih file Excel terlebih dahulu.'); return; }
   if (jenis==='REALISASI' && !tg){ upStatus('err','Isi tanggal posisi data.'); return; }
+  if (jenis==='RKK' && !(tahun>=2000 && tahun<=2100)){ upStatus('err','Isi tahun anggaran RKK, misalnya '+new Date().getFullYear()+'.'); return; }
   if (typeof XLSX==='undefined'){ upGagal('Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
   upButton(true); upStatus('busy','Membaca file '+f.name+'…');
   var rd=new FileReader();
@@ -88,7 +106,7 @@ function doUpload(){
       var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       var rowsX=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''}).map(function(r){ var k=r.length; while(k>0&&r[k-1]==='') k--; return r.slice(0,k); });
       upStatus('busy','Memproses '+rp(rowsX.length)+' baris di server… Mohon tunggu, jangan tutup halaman ini.');
-      SB.unggah(jenis,tg,f.name,rowsX).then(function(r){
+      SB.unggah(jenis,tg,f.name,rowsX,tahun).then(function(r){
         upButton(false); upStatus('ok',r.pesan||'File berhasil diproses.');
         var inp=$('upFile'); if(inp) inp.value='';
         upBerhasil(r, f.name);
