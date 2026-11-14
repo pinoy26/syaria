@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141509';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141509';
-import { card, openModal } from '../ui-components.js?v=202611141509';
-import { SB } from '../api.js?v=202611141509';
-import { refresh } from '../nav.js?v=202611141509';
-import { reboot, loadData } from '../main.js?v=202611141509';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141509';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141514';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141514';
+import { card, openModal } from '../ui-components.js?v=202611141514';
+import { SB } from '../api.js?v=202611141514';
+import { refresh } from '../nav.js?v=202611141514';
+import { reboot, loadData } from '../main.js?v=202611141514';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141514';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -41,10 +41,37 @@ export function renderKelola(){
   setTimeout(bindKelolaData,0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
     card('k-log','Riwayat unggahan','Cek harus "Cocok": total detail sama dengan baris JUMLAH SELURUHNYA pada laporan.',log)+
+    card('k-arsip','Arsip tahun anggaran','Tahun anggaran yang sudah selesai cukup menyimpan satu posisi per bulan untuk menghemat ruang database.',arsipHtml(A,thAktif))+
     card('k-rule','Aturan unit kerja','Menentukan Fakultas/Rektorat setiap sub komponen.',rules)+'</div>';
+}
+/* pratinjau rapikan arsip per tahun anggaran lama (sebelum tahun data terbaru) */
+var KB_PER_BARIS=0.65; /* ukuran rata-rata satu baris realisasi beserta indeksnya (terukur ±0,65 KB) */
+function arsipHtml(A,thAktif){
+  var th=+thAktif, perTahun={};
+  A.periods.forEach(function(p){ var y=+String(p.periode).slice(0,4); (perTahun[y]=perTahun[y]||[]).push(p); });
+  var lama=Object.keys(perTahun).map(Number).filter(function(y){ return th && y<th; }).sort();
+  var catatan='<p class="note">Untuk tahun anggaran yang sudah selesai, posisi terakhir di setiap bulan (termasuk posisi akhir Desember) disisakan; posisi lain di tahun itu dihapus permanen. Tahun anggaran berjalan (TA '+(th||'—')+') tidak bisa dirapikan.</p>';
+  if (!lama.length) return '<div class="empty">Belum ada tahun anggaran yang selesai. Fitur ini aktif setelah data tahun anggaran berikutnya diunggah'+(th?' (mulai TA '+(th+1)+')':'')+'.</div>'+catatan;
+  return '<div class="tbl"><table><thead><tr><th>Tahun anggaran</th><th class="n">Posisi tersimpan</th><th class="n">Disisakan (akhir bulan)</th><th class="n">Akan dihapus</th><th class="n">Perkiraan ruang dihemat</th><th></th></tr></thead><tbody>'+
+    lama.map(function(y){
+      var ps=perTahun[y], akhir={};
+      ps.forEach(function(p){ var m=String(p.periode).slice(0,7); if(!akhir[m]||p.periode>akhir[m]) akhir[m]=p.periode; });
+      var sisa=Object.keys(akhir).length, hapus=ps.filter(function(p){ return akhir[String(p.periode).slice(0,7)]!==p.periode; });
+      var baris=hapus.reduce(function(a,p){ return a+(+p.jumlah||0); },0), mb=baris*KB_PER_BARIS/1024;
+      return '<tr><td><b>TA '+y+'</b></td><td class="n">'+ps.length+'</td><td class="n">'+sisa+'</td><td class="n">'+hapus.length+' posisi · '+rp(baris)+' baris</td><td class="n">± '+mb.toLocaleString('id-ID',{maximumFractionDigits:1})+' MB</td><td>'+
+        (hapus.length?'<button class="btn" type="button" data-arsip="'+y+'" data-n="'+hapus.length+'" data-sisa="'+sisa+'">Rapikan TA '+y+'</button>':'<span class="note">Sudah rapi</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+catatan;
 }
 function bindKelolaData(){
   if (!$('btnUp')) return;
+  [].forEach.call(document.querySelectorAll('[data-arsip]'),function(b){ b.onclick=function(){
+    var y=+b.dataset.arsip;
+    tanya({ judul:'Rapikan arsip TA '+y+'?', pesan:b.dataset.n+' posisi data TA '+y+' akan dihapus permanen. Yang disisakan: '+b.dataset.sisa+' posisi akhir bulan. Tindakan ini tidak bisa dibatalkan.', ya:'Rapikan arsip' }).then(function(ya){
+      if(!ya) return; b.disabled=true;
+      SB.rapikanArsip(y).then(function(r){ toast(r.pesan,'ok','Arsip dirapikan'); S.admin=null; S.trend={}; S.cmp=null; reboot(); })
+        .catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal merapikan arsip'); });
+    });
+  }; });
   var today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
   $('upTgl').value=today;
   $('upTahun').value=new Date().getFullYear();

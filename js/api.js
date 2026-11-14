@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611141509';
-import { parseRealisasi, parseRKK } from './parser.js?v=202611141509';
+import { BOOT } from './state.js?v=202611141514';
+import { parseRealisasi, parseRKK } from './parser.js?v=202611141514';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -251,6 +251,14 @@ SB.salinAturanUnit = function(dari, ke){
   return SBC.rpc('salin_aturan_unit', { p_dari: dari, p_ke: ke }).then(function(r){
     if (r.error) throw r.error;
     return { ok: true, pesan: r.data.baris + ' aturan unit kerja TA ' + dari + ' disalin ke TA ' + ke + '. Ubah di sheet Ref_Unit bila ada perubahan pemilik kode.' };
+  });
+};
+/* rapikan arsip tahun anggaran yang sudah selesai: sisakan posisi terakhir tiap bulan */
+SB.rapikanArsip = function(tahun){
+  return SBC.rpc('rapikan_arsip', { p_tahun: tahun }).then(function(r){
+    if (r.error) throw r.error;
+    var d = r.data || {};
+    return { ok: true, pesan: 'Arsip TA ' + d.tahun + ' dirapikan: ' + d.posisi_dihapus + ' posisi (' + d.baris_dihapus + ' baris) dihapus, ' + d.posisi_disisakan + ' posisi akhir bulan disisakan.' };
   });
 };
 SB.aktifkan = function(id, aktif){
