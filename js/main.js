@@ -1,12 +1,12 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611141413';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js?v=202611141413';
-import { SB, SBC, sbInit } from './api.js?v=202611141413';
-import { closeModal } from './ui-components.js?v=202611141413';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611141413';
-import { tampilMasuk } from './auth.js?v=202611141413';
-import { bukaUbahSandi } from './akun.js?v=202611141413';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611141413';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611141419';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js?v=202611141419';
+import { SB, SBC, sbInit } from './api.js?v=202611141419';
+import { closeModal } from './ui-components.js?v=202611141419';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611141419';
+import { tampilMasuk } from './auth.js?v=202611141419';
+import { bukaUbahSandi } from './akun.js?v=202611141419';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611141419';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));

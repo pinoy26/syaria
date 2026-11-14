@@ -1,8 +1,8 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF langsung (jsPDF) & Excel */
-import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611141413';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611141413';
-import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611141413';
-import { refresh } from '../nav.js?v=202611141413';
+import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611141419';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611141419';
+import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611141419';
+import { refresh } from '../nav.js?v=202611141419';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
@@ -134,8 +134,7 @@ function kopPdf(doc, judul){
   doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
   doc.text(polos((BOOT&&BOOT.satker)||'').toUpperCase(), 36, 34);
   doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-  /* font standar PDF hanya aman untuk karakter dasar: pakai '-' dan '|' alih-alih tanda pisah panjang / titik tengah */
-  doc.text('LENTERA - Layanan Perencanaan Anggaran Terintegrasi'+((BOOT&&BOOT.kode)?'  |  Satker '+BOOT.kode:''), 36, 47);
+  if (BOOT && BOOT.kode) doc.text('Kode Satker '+BOOT.kode, 36, 47);
   doc.setDrawColor(150); doc.setLineWidth(.6); doc.line(36, 56, W-36, 56);
   doc.setFont('helvetica','bold'); doc.setFontSize(12);
   doc.text(judul.toUpperCase(), W/2, 78, {align:'center'});
@@ -209,16 +208,18 @@ function matriksSumberDana(R){
 function pdfSumberDana(doc, J, R){
   var M=matriksSumberDana(R), KET='PAGU\nREALISASI\n%\nSISA';
   var isi=function(t){ return rp(t.pagu)+'\n'+rp(t.sd)+'\n'+pct(t.p)+'\n'+rp(t.sisa); };
-  var lebarJ=Math.max(70, Math.min(120, 420/Math.max(1,M.jenis.length)));
-  var cs={0:{halign:'center',cellWidth:26},1:{cellWidth:120},2:{cellWidth:62}}, akhir=3+M.jenis.length;
+  /* tabel selebar halaman: kolom tetap untuk NO/nama/keterangan, sisa lebar dibagi rata ke kolom jenis belanja & total */
+  var lebarHal=doc.internal.pageSize.getWidth()-72, tetap=30+170+80, akhir=3+M.jenis.length;
+  var lebarJ=(lebarHal-tetap)/(M.jenis.length+1);
+  var cs={0:{halign:'center',cellWidth:30},1:{cellWidth:170},2:{cellWidth:80}};
   M.jenis.forEach(function(_,i){ cs[3+i]={halign:'right',cellWidth:lebarJ}; });
-  cs[akhir]={halign:'right',cellWidth:86};
+  cs[akhir]={halign:'right',cellWidth:lebarJ};
   doc.autoTable(gaya({
     head:[[{content:'NO',rowSpan:2},{content:'(Kode) Sumber Dana',rowSpan:2},{content:'Keterangan',rowSpan:2},{content:'Jenis Belanja',colSpan:M.jenis.length},{content:'Total',rowSpan:2}],
           M.namaJenis],
     body:M.baris.map(function(b){ return [String(b.no), b.nama, KET].concat(b.sel.map(isi)).concat([isi(b.total)]); }),
     foot:[[{content:'GRAND TOTAL',colSpan:2,styles:{halign:'center',valign:'middle'}}, KET].concat(M.grand.sel.map(isi)).concat([isi(M.grand.total)])],
-    showFoot:'lastPage', columnStyles:cs, tableWidth:'wrap',
+    showFoot:'lastPage', columnStyles:cs, tableWidth:lebarHal,
     styles:{font:'helvetica',fontSize:8,cellPadding:4,lineColor:[170,170,170],lineWidth:.4,textColor:20,valign:'middle'},
     didParseCell:function(c){ if (c.section==='foot' && c.column.index>=3) c.cell.styles.halign='right'; },
     didDrawPage:function(){ kopPdf(doc, 'Realisasi Belanja per Sumber Dana'); }

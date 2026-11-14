@@ -1,10 +1,10 @@
 /* js/auth.js — halaman depan publik (beranda) & halaman masuk.
    Alur: beranda → tombol "Masuk" → halaman masuk (#masuk). Tombol kembali browser/HP kembali ke beranda. */
-import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611141413';
-import { THEME_BTN } from './theme.js?v=202611141413';
-import { SBC } from './api.js?v=202611141413';
-import { mulai } from './main.js?v=202611141413';
-import { muatBeritaBeranda } from './berita.js?v=202611141413';
+import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611141419';
+import { THEME_BTN } from './theme.js?v=202611141419';
+import { SBC } from './api.js?v=202611141419';
+import { mulai } from './main.js?v=202611141419';
+import { muatBeritaBeranda } from './berita.js?v=202611141419';
 
 var HASH_MASUK = '#masuk';
 var VIEW = '';
