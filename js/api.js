@@ -47,14 +47,14 @@ SB.boot = function(){
       (r[3].data || []).forEach(function(x){ akun[x.kode] = x.nama; });
       var aktif = !!(p && p.aktif);
       var sess = {
-        email: (p && p.email) || user.email, nama: (p && p.nama) || '', via: 'sandi', allowed: aktif,
+        email: (p && p.email) || user.email, via: 'sandi', allowed: aktif,
         role: p ? p.peran : '', all: !!p && (p.peran === 'ADMIN' || p.peran === 'SUPERADMIN' || p.peran === 'PIMPINAN'),
         scopes: cak.map(function(c){ return { kat: c.kategori, unit: c.unit }; })
       };
       if (sess.all) sess.scopes = [];
       if (aktif && !sess.all && !sess.scopes.length) { sess.allowed = false; sess.tanpaCakupan = true; }
       return {
-        session: sess, satker: set.NAMA_SATKER || '', kode: set.KODE_SATKER || '', akunNames: akun,
+        session: sess, satker: set.NAMA_SATKER || '', kode: set.KODE_SATKER || '', akunNames: akun, teksBerjalan: set.TEKS_BERJALAN || '',
         periods: (r[4].data || []).map(function(x){
           return { periode: x.periode, label: x.label, diunggah: (x.diunggah_pada || '').replace('T', ' ').slice(0, 16),
             pengunggah: x.diunggah_oleh, file: x.nama_file, jumlah: x.jumlah_detail, pagu: x.pagu, lock: x.lock_pagu,
@@ -243,6 +243,11 @@ SB.aturSandi = function(id, password){
     }
     return { ok: true, pesan: (r.data && r.data.pesan) || 'Kata sandi diganti.' };
   });
+};
+/* teks berjalan di judul halaman (tabel pengaturan, kunci TEKS_BERJALAN; hanya super admin yang bisa menulis) */
+SB.simpanTeksBerjalan = function(teks){
+  return SBC.from('pengaturan').upsert({ kunci: 'TEKS_BERJALAN', nilai: teks, keterangan: 'Teks pengumuman berjalan di judul halaman dasbor' }, { onConflict: 'kunci' })
+    .then(function(r){ if (r.error) throw r.error; return { ok: true }; });
 };
 SB.aktifkan = function(id, aktif){
   return SBC.from('pengguna').update({ aktif: aktif }).eq('id', id)

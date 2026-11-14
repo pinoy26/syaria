@@ -14,8 +14,7 @@ var MARK = '<div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fi
 var BRAND = '<div class="brand lentera">' + MARK + '<div><b>LENTERA</b><small>Layanan Perencanaan Anggaran Terintegrasi</small></div></div>';
 var TAGLINE = 'Menerangi Perencanaan, Menyatukan Anggaran';
 /* logo instansi: berkas resmi diletakkan di folder assets/ (disembunyikan otomatis bila belum ada) */
-function logo(file, alt, cls){ return '<img class="' + (cls || 'logo-inst') + '" src="assets/' + file + '" alt="' + alt + '" onerror="this.hidden=true">'; }
-var LOGO_INSTANSI = '<div class="tb-logos">' + logo('logo-kemenag.png', 'Kementerian Agama') + logo('logo-iain-ternate.png', 'IAIN Ternate') + '</div>';
+function logo(file, alt, cls){ return '<img class="' + cls + '" src="assets/' + file + '" alt="' + alt + '" onerror="this.hidden=true">'; }
 var LOGO_DERET = '<div class="logo-deret">' + logo('logo-kemenag.png', 'Kementerian Agama', 'logo-deret-img') + logo('logo-iain-ternate.png', 'IAIN Ternate', 'logo-deret-img') + logo('logo-pusaka.png', 'Pusaka Kementerian Agama', 'logo-deret-img') + logo('logo-kemenag-berdampak.png', 'Kemenag Berdampak', 'logo-deret-img') + '</div>';
 var IC_PANAH = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 var IC_KEMBALI = '<svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>';
@@ -93,7 +92,7 @@ function halamanBeranda(){
   VIEW = 'beranda';
   $('gate').innerHTML =
     '<div class="lp">' +
-      '<header class="lp-top"><div class="lp-in"><div class="lp-id">' + LOGO_INSTANSI + BRAND + '</div>' +
+      '<header class="lp-top"><div class="lp-in">' + BRAND +
         '<div class="lp-act">' + THEME_BTN + '<button type="button" class="btn primary lp-masuk" data-ke-masuk>Masuk' + IC_PANAH + '</button></div></div></header>' +
       '<section class="lp-hero"><div class="lp-art">' + HERO_ART + '</div>' +
         '<div class="lp-in lp-hero-in">' +
@@ -130,7 +129,7 @@ function halamanMasuk(catatan){
         '<div class="lg-ilus">' + LOGIN_ART + '</div></aside>' +
       '<main class="lg-main">' +
         '<div class="lg-top"><button type="button" class="btn lg-back" data-ke-beranda>' + IC_KEMBALI + 'Beranda</button>' + THEME_BTN + '</div>' +
-        '<div class="lg-box">' + LOGO_INSTANSI + BRAND +
+        '<div class="lg-box">' + BRAND +
           '<div class="lg-card">' +
             '<h2>Masuk ke LENTERA</h2>' +
             '<p class="note lg-note">' + esc(catatan || 'Masukkan email dan kata sandi yang diberikan admin keuangan.') + '</p>' +

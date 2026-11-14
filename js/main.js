@@ -3,10 +3,10 @@ import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js';
 import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js';
 import { SB, SBC, sbInit } from './api.js';
 import { closeModal } from './ui-components.js';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen, tutupCariMenu } from './nav.js';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 import { bukaUbahSandi } from './akun.js';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl, tampilTeksBerjalan } from './berita.js';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -63,8 +63,6 @@ $('moreSheet').addEventListener('click',function(e){
 });
 $('sheetBd').addEventListener('click',closeSheet);
 $('btnBerita').onclick=bukaBeritaDasbor;
-/* hasil pencarian menu di header */
-$('cariHasil').addEventListener('click',function(e){ var b=e.target.closest('[data-page]'); if(!b) return; tutupCariMenu(); gotoTab(b.getAttribute('data-page')); });
 document.addEventListener('click',function(e){
   if (e.target.closest('[data-out]')) { SB.keluar(); return; }
   if (e.target.closest('[data-pw]')) { if (sheetOpen()) closeSheet(); bukaUbahSandi(); }
@@ -87,6 +85,8 @@ export function mulai(){
     }
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
+    $('brandSub').textContent = (b.satker || '') + (b.kode ? ' · Satker ' + b.kode : '');
+    tampilTeksBerjalan(b.teksBerjalan);
     muatBeritaDasbor().then(bukaDariUrl);
     var ps = b.periods;
     fillPeriods(ps.length ? ps[ps.length - 1].periode : null);

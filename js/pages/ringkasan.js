@@ -25,8 +25,7 @@ export function renderRingkasan(){
   var pSisa=t.pagu?t.sisa/t.pagu:0, wBar=Math.min(100,Math.max(0,t.p*100));
   var tglPanjang=(+DB.periode.split('-')[2])+' '+blnTahun(DB.periode);
   var info='<span class="bn-i" tabindex="0" role="img" aria-label="Pagu revisi yang berlaku per '+esc(tglPanjang)+'" title="Pagu revisi yang berlaku per '+esc(tglPanjang)+'"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>';
-  /* pita Total Pagu selebar layar tepat di bawah header (susunan seperti MyIntress) */
-  h+='<section class="hero-band" id="c-hero"><div class="card-h hero-hd"></div>'+
+  h+='<section class="glass hero hero2" id="c-hero"><div class="card-h hero-hd"></div>'+
     '<div class="banner">'+
       '<div class="bn-top">'+
         '<div class="bn-pagu"><div class="bn-lbl">Total Pagu '+info+'<span class="bn-cap">'+esc(unitCaption())+'</span></div>'+
@@ -42,11 +41,11 @@ export function renderRingkasan(){
         (t.lock?'<span class="bn-leg bn-lock"><i></i><span>Lock pagu (proses revisi)<br><b><small>Rp</small> '+rp(t.lock)+'</b></span></span>':'')+
         '<span class="bn-date">Data per '+esc(tglPanjang)+'</span>'+
       '</div>'+
-    '</div></section>';
-  var gaugeBody='<div class="gauge">'+gauge(t.p)+pill(t.p)+
+    '</div>'+
+    '<div class="gauge">'+gauge(t.p)+pill(t.p)+
       '<div class="gauge-legend"><span><i class="sw" style="background:var(--real)"></i>Realisasi</span><span><i class="sw tick"></i>Waktu berjalan</span></div>'+
       (isUnitUser()?'<div class="note">Pembanding: capaian satker '+pc(DB.satkerPersen)+'</div>':'')+
-    '</div>';
+    '</div></section>';
 
   var bySrc=group(R,function(r){return r.sumber||'?';}).sort(function(a,b){return b.pagu-a.pagu;});
   var srcCol=function(k){ return k==='RM'?'var(--rm)':k==='PNP'?'var(--pnbp)':'var(--muted)'; };
@@ -76,8 +75,7 @@ export function renderRingkasan(){
   /* dua sisi: kiri realisasi (sumber dana di atas, jenis belanja di bawah), kanan berita & pengumuman */
   h+='<div class="rk-split"><div class="rk-main">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
     card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>'+
-    '<div class="rk-side">'+card('c-gauge','Capaian realisasi','Realisasi dibanding waktu berjalan tahun anggaran.',gaugeBody,'')+
-    '<div class="noprint">'+card('c-berita','Berita &amp; Pengumuman','Informasi terbaru dari admin keuangan.','<div id="rkBerita"><div class="loading" style="padding:24px 0">Memuat berita…</div></div>','')+'</div></div></div>';
+    '<div class="rk-side noprint">'+card('c-berita','Berita &amp; Pengumuman','Informasi terbaru dari admin keuangan.','<div id="rkBerita"><div class="loading" style="padding:24px 0">Memuat berita…</div></div>','')+'</div></div>';
 
   var cells=[]; byA2.forEach(function(g){ ['RM','PNP'].forEach(function(s){ cells.push(sum(g.rows.filter(function(r){return r.sumber===s;}))); }); });
   var max=Math.max.apply(null,cells.map(function(c){return c.pagu;}).concat([1]));
