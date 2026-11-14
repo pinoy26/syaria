@@ -1,5 +1,5 @@
 /* js/pages/berita.js — Kelola Berita & Pengumuman (admin keuangan & super admin) */
-import { $, esc, toast, errMsg } from '../utils.js';
+import { $, esc, toast, tanya, errMsg } from '../utils.js';
 import { S, BOOT, FAK_ORDER, isSuperAdmin } from '../state.js';
 import { card } from '../ui-components.js';
 import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js';
@@ -145,8 +145,8 @@ function bindTicker(){
     SB.simpanTeksBerjalan(teks).then(function(){
       btn.disabled = false; if (BOOT) BOOT.teksBerjalan = teks; tampilTeksBerjalan(teks);
       if ($('tkTeks')) $('tkTeks').value = teks;
-      toast(teks ? 'Teks berjalan disimpan.' : 'Teks berjalan dikosongkan dan disembunyikan.', 'ok');
-    }).catch(function(e){ btn.disabled = false; toast('Gagal menyimpan teks berjalan: ' + errMsg(e), 'err'); });
+      toast(teks ? 'Teks berjalan sudah tampil di judul halaman.' : 'Teks berjalan dikosongkan dan disembunyikan.', 'ok', teks ? 'Teks berjalan disimpan' : 'Teks berjalan dikosongkan');
+    }).catch(function(e){ btn.disabled = false; toast(errMsg(e), 'err', 'Gagal menyimpan teks berjalan'); });
   };
   $('tkSimpan').onclick = function(){ simpanTk($('tkTeks').value.replace(/\s+/g, ' ').trim(), this); };
   $('tkHapus').onclick = function(){ simpanTk('', this); };
@@ -176,13 +176,16 @@ function bind(){
 
   [].forEach.call(document.querySelectorAll('[data-lhapus]'), function(b){ b.onclick = function(){
     var l = K.edit && K.edit.lampiran.filter(function(x){ return String(x.id) === b.getAttribute('data-lhapus'); })[0];
-    if (!l || !confirm('Hapus lampiran "' + l.nama + '"? Berkas langsung dihapus dari penyimpanan.')) return;
-    b.disabled = true;
-    SB.hapusLampiran(l).then(function(){
-      K.edit.lampiran = K.edit.lampiran.filter(function(x){ return x !== l; });
-      var li = b.closest('li'); if (li) li.remove();
-      toast('Lampiran dihapus.', 'ok');
-    }).catch(function(e){ b.disabled = false; toast('Gagal menghapus lampiran: ' + errMsg(e), 'err'); });
+    if (!l) return;
+    tanya({ judul: 'Hapus lampiran?', pesan: '"' + l.nama + '" langsung dihapus dari penyimpanan.', ya: 'Hapus' }).then(function(ya){
+      if (!ya) return;
+      b.disabled = true;
+      SB.hapusLampiran(l).then(function(){
+        K.edit.lampiran = K.edit.lampiran.filter(function(x){ return x !== l; });
+        var li = b.closest('li'); if (li) li.remove();
+        toast('Lampiran "' + l.nama + '" sudah dihapus.', 'ok', 'Lampiran dihapus');
+      }).catch(function(e){ b.disabled = false; toast(errMsg(e), 'err', 'Gagal menghapus lampiran'); });
+    });
   }; });
   [].forEach.call(document.querySelectorAll('[data-blihat]'), function(b){ b.onclick = function(){ var x = cariBerita(b.getAttribute('data-blihat')); if (x) bukaHalamanBerita(x, b); }; });
   [].forEach.call(document.querySelectorAll('[data-bedit]'), function(b){ b.onclick = function(){
@@ -192,12 +195,14 @@ function bind(){
   }; });
   [].forEach.call(document.querySelectorAll('[data-bhapus]'), function(b){ b.onclick = function(){
     var x = cariBerita(b.getAttribute('data-bhapus')); if (!x) return;
-    if (!confirm('Hapus berita "' + x.judul + '"' + (x.lampiran.length ? ' beserta ' + x.lampiran.length + ' lampirannya' : '') + '? Tindakan ini tidak bisa dibatalkan.')) return;
-    b.disabled = true;
-    SB.hapusBerita(x).then(function(){
-      if (K.edit && K.edit.id === x.id){ K.edit = null; K.sasaran = []; }
-      toast('Berita dihapus.', 'ok'); muatUlang();
-    }).catch(function(e){ b.disabled = false; toast('Gagal menghapus berita: ' + errMsg(e), 'err'); });
+    tanya({ judul: 'Hapus berita ini?', pesan: '"' + x.judul + '"' + (x.lampiran.length ? ' beserta ' + x.lampiran.length + ' lampirannya' : '') + ' akan dihapus. Tindakan ini tidak bisa dibatalkan.', ya: 'Hapus berita' }).then(function(ya){
+      if (!ya) return;
+      b.disabled = true;
+      SB.hapusBerita(x).then(function(){
+        if (K.edit && K.edit.id === x.id){ K.edit = null; K.sasaran = []; }
+        toast('"' + x.judul + '" sudah dihapus.', 'ok', 'Berita dihapus'); muatUlang();
+      }).catch(function(e){ b.disabled = false; toast(errMsg(e), 'err', 'Gagal menghapus berita'); });
+    });
   }; });
 }
 
@@ -225,12 +230,12 @@ function simpan(terbit){
       });
     }, Promise.resolve());
   }).then(function(){
-    toast(terbit ? 'Berita disimpan dan diterbitkan.' : 'Berita disimpan sebagai draf.', 'ok');
+    toast(terbit ? '"' + judul + '" sudah tayang sesuai masa tayangnya.' : '"' + judul + '" disimpan sebagai draf dan belum tampil ke pengguna.', 'ok', terbit ? 'Berita diterbitkan' : 'Draf disimpan');
     K.edit = null; K.sasaran = []; muatUlang();
   }).catch(function(e){
     if (idTersimpan){
       /* berita sudah tersimpan tetapi sebagian lampiran gagal: muat ulang agar tidak tercipta berita ganda saat mencoba lagi */
-      toast('Berita tersimpan, tetapi lampiran gagal diunggah: ' + errMsg(e) + ' Gunakan tombol Ubah untuk mencoba lagi.', 'err');
+      toast('Berita tersimpan, tetapi lampiran gagal diunggah: ' + errMsg(e) + ' Gunakan tombol Ubah untuk mencoba lagi.', 'warn', 'Lampiran gagal diunggah');
       K.edit = null; K.sasaran = []; muatUlang(); return;
     }
     sibuk(false); msg('err', 'Gagal menyimpan: ' + errMsg(e));

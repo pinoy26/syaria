@@ -18,22 +18,60 @@ export function yearFrac(p){ var a=p.split('-').map(Number); var d=Date.UTC(a[0]
 export function endPrevMonth(p){ var a=p.split('-').map(Number); var d=new Date(Date.UTC(a[0],a[1]-1,0)); return d.toISOString().slice(0,10); }
 export function sum(rows){ var t={pagu:0,lock:0,lalu:0,ini:0,sd:0,sisa:0,n:0,n0:0}; rows.forEach(function(r){ t.pagu+=r.pagu;t.lock+=r.lock;t.lalu+=r.lalu;t.ini+=r.ini;t.sd+=r.sd;t.sisa+=r.sisa;t.n++; if(r.sd===0&&r.pagu>0)t.n0++; }); t.p=t.pagu?t.sd/t.pagu:0; return t; }
 export function group(rows, fn){ var m={},o=[]; rows.forEach(function(r){ var k=fn(r); if(!m[k]){m[k]=[];o.push(k);} m[k].push(r); }); return o.map(function(k){ var s=sum(m[k]); s.key=k; s.rows=m[k]; return s; }); }
-/* notifikasi singkat di atas layar. type: 'ok' (berhasil), 'err' (gagal), selain itu informasi */
-var TOAST_IC={
-  ok:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>',
-  err:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 16.5h.01"/></svg>',
-  info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5h.01"/></svg>'
+/* ================= jendela (modal) & notifikasi =================
+   Semua notifikasi tampil sebagai jendela bergaya sama dengan "Kata sandi berhasil diubah":
+   ikon bulat besar, judul, pesan, tombol. onClose dipanggil saat jendela ditutup dengan cara apa pun. */
+var jendelaTutup=null, jendelaTimer=null;
+export function bukaJendela(html, onClose){
+  var prev=jendelaTutup; jendelaTutup=null; if (prev) prev();
+  clearTimeout(jendelaTimer);
+  jendelaTutup=onClose||null;
+  var m=$('modal'), bd=$('modalBd');
+  m.innerHTML=html; m.hidden=false; bd.hidden=false;
+  requestAnimationFrame(function(){ m.classList.add('open'); bd.classList.add('open'); });
+}
+export function tutupJendela(){
+  var m=$('modal'), bd=$('modalBd');
+  m.classList.remove('open'); bd.classList.remove('open');
+  clearTimeout(jendelaTimer);
+  jendelaTimer=setTimeout(function(){ m.hidden=true; bd.hidden=true; m.innerHTML=''; },200);
+  var cb=jendelaTutup; jendelaTutup=null; if (cb) cb();
+}
+var NOTIF_IC={
+  ok:'<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  err:'<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg>',
+  warn:'<svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+  info:'<svg viewBox="0 0 24 24"><path d="M12 11v6M12 7.5h.01"/></svg>',
+  tanya:'<svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>'
 };
-export function toast(msg, type){
-  var t=$('toast'); type=TOAST_IC[type]?type:'info';
-  t.className='toast glass t-'+type;
-  t.setAttribute('role', type==='err'?'alert':'status');
-  t.innerHTML='<span class="t-ic">'+TOAST_IC[type]+'</span><span class="t-msg"></span>'+
-    '<button type="button" class="icon t-x" aria-label="Tutup notifikasi"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>';
-  t.querySelector('.t-msg').textContent=msg;
-  t.querySelector('.t-x').onclick=function(){ t.hidden=true; };
-  t.hidden=false;
-  clearTimeout(toast._t); toast._t=setTimeout(function(){ t.hidden=true; }, type==='err'?12000:6000);
+var NOTIF_JUDUL={ ok:'Berhasil', err:'Gagal', warn:'Perlu diperiksa', info:'Informasi' };
+/* isi standar jendela notifikasi; tambahan = HTML ekstra (mis. daftar) di bawah pesan */
+export function notifHtml(type, judul, pesan, tambahan, tombol){
+  type=NOTIF_IC[type]?type:'info';
+  return '<div class="done" role="'+(type==='err'||type==='tanya'?'alertdialog':'dialog')+'" aria-labelledby="ntJudul">'+
+    '<div class="done-ic t-'+type+'">'+NOTIF_IC[type]+'</div>'+
+    '<h3 id="ntJudul">'+esc(judul||NOTIF_JUDUL[type]||'')+'</h3>'+
+    (pesan?'<p class="done-msg">'+esc(pesan)+'</p>':'')+(tambahan||'')+
+    (tombol||'<button type="button" class="btn primary" data-modal-close>Tutup</button>')+'</div>';
+}
+function fokusTombol(sel){ setTimeout(function(){ var b=$('modal').querySelector(sel); if(b) b.focus(); },60); }
+/* notifikasi. type: 'ok' (berhasil), 'err' (gagal), 'warn' (perlu diperiksa), selain itu informasi.
+   Nama tetap "toast" agar semua pemanggil lama ikut berubah ke bentuk jendela. */
+export function toast(msg, type, judul, onClose){
+  bukaJendela(notifHtml(type, judul, msg), onClose);
+  fokusTombol('[data-modal-close]');
+}
+/* pengganti confirm() bawaan browser. Mengembalikan Promise<boolean>; Batal/Esc/klik di luar = false. */
+export function tanya(o){
+  return new Promise(function(selesai){
+    var dijawab=false;
+    bukaJendela(notifHtml('tanya', o.judul, o.pesan, '',
+      '<div class="done-btns"><button type="button" class="btn" data-modal-close>'+esc(o.batal||'Batal')+'</button>'+
+      '<button type="button" class="btn '+(o.bahaya===false?'primary':'danger')+'" id="ntYa">'+esc(o.ya||'Ya')+'</button></div>'),
+      function(){ if(!dijawab){ dijawab=true; selesai(false); } });
+    $('ntYa').onclick=function(){ dijawab=true; selesai(true); tutupJendela(); };
+    fokusTombol('[data-modal-close]');
+  });
 }
 export function errMsg(e){
   var m = String((e && e.message) || (e && e.error_description) || e);

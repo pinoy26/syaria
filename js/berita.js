@@ -114,7 +114,7 @@ export function bukaDariUrl(){
   SB.beritaSatu(m[1]).then(function(b){
     if (b){ bukaHalamanBerita(b, null, true); if (RD.tandai) RD.tandai(b); return; }
     history.replaceState(null, '', location.pathname + location.search);
-    toast('Berita tidak ditemukan, sudah tidak tayang, atau hanya untuk pengguna yang sudah masuk.', 'info');
+    toast('Berita ini tidak ditemukan, sudah tidak tayang, atau hanya bisa dibaca setelah masuk.', 'info', 'Berita tidak bisa dibuka');
   }).catch(function(){ history.replaceState(null, '', location.pathname + location.search); });
 }
 
@@ -151,7 +151,7 @@ export function muatBeritaLogin(){
     if ($('gnSemua')) $('gnSemua').onclick = function(){
       var t = this; t.disabled = true;
       SB.beritaTayang(true).then(function(s){ t.disabled = false; bukaDaftar(s.items, 'Semua berita', { asal: t }); })
-        .catch(function(e){ t.disabled = false; toast('Berita gagal dimuat: ' + errMsg(e), 'err'); });
+        .catch(function(e){ t.disabled = false; toast(errMsg(e), 'err', 'Berita gagal dimuat'); });
     };
   }).catch(function(){ /* berita gagal dimuat: halaman login tetap berfungsi seperti biasa */ });
 }

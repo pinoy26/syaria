@@ -1,5 +1,5 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, errMsg } from '../utils.js';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js';
 import { S, FAK_ORDER, DB, sess } from '../state.js';
 import { card, openModal } from '../ui-components.js';
 import { SB } from '../api.js';
@@ -41,13 +41,15 @@ function bindKelolaData(){
   $('upJenis').onchange=function(){ $('upTglWrap').hidden=this.value==='RKK'; };
   $('btnUp').onclick=doUpload;
   [].forEach.call(document.querySelectorAll('[data-delp]'),function(b){ b.onclick=function(){
-    if(!confirm('Hapus data posisi '+tgl(b.dataset.delp)+'? Tindakan ini tidak bisa dibatalkan.')) return;
-    b.disabled=true; SB.hapusPeriode(b.dataset.delp).then(function(r){ toast(r.pesan,'ok'); reboot(); }).catch(function(e){ b.disabled=false; toast('Gagal menghapus: '+errMsg(e),'err'); });
+    tanya({ judul:'Hapus data posisi '+tgl(b.dataset.delp)+'?', pesan:'Seluruh data realisasi pada tanggal posisi ini akan dihapus. Tindakan ini tidak bisa dibatalkan.', ya:'Hapus' }).then(function(ya){
+      if(!ya) return;
+      b.disabled=true; SB.hapusPeriode(b.dataset.delp).then(function(r){ toast(r.pesan,'ok','Data posisi dihapus'); reboot(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus data posisi'); });
+    });
   }; });
   /* hasil ditampilkan lewat notifikasi: loadData memuat ulang halaman sehingga #mapMsg ikut hilang */
-  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope).then(function(r){ toast(r.pesan||'Aturan unit kerja berhasil diterapkan.','ok'); S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); toast('Gagal menerapkan aturan: '+errMsg(e),'err'); }); };
+  var remap=function(scope,btn){ btn.disabled=true; $('mapMsg').textContent='Memproses…'; SB.terapkanUlang(scope).then(function(r){ toast(r.pesan||'Aturan unit kerja berhasil diterapkan.','ok','Aturan unit kerja diterapkan'); S.trend={}; S.cmp=null; loadData(DB.periode); }).catch(function(e){ btn.disabled=false; $('mapMsg').textContent=errMsg(e); toast(errMsg(e),'err','Gagal menerapkan aturan'); }); };
   $('btnRemap').onclick=function(){ remap('terbaru',this); };
-  $('btnRemapAll').onclick=function(){ if(confirm('Terapkan aturan terbaru ke SEMUA posisi data? Data lama akan ikut dipetakan ulang.')) remap('semua',this); };
+  $('btnRemapAll').onclick=function(){ var btn=this; tanya({ judul:'Terapkan ke semua posisi data?', pesan:'Aturan terbaru akan diterapkan ke SEMUA posisi data. Data lama ikut dipetakan ulang.', ya:'Terapkan', bahaya:false }).then(function(ya){ if(ya) remap('semua',btn); }); };
 }
 /* kotak status di bawah formulir unggah: 'busy' (sedang diproses), 'ok', 'err' */
 function upStatus(type,text){
@@ -62,19 +64,15 @@ function upButton(busy){
 }
 function upGagal(text){
   upButton(false); upStatus('err',text);
-  toast('Unggahan gagal. Lihat keterangan di bawah formulir unggah.','err');
+  toast(text,'err','Unggahan gagal');
 }
 /* hasil sukses ditampilkan di jendela tersendiri: halaman Kelola Data dimuat ulang setelah unggah sehingga kotak status ikut hilang */
 function upBerhasil(r, namaFile){
   var daftar=function(judul,isi){ return isi&&isi.length?'<div class="done-list"><b>'+esc(judul)+' ('+isi.length+')</b><ul>'+isi.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>':''; };
   /* tetap berhasil tersimpan, tetapi ada selisih total / catatan yang perlu dicek admin */
   var perluCek=(r.peringatan&&r.peringatan.length) || /PERHATIAN|belum punya sumber dana/.test(r.pesan||'');
-  openModal('<div class="done"><div class="done-ic'+(perluCek?' warn':'')+'">'+(perluCek?'<svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>':'<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>')+'</div>'+
-    '<h3>'+(perluCek?'Unggahan tersimpan — mohon diperiksa':'Unggahan berhasil')+'</h3><p class="note" style="margin:0">'+esc(namaFile)+'</p><p style="margin:4px 0 0">'+esc(r.pesan||'File berhasil diproses.')+'</p>'+
-    daftar('Sub komponen baru dibanding posisi sebelumnya',r.subBaru)+
-    daftar('Catatan pembacaan',r.peringatan)+
-    '<button type="button" class="btn primary" data-modal-close>Tutup</button></div>');
-  toast((perluCek?'Unggahan tersimpan, tetapi ada catatan yang perlu diperiksa: ':'Unggahan berhasil: ')+namaFile, perluCek?'info':'ok');
+  openModal(notifHtml(perluCek?'warn':'ok', perluCek?'Unggahan tersimpan — mohon diperiksa':'Unggahan berhasil', r.pesan||'File berhasil diproses.',
+    '<p class="note" style="margin:0">'+esc(namaFile)+'</p>'+daftar('Sub komponen baru dibanding posisi sebelumnya',r.subBaru)+daftar('Catatan pembacaan',r.peringatan)));
 }
 function doUpload(){
   var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value;
@@ -127,8 +125,10 @@ export function renderKelolaUser(){
 function bindKelolaUser(units){
   if (!$('uPeran')) return;
   [].forEach.call(document.querySelectorAll('[data-del]'),function(b){ b.onclick=function(){
-    if(!confirm('Hapus akun '+b.dataset.email+'? Tindakan ini tidak bisa dibatalkan.')) return;
-    b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast('Gagal menghapus akun: '+errMsg(e),'err'); });
+    tanya({ judul:'Hapus akun '+b.dataset.email+'?', pesan:'Pengguna ini tidak akan bisa masuk lagi. Tindakan ini tidak bisa dibatalkan.', ya:'Hapus akun' }).then(function(ya){
+      if(!ya) return;
+      b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan,'ok','Akun dihapus'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus akun'); });
+    });
   }; });
   var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
   var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };

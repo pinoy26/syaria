@@ -1,5 +1,5 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl } from './utils.js';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js';
 import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js';
 
 /* ================= komponen UI ================= */
@@ -122,15 +122,8 @@ export function bindTreeSearch(root){
 }
 
 /* ================= modal ================= */
-export function openModal(html){
-  $('modal').innerHTML=html; $('modal').hidden=false; $('modalBd').hidden=false;
-  bindTips($('modal'));
-  requestAnimationFrame(function(){ $('modal').classList.add('open'); $('modalBd').classList.add('open'); });
-}
-export function closeModal(){
-  $('modal').classList.remove('open'); $('modalBd').classList.remove('open');
-  setTimeout(function(){ $('modal').hidden=true; $('modalBd').hidden=true; $('modal').innerHTML=''; },200);
-}
+export function openModal(html,onClose){ bukaJendela(html,onClose); bindTips($('modal')); }
+export function closeModal(){ tutupJendela(); }
 
 /* ================= TABEL BERTINGKAT ================= */
 var TREES={};

@@ -132,9 +132,9 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 .sheet-list button.on{background:var(--accent-soft);color:var(--ink);font-weight:700}
 
 /* modal */
-.modal-backdrop{display:none;position:fixed;inset:0;z-index:55;background:rgba(4,14,16,.5);opacity:0;transition:opacity .2s}
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:59;background:rgba(4,14,16,.5);opacity:0;transition:opacity .2s}
 .modal-backdrop.open{display:block;opacity:1}
-.modal{display:none;position:fixed;z-index:56;left:50%;top:50%;transform:translate(-50%,-48%);opacity:0;width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px);overflow:auto;border-radius:20px;padding:22px;transition:opacity .2s,transform .2s}
+.modal{display:none;position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-48%);opacity:0;width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px);overflow:auto;border-radius:20px;padding:22px;transition:opacity .2s,transform .2s}
 .modal.open{display:block;opacity:1;transform:translate(-50%,-50%)}
 .modal-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
 .modal-hd h3{margin:2px 0 0;font-size:17px;font-weight:700}
@@ -471,6 +471,13 @@ button.btn .spin{margin-top:0}
 .done .btn{margin-top:10px}
 .done-ic{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb, var(--good) 18%, transparent);color:var(--good-ink)}
 .done-ic.warn{background:color-mix(in srgb, var(--warn) 24%, transparent);color:var(--warn-ink)}
+.done-ic.t-warn,.done-ic.t-tanya{background:color-mix(in srgb, var(--warn) 24%, transparent);color:var(--warn-ink)}
+.done-ic.t-err{background:color-mix(in srgb, var(--crit) 16%, transparent);color:var(--crit-ink)}
+.done-ic.t-info{background:var(--accent-soft);color:var(--accent)}
+.done-msg{margin:4px 0 0;max-width:46ch;line-height:1.55;overflow-wrap:anywhere;white-space:pre-line}
+.done-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.done-btns .btn{margin-top:0}
+button.btn.danger{background:var(--crit);color:#fff;border-color:var(--crit);box-shadow:0 6px 16px -8px var(--crit)}
 .done-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .done-list{width:100%;text-align:left;margin-top:8px;padding:10px 14px;border-radius:12px;background:var(--glass-strong);border:1px solid var(--line);font-size:12.5px;max-height:220px;overflow:auto}
 .done-list ul{margin:6px 0 0;padding-left:18px}
@@ -681,4 +688,4 @@ tr.b-sedang td{background:var(--accent-soft)}
 @keyframes ticker{to{transform:translateX(-100%)}}
 @media (max-width:640px){ .page-title{flex-wrap:wrap} .ticker{order:3;flex-basis:100%} }
 @media (prefers-reduced-motion:reduce){ .ticker{-webkit-mask-image:none;mask-image:none} .ticker-track{animation:none;padding-left:0;white-space:normal} }
-
+@media print{ .modal,.modal-backdrop{display:none!important} }

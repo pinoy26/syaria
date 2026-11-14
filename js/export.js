@@ -31,8 +31,8 @@ export function printCard(id){
 /* "Unduh PDF" memakai mesin cetak asli browser juga (hasil teks asli, bukan gambar) —
    pengguna tinggal pilih tujuan "Simpan sebagai PDF" di jendela cetak. */
 export function pdfCard(id,title){
-  toast('Pada jendela cetak yang terbuka, pilih tujuan "Simpan sebagai PDF".');
-  printCard(id);
+  /* jendela cetak dibuka setelah petunjuk ditutup, agar petunjuk tidak ikut tercetak */
+  toast('Pada jendela cetak berikutnya, pilih tujuan "Simpan sebagai PDF".','info','Unduh PDF',function(){ setTimeout(function(){ printCard(id); },250); });
 }
 
 /* ================= cetak seluruh halaman ================= */
