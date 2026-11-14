@@ -6,6 +6,7 @@ import { closeModal } from './ui-components.js';
 import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js';
 import { tampilMasuk } from './auth.js';
 import { bukaUbahSandi } from './akun.js';
+import { muatBeritaDasbor, bukaBeritaDasbor } from './berita.js';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -72,6 +73,7 @@ $('moreSheet').addEventListener('click',function(e){
   closeSheet(); gotoTab(b.getAttribute('data-page'));
 });
 $('sheetBd').addEventListener('click',closeSheet);
+$('btnBerita').onclick=bukaBeritaDasbor;
 document.addEventListener('click',function(e){
   if (e.target.closest('[data-out]')) { SB.keluar(); return; }
   if (e.target.closest('[data-pw]')) { if (sheetOpen()) closeSheet(); bukaUbahSandi(); }
@@ -95,6 +97,7 @@ export function mulai(){
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
     $('brandSub').textContent = (b.satker || '') + (b.kode ? ' · Satker ' + b.kode : '');
+    muatBeritaDasbor();
     var ps = b.periods;
     fillPeriods(ps.length ? ps[ps.length - 1].periode : null);
     if (!ps.length) { setDB(null); refresh(); return; }

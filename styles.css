@@ -150,7 +150,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans
 #pageTools select{font-size:12px;letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink2);background:var(--glass-strong);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;min-width:0}
-select,input[type=search],input[type=date],input[type=text],input[type=email],input[type=password]{font:500 13px var(--sans);color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:10px;padding:8px 10px;min-width:0;max-width:100%}
+select,textarea,input[type=search],input[type=date],input[type=text],input[type=email],input[type=password],input[type=url]{font:500 13px var(--sans);color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:10px;padding:8px 10px;min-width:0;max-width:100%}
 select:disabled{opacity:.65}
 button.btn{font:600 13px var(--sans);display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:9px 16px;border:1px solid var(--line-strong);background:var(--glass-strong);color:var(--ink);cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s,transform .1s}
 button.btn:hover{border-color:var(--accent)}
@@ -593,3 +593,79 @@ button.btn .spin{margin-top:0}
 .row-actions{display:flex;gap:6px}
 .row-actions button{padding:4px 9px;font-size:12px}
 .link{color:var(--accent);font-weight:600}
+
+/* ================= Berita & Pengumuman ================= */
+.st-info{color:var(--accent);background:var(--accent-soft);border-color:transparent} .st-info i{background:var(--accent)}
+.st-draf{color:var(--muted)} .st-draf i{background:var(--muted)}
+textarea{font-size:13.5px;line-height:1.55;resize:vertical;min-height:120px}
+
+/* halaman login: kartu login saja, atau berita (kiri) + login (kanan); di HP login di atas, berita di bawah */
+.gate-wrap{display:grid;gap:18px;max-width:520px;margin:12vh auto;padding:0 16px 32px;align-items:start}
+.gate-wrap .gate{margin:0;max-width:none}
+.gate-wrap.has-news{max-width:1060px;margin:8vh auto;grid-template-columns:minmax(0,1fr) minmax(300px,400px)}
+.gate-wrap.has-news .gate-news{order:-1}
+.gate-news{padding:22px 22px 16px;text-align:left;min-width:0}
+.gn-hd{margin-bottom:12px}
+.gn-hd h2{margin:2px 0 0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+@media (max-width:900px){
+  .gate-wrap.has-news{grid-template-columns:minmax(0,1fr);max-width:560px;margin:4vh auto}
+  .gate-wrap.has-news .gate-news{order:0}
+}
+
+/* daftar berita */
+.nw-list{display:flex;flex-direction:column;gap:8px}
+.nw-item{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--glass-strong);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .15s,background .15s}
+.nw-item:hover{border-color:var(--accent);background:var(--accent-soft)}
+.nw-item.baru{border-left:3px solid var(--accent)}
+.nw-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:12px;color:var(--muted)}
+.nw-meta .pill{padding:2px 9px 2px 7px;font-size:11.5px}
+.nw-tag{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2)}
+.nw-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:auto}
+.nw-judul{font-size:14.5px;line-height:1.35}
+.nw-ring{font-size:12.5px;color:var(--ink2);line-height:1.45}
+.nw-ft{margin-top:12px}
+
+/* isi berita (jendela) */
+.nw-back{margin-bottom:10px;padding:5px 12px 5px 8px}
+.modal-hd .nw-meta{margin-bottom:4px}
+.nw-isi{white-space:pre-line;line-height:1.6;font-size:14px;overflow-wrap:anywhere}
+.nw-tautan{margin:12px 0 0}
+.nw-foto{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px}
+.nw-ph{display:block;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--track);aspect-ratio:4/3}
+.nw-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.nw-dok{margin:14px 0 0;padding-left:18px;display:grid;gap:6px;font-size:13px}
+
+/* lonceng di judul halaman & banner di Ringkasan */
+.page-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pt-txt{min-width:0}
+.nw-bell{position:relative;flex:none;width:40px;height:40px}
+.nw-bell svg{width:20px;height:20px}
+.nw-badge{position:absolute;top:2px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--crit);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;line-height:1}
+.nw-banners{display:grid;gap:8px}
+.nw-banner{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--glass-strong)}
+.nw-banner.nw-penting{border-left-color:var(--crit)}
+.nw-banner.nw-tenggat{border-left-color:var(--warn)}
+.nw-banner-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;padding:0}
+.nw-banner-txt b{font-size:14px}
+.nw-banner-txt span{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nw-banner-txt:hover b{color:var(--accent)}
+@media (max-width:640px){ .nw-banner{flex-wrap:wrap} .nw-banner-txt{flex-basis:100%;order:2} .nw-banner .icon{margin-left:auto} }
+
+/* Kelola Berita */
+.b-form{display:grid;gap:14px}
+.b-box{border:1px solid var(--line);border-radius:14px;padding:10px 14px 14px;margin:0;display:grid;gap:8px;min-width:0}
+.b-box legend{padding:0 6px}
+label.chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.45}
+label.chk input{margin:3px 0 0;accent-color:var(--accent);flex:none}
+.b-sasaran{display:grid;gap:8px;padding:4px 0 0 24px}
+.b-sasaran .note{margin:0}
+.b-chips{display:flex;flex-wrap:wrap;gap:6px}
+.b-chips .chip{padding-right:4px}
+.b-chips .chip .icon{padding:2px}
+.b-chips .chip .icon svg{width:13px;height:13px}
+.b-lamp{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.b-lamp li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 6px 12px;border-radius:10px;background:var(--glass-strong);border:1px solid var(--line);font-size:13px;overflow-wrap:anywhere}
+.b-lamp li .btn{padding:4px 10px;font-size:12px;flex:none}
+tr.b-sedang td{background:var(--accent-soft)}
+@media (max-width:640px){ .b-sasaran{padding-left:0} }
+
