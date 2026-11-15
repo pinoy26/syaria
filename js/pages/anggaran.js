@@ -1,14 +1,14 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150637';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150637';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611150637';
-import { SB } from '../api.js?v=202611150637';
-import { refresh } from '../nav.js?v=202611150637';
-import { hitungBlokir } from '../blokir.js?v=202611150637';
+import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150709';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150709';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611150709';
+import { SB } from '../api.js?v=202611150709';
+import { refresh } from '../nav.js?v=202611150709';
+import { hitungBlokir } from '../blokir.js?v=202611150709';
 
-export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi'];
+export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
 
 /* ---------- pemuatan data ---------- */
@@ -189,7 +189,7 @@ export function renderAnggaranRKK(){
    Item RKK tidak bernomor: item dikenali dari kelompok (sub komponen + akun), judul, sub judul dan uraian
    (rincian dalam kurung [..] diabaikan karena bisa berubah saat revisi); nama kembar dipasangkan urut kemunculan. */
 function normal(s){ return String(s || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
-function kunciItem(r){ return [r.prog, r.kro, r.ro, r.sub, r.akun].join('|') + '#' + normal(r.judul) + '#' + normal(r.judul2) + '#' + normal(r.uraian); }
+export function kunciItem(r){ return [r.prog, r.kro, r.ro, r.sub, r.akun].join('|') + '#' + normal(r.judul) + '#' + normal(r.judul2) + '#' + normal(r.uraian); }
 export function bandingRKK(lama, baru){
   var peta = function(rs){ var m = {}; rs.slice().sort(function(a, b){ return a.urutan - b.urutan; }).forEach(function(r){ var k = kunciItem(r); (m[k] = m[k] || []).push(r); }); return m; };
   var A = peta(lama), B = peta(baru), keys = {}, hasil = [];

@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150637';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150637';
+import { BOOT } from './state.js?v=202611150709';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150709';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -281,6 +281,29 @@ SB.anggaranItem = function(versiId){
     .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; x.a2 = String(x.akun || '').slice(0, 2); return x; }); })
     .catch(function(e){ delete CACHE_AG.item[versiId]; throw e; });
 };
+/* ---------- Usulan revisi anggaran (penulisan selalu lewat fungsi database yang memeriksa aturan) ---------- */
+function rpc(nama, arg){ return SBC.rpc(nama, arg).then(function(r){ if (r.error) throw r.error; return r.data; }); }
+SB.usulanDaftar = function(){
+  return SBC.from('usulan_revisi').select('*').order('diubah_pada', { ascending: false }).then(function(r){ if (r.error) throw r.error; return r.data || []; });
+};
+SB.usulanDetail = function(id){
+  return Promise.all([
+    SBC.from('usulan_revisi').select('*').eq('id', id).maybeSingle(),
+    SBC.from('usulan_revisi_baris').select('*').eq('usulan_id', id).order('urutan'),
+    SBC.from('usulan_revisi_log').select('*').eq('usulan_id', id).order('waktu')
+  ]).then(function(r){
+    r.forEach(function(x){ if (x.error) throw x.error; });
+    if (!r[0].data) throw new Error('Usulan tidak ditemukan atau Anda tidak berhak melihatnya.');
+    var num = function(b){ ['s_jumlah', 'm_jumlah'].forEach(function(k){ b[k] = +b[k] || 0; }); ['s_volume', 's_harga', 'm_volume', 'm_harga'].forEach(function(k){ b[k] = b[k] == null ? null : +b[k]; }); return b; };
+    return { u: r[0].data, baris: (r[1].data || []).map(num), log: r[2].data || [] };
+  });
+};
+SB.simpanUsulan = function(id, versiId, judul, alasan, baris){ return rpc('simpan_usulan', { p_id: id || null, p_versi_id: versiId, p_judul: judul, p_alasan: alasan, p_baris: baris }); };
+SB.ajukanUsulan = function(id){ return rpc('ajukan_usulan', { p_id: id }); };
+SB.hapusUsulan = function(id){ return rpc('hapus_usulan', { p_id: id }); };
+SB.prosesUsulan = function(id, aksi, catatan){ return rpc('proses_usulan', { p_id: id, p_aksi: aksi, p_catatan: catatan || '' }); };
+SB.catatNoRevisi = function(id, no, catatan){ return rpc('catat_no_revisi', { p_id: id, p_no: no, p_catatan: catatan || '' }); };
+SB.selesaikanUsulan = function(id, catatan){ return rpc('selesaikan_usulan', { p_id: id, p_catatan: catatan || '' }); };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };

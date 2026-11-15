@@ -796,3 +796,22 @@ button.btn.lg-lupa{margin-top:12px}
 .bn-blok i{background:repeating-linear-gradient(45deg,#fff 0 3px,rgba(0,0,0,.35) 3px 6px);box-shadow:inset 0 0 0 1.5px #fff}
 .bn-box .bn-ef{font-size:11.5px;font-weight:600;opacity:.85}
 .ag-blv{color:var(--warn-ink);font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ================= Usulan revisi ================= */
+.us-list{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.status-box.us-telaah{border-left-color:var(--warn);background:color-mix(in srgb, var(--warn) 14%, var(--glass-strong));color:var(--ink)}
+.us-ring{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:12px;font-size:13px}
+.us-ring b{font-family:var(--mono)}
+.us-info{display:flex;flex-wrap:wrap;gap:12px 28px;margin-bottom:12px}
+.us-info>div{display:flex;flex-direction:column;gap:3px}
+.us-alasan{margin:0 0 12px;white-space:pre-line}
+.us-log{margin:0;padding-left:18px;display:grid;gap:8px;font-size:13px}
+.us-cocok{margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--glass-strong)}
+input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;max-width:100%}
+/* angka "perlu tindakan" di menu & bagian usulan di lonceng */
+.nav-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:99px;background:var(--crit);color:#fff;font-size:10.5px;font-weight:800;line-height:1;font-family:var(--sans)}
+.hn-dot{width:7px;height:7px;border-radius:50%;background:var(--crit);display:inline-block;margin-left:5px}
+.nw-usulan{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.nw-usulan .eyebrow{display:block;margin-bottom:8px}
+.us-saring{margin-bottom:12px}
+

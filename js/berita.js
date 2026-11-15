@@ -1,7 +1,8 @@
 /* js/berita.js — Berita & Pengumuman: tampilan bersama (halaman login, lonceng dasbor, halaman baca berita) */
-import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611150637';
-import { SB } from './api.js?v=202611150637';
-import { openModal, closeModal } from './ui-components.js?v=202611150637';
+import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611150709';
+import { SB } from './api.js?v=202611150709';
+import { sess } from './state.js?v=202611150709';
+import { openModal, closeModal } from './ui-components.js?v=202611150709';
 
 export var JENIS = { info: ['st-info', 'Info'], penting: ['st-crit', 'Penting'], tenggat: ['st-warn', 'Tenggat'] };
 export var IC_BERITA = '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>';
@@ -124,9 +125,16 @@ function bukaDaftar(items, judul, opsi){
   var adaBaru = opsi.tandaiBaru && items.some(function(b){ return !sudahDibaca(b.id); });
   openModal('<div class="modal-hd"><div><span class="eyebrow">Berita &amp; Pengumuman</span><h3>' + esc(judul) + '</h3></div>' +
     '<button type="button" class="icon" data-modal-close aria-label="Tutup">' + IC_X + '</button></div>' +
+    (opsi.usulan && opsi.usulan.length ? '<div class="nw-usulan"><span class="eyebrow">Usulan revisi anggaran</span><div class="nw-list">' + opsi.usulan.map(function(x){
+        return '<button type="button" class="nw-item baru" data-usulan="' + x.id + '"' + (x.kunci ? ' data-kunci="' + esc(x.kunci) + '"' : '') + '><span class="nw-meta"><span class="pill st-info"><i></i>Usulan revisi</span>' +
+          (x.telaah ? '<span class="pill st-warn"><i></i>Perlu telaah</span>' : '') + '<span class="nw-dot" aria-label="Baru"></span></span><b class="nw-judul">' + esc(x.teks) + '</b><span class="nw-ring">' + esc(x.judul) + '</span></button>'; }).join('') + '</div></div>' : '') +
     (items.length ? '<div class="nw-list">' + items.map(function(b){ return itemHtml(b, opsi.tandaiBaru && !sudahDibaca(b.id)); }).join('') + '</div>'
-                  : '<div class="empty">Belum ada berita.</div>') +
+                  : (opsi.usulan && opsi.usulan.length ? '' : '<div class="empty">Belum ada berita.</div>')) +
     (adaBaru ? '<div class="tools nw-ft"><button type="button" class="btn" id="nwSemuaBaca">Tandai semua sudah dibaca</button></div>' : ''));
+  [].forEach.call($('modal').querySelectorAll('[data-usulan]'), function(el){ el.onclick = function(){
+    var k = el.getAttribute('data-kunci'); if (k){ var p = k.split(':'); tandaiUsulanDilihat(+p[0], p[1]); }
+    closeModal(); document.dispatchEvent(new CustomEvent('buka-usulan', { detail: +el.getAttribute('data-usulan') }));
+  }; });
   bindItems($('modal'), items, function(b){
     if (opsi.tandaiBaru){ tandaiDibaca([b.id]); if (opsi.onBerubah) opsi.onBerubah(); }
     bukaHalamanBerita(b, opsi.asal);
@@ -159,16 +167,46 @@ export function muatBeritaBeranda(onAda){
 var DASBOR = { items: [], dimuat: false };
 export function muatBeritaDasbor(){
   RD.tandai = function(b){ tandaiDibaca([b.id]); tampilBel(); };
-  return SB.beritaTayang(false).then(function(r){ DASBOR.items = r.items; })
-    .catch(function(){ DASBOR.items = []; })
-    .then(function(){ DASBOR.dimuat = true; tampilBel(); isiPanelBerita(); });
+  return Promise.all([
+    SB.beritaTayang(false).then(function(r){ DASBOR.items = r.items; }).catch(function(){ DASBOR.items = []; }),
+    muatNotifUsulan()
+  ]).then(function(){ DASBOR.dimuat = true; tampilBel(); isiPanelBerita(); });
+}
+
+/* ================= notifikasi usulan revisi (lonceng & angka di menu) =================
+   Admin perencanaan: setiap usulan berstatus Diajukan (hilang setelah diproses).
+   Pengusul: perubahan status usulannya sendiri (hilang setelah dibuka; disimpan per perangkat). */
+var USULAN = { list: [] }, K_USULAN = 'dasbor-usulan-dilihat';
+var TEKS_ST = { dikembalikan: 'dikembalikan untuk diperbaiki', disetujui: 'disetujui', ditolak: 'ditolak', diinput_sakti: 'sudah diinput ke SAKTI', selesai: 'selesai' };
+export function muatNotifUsulan(){
+  return SB.usulanDaftar().then(function(l){ USULAN.list = l; }).catch(function(){ USULAN.list = []; })
+    .then(function(){ tampilBel(); document.dispatchEvent(new Event('notif-usulan')); });
+}
+function notifUsulan(){
+  var s = sess(); if (!s || !s.role) return [];
+  if (s.role === 'SUPERADMIN') return USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).map(function(u){
+    return { id: u.id, teks: 'Usulan #' + u.id + ' dari ' + (u.lintas_unit ? 'lintas unit' : (u.unit || '—')) + ' menunggu persetujuan', judul: u.judul, telaah: u.perlu_telaah, kunci: null }; });
+  var dilihat = ambilSet(K_USULAN);
+  return USULAN.list.filter(function(u){ return u.dibuat_email === s.email && TEKS_ST[u.status] && dilihat.indexOf(u.id + ':' + u.status) < 0; }).map(function(u){
+    return { id: u.id, teks: 'Usulan #' + u.id + ' ' + TEKS_ST[u.status], judul: u.judul, telaah: false, kunci: u.id + ':' + u.status }; });
+}
+export function tandaiUsulanDilihat(id, status){
+  var a = ambilSet(K_USULAN), k = id + ':' + status;
+  if (a.indexOf(k) < 0){ a.push(k); simpanSet(K_USULAN, a); tampilBel(); document.dispatchEvent(new Event('notif-usulan')); }
+}
+/* angka di menu: Admin perencanaan = menunggu persetujuan; pengusul = usulannya yang dikembalikan */
+export function hitungMenuUsulan(){
+  var s = sess(); if (!s || !s.role) return {};
+  if (s.role === 'SUPERADMIN') return { 'kelola-usulan': USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).length };
+  return { 'anggaran-usulan': USULAN.list.filter(function(u){ return u.dibuat_email === s.email && u.status === 'dikembalikan'; }).length };
 }
 function tampilBel(){
   var b = $('btnBerita'); if (!b) return;
-  var n = DASBOR.items.filter(function(x){ return !sudahDibaca(x.id); }).length;
-  b.hidden = !DASBOR.items.length;
+  var nu = notifUsulan();
+  var n = DASBOR.items.filter(function(x){ return !sudahDibaca(x.id); }).length + nu.length;
+  b.hidden = !DASBOR.items.length && !nu.length;
   var bd = b.querySelector('.nw-badge'); bd.hidden = !n; bd.textContent = n > 9 ? '9+' : String(n);
-  var lbl = 'Berita & pengumuman' + (n ? ' (' + n + ' belum dibaca)' : '');
+  var lbl = 'Berita, pengumuman & usulan revisi' + (n ? ' (' + n + ' baru)' : '');
   b.setAttribute('aria-label', lbl); b.title = lbl;
 }
 /* panel Berita & Pengumuman di sisi kanan Ringkasan: 5 berita teratas (yang disematkan lebih dulu) */
@@ -186,4 +224,4 @@ export function isiPanelBerita(){
   });
   if ($('rkSemua')) $('rkSemua').onclick = bukaBeritaDasbor;
 }
-export function bukaBeritaDasbor(){ bukaDaftar(DASBOR.items, 'Berita & pengumuman', { tandaiBaru: true, onBerubah: function(){ tampilBel(); isiPanelBerita(); }, asal: $('btnBerita') }); }
+export function bukaBeritaDasbor(){ bukaDaftar(DASBOR.items, 'Berita & pengumuman', { tandaiBaru: true, usulan: notifUsulan(), onBerubah: function(){ tampilBel(); isiPanelBerita(); }, asal: $('btnBerita') }); }

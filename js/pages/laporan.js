@@ -1,8 +1,8 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF langsung (jsPDF) & Excel */
-import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611150637';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611150637';
-import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611150637';
-import { refresh } from '../nav.js?v=202611150637';
+import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611150709';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611150709';
+import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611150709';
+import { refresh } from '../nav.js?v=202611150709';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
@@ -110,7 +110,7 @@ function unduhExcel(){
 var PDF_LIB=['https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'];
 var pdfSiap=null;
 /* pustaka PDF (±400 KB) baru dimuat saat pertama kali dibutuhkan */
-function muatPdfLib(){
+export function muatPdfLib(){
   if (pdfSiap) return pdfSiap;
   pdfSiap=PDF_LIB.reduce(function(p,src){ return p.then(function(){ return new Promise(function(ok,gagal){
     var sc=document.createElement('script'); sc.src=src; sc.onload=ok;
