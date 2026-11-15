@@ -1,12 +1,13 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611150527';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, EMPTY_F } from './state.js?v=202611150527';
-import { SB, SBC, sbInit } from './api.js?v=202611150527';
-import { closeModal } from './ui-components.js?v=202611150527';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611150527';
-import { tampilMasuk } from './auth.js?v=202611150527';
-import { bukaUbahSandi } from './akun.js?v=202611150527';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611150527';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611150540';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611150540';
+import { SB, SBC, sbInit } from './api.js?v=202611150540';
+import { closeModal } from './ui-components.js?v=202611150540';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611150540';
+import { tampilMasuk } from './auth.js?v=202611150540';
+import { bukaUbahSandi } from './akun.js?v=202611150540';
+import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611150540';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611150540';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -18,7 +19,18 @@ export function setData(d){
 }
 export function loadData(periode){
   $('page').innerHTML='<div class="loading">Memuat data posisi '+tgl(periode)+'…</div>';
-  return SB.data(periode).then(function(d){ setData(d); S.open={}; refresh(); }).catch(function(e){ $('page').innerHTML='<div class="glass card">'+esc(errMsg(e))+'</div>'; });
+  return Promise.all([SB.data(periode), rkkUntuk(periode)]).then(function(x){
+    var d=x[0], rkk=x[1];
+    setData(d);
+    /* pagu blokir: RKK (pagu penuh) − FA Detail (pagu setelah blokir), sebagai baris "Pagu diblokir" */
+    d.blokir=null;
+    if (rkk && rkk.rows.length){
+      var h=hitungBlokir(rkk.rows, ALL);
+      d.blokir={ total:h.total, versi:rkk.versi, kelompok:Object.keys(h.kelompok).length };
+      if (h.total>0) setALL(ALL.concat(barisBlokir(h)));
+    }
+    S.open={}; refresh();
+  }).catch(function(e){ $('page').innerHTML='<div class="glass card">'+esc(errMsg(e))+'</div>'; });
 }
 /* pemilih Tahun Anggaran + Posisi data: daftar posisi hanya berisi tanggal di tahun anggaran terpilih,
    berlabel tanggal lengkap agar beberapa unggahan dalam satu bulan bisa dibedakan */

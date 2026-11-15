@@ -790,3 +790,9 @@ button.btn.lg-lupa{margin-top:12px}
 .ag-bl{padding:1px 8px 1px 6px;font-size:11px}
 .tbl-grid tr.ag-blokir td{background:color-mix(in srgb, var(--warn) 10%, var(--grid-bg))}
 
+/* pagu blokir di kartu Total Pagu: segmen berarsir di ujung kanan bilah */
+.bn-bar{position:relative}
+.bn-blk{position:absolute;top:0;right:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.55) 0 4px,rgba(0,0,0,.18) 4px 8px);border-left:2px solid #fff}
+.bn-blok i{background:repeating-linear-gradient(45deg,#fff 0 3px,rgba(0,0,0,.35) 3px 6px);box-shadow:inset 0 0 0 1.5px #fff}
+.bn-box .bn-ef{font-size:11.5px;font-weight:600;opacity:.85}
+.ag-blv{color:var(--warn-ink);font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums}

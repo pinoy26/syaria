@@ -16,7 +16,7 @@ export function tglPendek(p){ return tgl(p).replace(/ \d{4}$/,''); }
 export function blnTahun(p){ if(!p) return ''; var a=p.split('-'); return BLN_PANJANG[+a[1]-1]+' '+a[0]; }
 export function yearFrac(p){ var a=p.split('-').map(Number); var d=Date.UTC(a[0],a[1]-1,a[2]),s=Date.UTC(a[0],0,1),e=Date.UTC(a[0]+1,0,1); return ((d-s)/864e5+1)/((e-s)/864e5); }
 export function endPrevMonth(p){ var a=p.split('-').map(Number); var d=new Date(Date.UTC(a[0],a[1]-1,0)); return d.toISOString().slice(0,10); }
-export function sum(rows){ var t={pagu:0,lock:0,lalu:0,ini:0,sd:0,sisa:0,n:0,n0:0}; rows.forEach(function(r){ t.pagu+=r.pagu;t.lock+=r.lock;t.lalu+=r.lalu;t.ini+=r.ini;t.sd+=r.sd;t.sisa+=r.sisa;t.n++; if(r.sd===0&&r.pagu>0)t.n0++; }); t.p=t.pagu?t.sd/t.pagu:0; return t; }
+export function sum(rows){ var t={pagu:0,lock:0,lalu:0,ini:0,sd:0,sisa:0,n:0,n0:0,bl:0}; rows.forEach(function(r){ t.pagu+=r.pagu;t.lock+=r.lock;t.lalu+=r.lalu;t.ini+=r.ini;t.sd+=r.sd;t.sisa+=r.sisa;t.n++; if(r.blokir){ t.bl+=r.pagu; } else if(r.sd===0&&r.pagu>0)t.n0++; }); t.p=t.pagu?t.sd/t.pagu:0; return t; }
 export function group(rows, fn){ var m={},o=[]; rows.forEach(function(r){ var k=fn(r); if(!m[k]){m[k]=[];o.push(k);} m[k].push(r); }); return o.map(function(k){ var s=sum(m[k]); s.key=k; s.rows=m[k]; return s; }); }
 /* ================= jendela (modal) & notifikasi =================
    Semua notifikasi tampil sebagai jendela bergaya sama dengan "Kata sandi berhasil diubah":

@@ -1,11 +1,12 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150527';
-import { S, DB, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150527';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611150527';
-import { SB } from '../api.js?v=202611150527';
-import { refresh } from '../nav.js?v=202611150527';
+import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150540';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150540';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611150540';
+import { SB } from '../api.js?v=202611150540';
+import { refresh } from '../nav.js?v=202611150540';
+import { hitungBlokir } from '../blokir.js?v=202611150540';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
@@ -36,7 +37,7 @@ function muat(){
   });
 }
 /* dipanggil setelah unggah/hapus RKK agar data dimuat ulang */
-export function lupakanAnggaran(){ AG.versi = null; AG.rows = null; AG.rowsId = null; AG.id = null; }
+export function lupakanAnggaran(){ AG.versi = null; AG.rows = null; AG.rowsId = null; AG.id = null; SB.lupakanCacheAnggaran(); }
 function siap(){
   if (AG.err) return '<div class="glass card"><h2>Data anggaran gagal dimuat</h2><p class="note">' + esc(AG.err) + '</p></div>';
   if (AG.versi && !AG.versi.length) return '<div class="glass card"><h2>Belum ada RKK</h2><p class="note">Admin perencanaan belum mengunggah Rincian Kertas Kerja Satker (RKK). Setelah diunggah di Kelola Data, rincian anggaran tampil di sini.</p></div>';
@@ -53,6 +54,15 @@ export function bindAnggaran(){
   var s = $('agVersi');
   if (s) s.onchange = function(){ AG.id = +this.value; AG.rows = null; S.open = {}; refresh(); };
 }
+
+/* ---------- nilai blokir: RKK versi terpilih − FA Detail posisi realisasi yang sedang dimuat (tahun sama) ---------- */
+var HB = null;
+function nilaiBlokir(){
+  var v = versiAktif();
+  if (!v || !DB || !DB.periode || +DB.periode.slice(0, 4) !== v.tahun || !ALL.length) return null;
+  return hitungBlokir(AG.rows, ALL);
+}
+function rpBlokir(n){ return '<span class="ag-blv">' + rp(n) + '</span>'; }
 
 /* ---------- format ---------- */
 function vol(v){ return v == null ? '' : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
@@ -83,8 +93,9 @@ function pohon(id, R, levels){
   daftarPohon(id, R, levels);
   var out = [];
   var kolomKel = function(rs){
-    var nb = rs.filter(function(r){ return r.blokir; }).length;
-    return '<td></td><td></td><td></td><td class="n">' + rp(jml(rs)) + '</td><td class="stc">' + (nb ? '<span class="pill st-warn ag-bl"><i></i>' + nb + '</span>' : '') + '</td>';
+    var b = rs.filter(function(r){ return r.blokir; });
+    var nilai = HB ? b.reduce(function(a, r){ return a + (HB.item[r.urutan] || 0); }, 0) : 0;
+    return '<td></td><td></td><td></td><td class="n">' + rp(jml(rs)) + '</td><td class="n">' + (!b.length ? '' : HB ? rpBlokir(nilai) : '<span class="pill st-warn ag-bl"><i></i>' + b.length + ' item</span>') + '</td>';
   };
   (function walk(rs, depth, pid){
     var L = levels[depth], m = {}, order = [];
@@ -99,7 +110,7 @@ function pohon(id, R, levels){
         out.push('<tr class="leaf' + (r.blokir ? ' ag-blokir' : '') + '"><td><span style="padding-left:' + (ind + 44) + 'px;display:inline-block">' + esc(r.uraian) +
           (r.judul2 ? ' <span class="note">· ' + esc(r.judul2) + '</span>' : '') + '</span></td>' +
           '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' +
-          '<td class="stc">' + (r.blokir ? '<span class="pill st-warn ag-bl" title="Item ini kena blokir (tanda * di RKK)"><i></i>Blokir</span>' : '') + '</td></tr>');
+          '<td class="n">' + (!r.blokir ? '' : HB && HB.item[r.urutan] != null ? rpBlokir(HB.item[r.urutan]) : '<span class="pill st-warn ag-bl" title="Item ini kena blokir (tanda * di RKK)"><i></i>Blokir</span>') + '</td></tr>');
       });
     });
   })(R, 0, id);
@@ -107,10 +118,12 @@ function pohon(id, R, levels){
     '<button type="button" class="icon" data-search-prev="' + id + '" aria-label="Hasil sebelumnya">' + IC.up + '</button>' +
     '<button type="button" class="icon" data-search-next="' + id + '" aria-label="Hasil berikutnya">' + IC.down + '</button></span>';
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="' + id + '">Buka satu tingkat</button><button class="btn" type="button" data-expandall="' + id + '">Buka semua</button><button class="btn" type="button" data-closeall="' + id + '">Tutup semua</button>' + search + '</div>' +
-    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Volume</th><th>Satuan</th><th class="n">Harga satuan</th><th class="n">Jumlah</th><th class="stc">Blokir</th></tr></thead><tbody>' + out.join('') +
-    '<tr class="tot"><td>Jumlah</td><td></td><td></td><td></td><td class="n">' + rp(jml(R)) + '</td><td class="stc">' + (R.filter(function(r){ return r.blokir; }).length || '') + '</td></tr></tbody></table></div>';
+    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Volume</th><th>Satuan</th><th class="n">Harga satuan</th><th class="n">Jumlah</th><th class="n">Blokir</th></tr></thead><tbody>' + out.join('') +
+    '<tr class="tot"><td>Jumlah</td><td></td><td></td><td></td><td class="n">' + rp(jml(R)) + '</td><td class="n">' + (HB ? rp(R.reduce(function(a, r){ return a + (r.blokir ? (HB.item[r.urutan] || 0) : 0); }, 0)) : (R.filter(function(r){ return r.blokir; }).length || '')) + '</td></tr></tbody></table></div>' +
+    '<p class="note">' + (HB ? 'Nilai blokir = jumlah di RKK − pagu di FA Detail posisi ' + tgl(DB.periode) + ' (data realisasi yang sedang dibuka).' : 'Nilai blokir tampil bila data realisasi tahun anggaran yang sama sudah dimuat; sementara hanya ditandai.') + '</p>';
 }
 function keterangan(){
+  HB = nilaiBlokir();
   var v = versiAktif();
   return v ? 'RKK posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun + (isUnitUser() ? ' · cakupan ' + esc(unitCaption()) : '') : '';
 }
@@ -118,11 +131,14 @@ function keterangan(){
 /* ================= Ringkasan Anggaran ================= */
 export function renderAnggaran(){
   var t = siap(); if (t) return t;
+  HB = nilaiBlokir();
   var R = AG.rows, total = jml(R), bl = R.filter(function(r){ return r.blokir; });
   var grup = function(fn){ var m = {}, o = []; R.forEach(function(r){ var k = fn(r); if (!m[k]){ m[k] = []; o.push(k); } m[k].push(r); }); return o.map(function(k){ return { key: k, rows: m[k], jumlah: jml(m[k]) }; }); };
+  var blUnit = {};
+  if (HB) Object.keys(HB.kelompok).forEach(function(k){ var c = HB.kelompok[k].contoh; var ku = (c.kategori || '?') + '|' + (c.unit || '?'); blUnit[ku] = (blUnit[ku] || 0) + HB.kelompok[k].nilai; });
   var baris = function(nama, g, warna){
-    var p = total ? g.jumlah / total : 0;
-    return '<div class="ubar"><span class="n"><span class="un">' + nama + '</span><span class="note num">Rp ' + rp(g.jumlah) + '</span></span>' +
+    var p = total ? g.jumlah / total : 0, b = blUnit[g.key];
+    return '<div class="ubar"><span class="n"><span class="un">' + nama + '</span><span class="note num">Rp ' + rp(g.jumlah) + (b ? ' · <span class="ag-blv">blokir Rp ' + rp(b) + '</span>' : '') + '</span></span>' +
       '<span class="track"><span class="fill" style="width:' + (p * 100).toFixed(2) + '%;background:' + warna + '"></span></span><span class="pct">' + pc(p) + '</span></div>';
   };
   var src = grup(function(r){ return r.sumber || '?'; }).sort(function(a, b){ return a.key === 'RM' ? -1 : b.key === 'RM' ? 1 : 0; });
@@ -135,7 +151,9 @@ export function renderAnggaran(){
   var ringkas = '<div class="ag-tiles">' +
     tile('Pagu anggaran (RKK)', '<small>Rp</small> ' + rp(total), 'Termasuk pagu yang diblokir') +
     tile('Item detail', rp(R.length), 'Dalam ' + rp(grup(function(r){ return r.ro + '|' + r.sub; }).length) + ' sub komponen') +
-    tile('Item bertanda blokir (*)', rp(bl.length), bl.length ? 'Pagu item: Rp ' + rp(jml(bl)) + ' · nilai blokir dihitung di tahap berikut' : 'Tidak ada item yang diblokir') +
+    (HB ? tile('Pagu diblokir', '<small>Rp</small> ' + rp(HB.total), bl.length + ' item bertanda * · dibandingkan FA Detail ' + tgl(DB.periode)) +
+          tile('Pagu efektif', '<small>Rp</small> ' + rp(total - HB.total), 'Pagu yang dapat direalisasikan')
+        : tile('Item bertanda blokir (*)', rp(bl.length), bl.length ? 'Nilai blokir tampil setelah data realisasi tahun yang sama dimuat' : 'Tidak ada item yang diblokir')) +
   '</div>';
   var h = '<div class="page-sec grid">' +
     card('ag-ring', 'Ringkasan anggaran', keterangan(), ringkas, pilihVersi()) +

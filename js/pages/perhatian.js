@@ -1,7 +1,7 @@
 /* js/pages/perhatian.js — Perlu Perhatian */
-import { esc, rp, pc, group, sum } from '../utils.js?v=202611150527';
-import { rows, subName, pill } from '../state.js?v=202611150527';
-import { card, printHead } from '../ui-components.js?v=202611150527';
+import { esc, rp, pc, group, sum } from '../utils.js?v=202611150540';
+import { rows, subName, pill } from '../state.js?v=202611150540';
+import { card, printHead } from '../ui-components.js?v=202611150540';
 
 /* ================= perlu perhatian ================= */
 export function renderPerhatian(){
@@ -13,7 +13,7 @@ export function renderPerhatian(){
   var low=group(R,function(r){return r.ro+'|'+r.sub;}).filter(function(g){return g.pagu>=2e7&&g.p<0.3;}).sort(function(a,b){return b.sisa-a.sisa;}).slice(0,25);
   var lb=low.length?'<div class="tbl"><table><thead><tr><th>Unit</th><th>Sub komponen</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">%</th><th class="n">Sisa</th><th>Status</th></tr></thead><tbody>'+
     low.map(function(g){ var r=g.rows[0]; return '<tr><td>'+esc(r.unit)+'</td><td><span class="code">'+esc(r.sub)+'</span> '+esc(subName(r))+'</td><td class="n">'+rp(g.pagu)+'</td><td class="n">'+rp(g.sd)+'</td><td class="n">'+pc(g.p)+'</td><td class="n">'+rp(g.sisa)+'</td><td>'+pill(g.p)+'</td></tr>'; }).join('')+'</tbody></table></div>':'<p class="note">Tidak ada sub komponen dengan penyerapan di bawah 30%.</p>';
-  var z=group(R.filter(function(r){return r.sd===0&&r.pagu>0;}),function(r){return r.kat+'|'+r.unit;}).sort(function(a,b){return b.pagu-a.pagu;});
+  var z=group(R.filter(function(r){return r.sd===0&&r.pagu>0&&!r.blokir;}),function(r){return r.kat+'|'+r.unit;}).sort(function(a,b){return b.pagu-a.pagu;});
   var zb='<div class="tbl"><table><thead><tr><th>Unit</th><th class="n">Detail belum terealisasi</th><th class="n">Pagu belum diserap</th></tr></thead><tbody>'+z.map(function(g){return '<tr><td><span class="note">'+esc(g.key.split('|')[0])+'</span> <b>'+esc(g.key.split('|')[1])+'</b></td><td class="n">'+g.n+'</td><td class="n">'+rp(g.pagu)+'</td></tr>';}).join('')+'</tbody></table></div>';
   var nos=R.filter(function(r){return !r.sumber;});
   return '<div class="page-sec grid">'+printHead()+

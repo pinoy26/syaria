@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611150527';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611150527';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611150527';
-import { SB } from '../api.js?v=202611150527';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611150540';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611150540';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611150540';
+import { SB } from '../api.js?v=202611150540';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){
@@ -32,13 +32,16 @@ export function renderRingkasan(){
           '<div class="bn-amt"><small>Rp</small>'+rp(t.pagu)+'</div></div>'+
         '<div class="bn-boxes">'+
           '<div class="bn-box bn-real"><span>Realisasi Belanja</span><b><small>Rp</small>'+rp(t.sd)+'</b></div>'+
-          '<div class="bn-box bn-sisa"><span>Sisa Pagu</span><b><small>Rp</small>'+(t.sisa<0?'−':'')+rp(Math.abs(t.sisa))+'</b></div>'+
+          '<div class="bn-box bn-sisa"><span>Sisa Pagu</span><b><small>Rp</small>'+(t.sisa<0?'−':'')+rp(Math.abs(t.sisa))+'</b>'+
+            (t.bl?'<small class="bn-ef">dapat digunakan Rp '+rp(t.sisa-t.bl)+'</small>':'')+'</div>'+
         '</div></div>'+
       '<div class="bn-pct"><span>Total Realisasi Belanja <b>'+pc(t.p)+'</b></span><span>Sisa Pagu <b>'+pc(pSisa)+'</b></span></div>'+
-      '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"><em>'+pc(t.p)+'</em></span></div>'+
+      '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"><em>'+pc(t.p)+'</em></span>'+
+        (t.bl&&t.pagu?'<span class="bn-blk" style="width:'+Math.min(100,t.bl/t.pagu*100).toFixed(2)+'%" title="Pagu diblokir Rp '+rp(t.bl)+'"></span>':'')+'</div>'+
       '<div class="bn-foot">'+
         '<span class="bn-leg"><i></i><span>Realisasi periode ini<br><b><small>Rp</small> '+rp(t.ini)+'</b> <span class="bn-sub">'+poin(t.pagu?t.ini/t.pagu:0)+'</span></span></span>'+
         (t.lock?'<span class="bn-leg bn-lock"><i></i><span>Lock pagu (proses revisi)<br><b><small>Rp</small> '+rp(t.lock)+'</b></span></span>':'')+
+        (t.bl?'<span class="bn-leg bn-blok"><i></i><span>Pagu diblokir (tidak dapat direalisasikan)<br><b><small>Rp</small> '+rp(t.bl)+'</b> <span class="bn-sub">'+pc(t.bl/t.pagu)+' pagu · dari RKK '+tgl(DB.blokir.versi.posisi)+'</span></span></span>':'')+
         '<span class="bn-date">Data per '+esc(tglPanjang)+'</span>'+
       '</div>'+
     '</div>'+
@@ -108,7 +111,7 @@ export function renderRingkasan(){
     card('c-tren','Tren penyerapan','Realisasi kumulatif setiap posisi data dibanding garis ideal penyerapan merata sepanjang tahun.','<div id="trendBox" class="trend"><div class="loading" style="padding:30px 0">Memuat tren…</div></div>')+'</div>';
 
   var minus=R.filter(function(r){return r.sisa<0;}), ms=sum(minus);
-  var gs=group(R,function(r){return r.ro+'|'+r.sub;}), s0=gs.filter(function(g){return g.sd===0&&g.pagu>0;});
+  var gs=group(R.filter(function(r){return !r.blokir;}),function(r){return r.ro+'|'+r.sub;}), s0=gs.filter(function(g){return g.sd===0&&g.pagu>0;});
   var lowK=group(R,function(r){return r.komp;}).filter(function(g){return g.pagu>=1e8;}).sort(function(a,b){return a.p-b.p;})[0];
 
   /* porsi pagu terhadap pagu induk: diagram donat + keterangan berangka penuh */

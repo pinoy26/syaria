@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150527';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150527';
+import { BOOT } from './state.js?v=202611150540';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150540';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -266,15 +266,20 @@ SB.rapikanArsip = function(tahun){
   });
 };
 /* ---------- Monev Anggaran: versi RKK & item (RLS membatasi item sesuai cakupan unit) ---------- */
+var CACHE_AG = { versi: null, item: {} };
+SB.lupakanCacheAnggaran = function(){ CACHE_AG = { versi: null, item: {} }; };
 SB.anggaranVersi = function(){
-  return SBC.from('anggaran_versi').select('id,tahun,posisi,jumlah_item,pagu,item_blokir,pagu_item_blokir').order('posisi').then(function(r){
+  if (CACHE_AG.versi) return CACHE_AG.versi;
+  return CACHE_AG.versi = SBC.from('anggaran_versi').select('id,tahun,posisi,jumlah_item,pagu,item_blokir,pagu_item_blokir').order('posisi').then(function(r){
     if (r.error) throw r.error; return r.data || [];
-  });
+  }).catch(function(e){ CACHE_AG.versi = null; throw e; });
 };
 var KOLOM_ANGGARAN = 'urutan,prog,prog_n,keg,keg_n,kro,kro_n,ro,ro_n,komp,komp_n,sub,sub_n,akun,akun_n,sumber,kategori,unit,judul,judul2,uraian,volume,satuan,harga,jumlah,blokir';
 SB.anggaranItem = function(versiId){
-  return sbAll(function(){ return SBC.from('anggaran').select(KOLOM_ANGGARAN).eq('versi_id', versiId).order('urutan'); })
-    .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; x.a2 = String(x.akun || '').slice(0, 2); return x; }); });
+  if (CACHE_AG.item[versiId]) return CACHE_AG.item[versiId];
+  return CACHE_AG.item[versiId] = sbAll(function(){ return SBC.from('anggaran').select(KOLOM_ANGGARAN).eq('versi_id', versiId).order('urutan'); })
+    .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; x.a2 = String(x.akun || '').slice(0, 2); return x; }); })
+    .catch(function(e){ delete CACHE_AG.item[versiId]; throw e; });
 };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
