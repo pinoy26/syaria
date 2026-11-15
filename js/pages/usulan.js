@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151008';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611151008';
-import { card } from '../ui-components.js?v=202611151008';
-import { SB } from '../api.js?v=202611151008';
-import { refresh, keepScroll } from '../nav.js?v=202611151008';
-import { kunciItem } from './anggaran.js?v=202611151008';
-import { muatPdfLib } from './laporan.js?v=202611151008';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611151008';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151028';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611151028';
+import { card } from '../ui-components.js?v=202611151028';
+import { SB } from '../api.js?v=202611151028';
+import { refresh, keepScroll } from '../nav.js?v=202611151028';
+import { kunciItem } from './anggaran.js?v=202611151028';
+import { muatPdfLib } from './laporan.js?v=202611151028';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611151028';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -348,9 +348,9 @@ function bind(){
   };
   if ($('usSimpan')) $('usSimpan').onclick = function(){ kirim(false, this); };
   if ($('usAjukan')) $('usAjukan').onclick = function(){ kirim(true, this); };
-  var muatUlang = function(pesan, judul){ toast(pesan, 'ok', judul); var id = U.id; U.detail = null; U.list = null; muatNotifUsulan(); ke('detail', id); };
+  var muatUlang = function(pesan, judul){ document.dispatchEvent(new Event('usulan-berubah')); toast(pesan, 'ok', judul); var id = U.id; U.detail = null; U.list = null; muatNotifUsulan(); ke('detail', id); };
   on('[data-us-ajukan]', function(el){ el.disabled = true; SB.ajukanUsulan(U.id).then(function(){ muatUlang('Usulan diajukan ke Admin perencanaan.', 'Usulan diajukan'); }).catch(function(e){ el.disabled = false; toast(errMsg(e), 'err', 'Belum dapat diajukan'); }); });
-  on('[data-us-hapus]', function(){ tanya({ judul: 'Hapus usulan #' + U.id + '?', pesan: 'Usulan dan seluruh barisnya dihapus.', ya: 'Hapus' }).then(function(ya){ if (!ya) return; SB.hapusUsulan(U.id).then(function(){ toast('Usulan dihapus.', 'ok', 'Usulan dihapus'); ke('daftar'); }).catch(function(e){ toast(errMsg(e), 'err', 'Gagal menghapus'); }); }); });
+  on('[data-us-hapus]', function(){ tanya({ judul: 'Hapus usulan #' + U.id + '?', pesan: 'Usulan dan seluruh barisnya dihapus.', ya: 'Hapus' }).then(function(ya){ if (!ya) return; SB.hapusUsulan(U.id).then(function(){ document.dispatchEvent(new Event('usulan-berubah')); toast('Usulan dihapus.', 'ok', 'Usulan dihapus'); ke('daftar'); }).catch(function(e){ toast(errMsg(e), 'err', 'Gagal menghapus'); }); }); });
   on('[data-us-proses]', function(el){
     var aksi = el.getAttribute('data-us-proses'), cat = $('usCatatan') ? $('usCatatan').value : '';
     var judul = { setujui: 'Setujui usulan #' + U.id + '?', kembalikan: 'Kembalikan usulan #' + U.id + ' ke pengusul?', tolak: 'Tolak usulan #' + U.id + '?' }[aksi];
@@ -421,7 +421,7 @@ function buatHistori(btn){
   tanya({ judul: 'Bentuk Usulan Revisi ke ' + ((v.revisi_ke || 0) + 1) + '?', pesan: 'Rincian anggaran ' + un.nama + ' pada ' + labelVersi(v) + ' (Rp ' + rp(un.pagu) + ') disalin menjadi bahan usulan revisi.', ya: 'Usulan Revisi' }).then(function(ya){
     if (!ya) return; btn.disabled = true;
     SB.buatHistori(v.id, un.kat, un.unit).then(function(r){
-      toast(r.judul + ' terbentuk untuk ' + un.nama + ': ' + rp(r.item) + ' item, pagu Rp ' + rp(r.pagu) + '.', 'ok', 'Usulan revisi aktif');
+      document.dispatchEvent(new Event('usulan-berubah')); toast(r.judul + ' terbentuk untuk ' + un.nama + ': ' + rp(r.item) + ' item, pagu Rp ' + rp(r.pagu) + '.', 'ok', 'Usulan revisi aktif');
       U.list = null; HS.v = null; MO.data = null; muatNotifUsulan(); refresh();
     }).catch(function(e){ btn.disabled = false; toast(errMsg(e), 'err', 'Usulan belum terbentuk'); });
   });
@@ -429,7 +429,7 @@ function buatHistori(btn){
 function batalHistori(id, judul){
   tanya({ judul: 'Batalkan ' + judul + '?', pesan: 'Usulan beserta salinan rincian anggarannya dihapus. DIPA tidak berubah.', ya: 'Batalkan usulan', bahaya: true }).then(function(ya){
     if (!ya) return;
-    SB.hapusUsulan(id).then(function(){ toast(judul + ' dibatalkan.', 'ok', 'Usulan dibatalkan'); U.list = null; HS.v = null; MO.data = null; muatNotifUsulan(); refresh(); })
+    SB.hapusUsulan(id).then(function(){ document.dispatchEvent(new Event('usulan-berubah')); toast(judul + ' dibatalkan.', 'ok', 'Usulan dibatalkan'); U.list = null; HS.v = null; MO.data = null; muatNotifUsulan(); refresh(); })
       .catch(function(e){ toast(errMsg(e), 'err', 'Gagal membatalkan'); });
   });
 }

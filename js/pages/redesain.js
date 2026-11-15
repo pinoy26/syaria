@@ -3,12 +3,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151008';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611151008';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611151008';
-import { SB } from '../api.js?v=202611151008';
-import { refresh, keepScroll } from '../nav.js?v=202611151008';
-import { lupakanUsulan } from './usulan.js?v=202611151008';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151028';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611151028';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611151028';
+import { SB } from '../api.js?v=202611151028';
+import { refresh } from '../nav.js?v=202611151028';
+import { lupakanUsulan } from './usulan.js?v=202611151028';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { daftar: null, mode: null, u: null, rows: null, basis: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -18,6 +18,8 @@ var IC_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 window.addEventListener('beforeunload', function(e){ if (R.kotor){ e.preventDefault(); e.returnValue = ''; } });
 /* dari detail usulan: buka langsung mode edit usulan itu */
 document.addEventListener('edit-redesain', function(e){ R.mode = e.detail; R.daftar = null; R.u = null; R.rows = null; S.page = 'anggaran-rkk'; S.open = {}; refresh(); window.scrollTo(0, 0); });
+/* usulan dibentuk/diajukan/dibatalkan di menu lain: daftar usulan dimuat ulang saat Belanja Redesain dibuka lagi */
+document.addEventListener('usulan-berubah', function(){ if (!R.kotor){ R.daftar = null; R.u = null; R.rows = null; } });
 export function lupakanRedesain(){ if (!R.kotor){ R.daftar = null; R.u = null; R.rows = null; } }
 
 /* ---------- angka ---------- */
@@ -35,7 +37,7 @@ function jumlahDari(r, b){ return b && r.volume === b.volume && r.harga === b.ha
 /* ---------- mode: lihat DIPA atau edit/lihat usulan histori ---------- */
 function usulanSaya(){
   var me = sess().email;
-  return (R.daftar || []).filter(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0 && (!isSuperAdmin() || u.dibuat_email === me); });
+  return (R.daftar || []).filter(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0 && (!isSuperAdmin() || u.dibuat_email === me) && bolehUbah(u); });
 }
 function bolehUbah(u){ return !!u && BISA_EDIT.indexOf(u.status) >= 0 && (u.dibuat_email === sess().email || isSuperAdmin()); }
 function muatDaftar(){
@@ -43,9 +45,7 @@ function muatDaftar(){
   SB.usulanDaftar().then(function(l){
     R.daftar = l; R.memuat = false;
     var ada = usulanSaya();
-    if (R.mode == null || (R.mode !== 'dipa' && !ada.some(function(u){ return u.id === R.mode; }))){
-      var ed = ada.filter(bolehUbah)[0]; R.mode = ed ? ed.id : 'dipa';
-    }
+    if (!ada.some(function(u){ return u.id === R.mode; })) R.mode = ada.length ? ada[0].id : 'dipa';
     if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.daftar = []; R.mode = 'dipa'; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
@@ -57,16 +57,15 @@ function muatSalinan(u){
     R.memuat = false; if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
-/* dipanggil renderAnggaranRKK: null = tampilkan DIPA seperti biasa (dengan bilah mode bila ada usulan) */
+/* Belanja Redesain langsung terbuka dalam mode edit bila unit punya usulan yang sedang disusun.
+   Pemilih hanya muncul bila pengguna memegang lebih dari satu usulan (mis. cakupan beberapa unit). */
 export function barMode(){
-  if (!R.daftar){ muatDaftar(); return ''; }
-  var ada = usulanSaya(); if (!ada.length) return '';
-  return '<div class="seg-row noprint"><span class="note">Tampilan</span><div class="seg" role="group" aria-label="Tampilan Belanja Redesain">' +
-    '<button type="button" data-rd-mode="dipa" aria-pressed="' + (R.mode === 'dipa') + '">DIPA (lihat)</button>' +
-    ada.map(function(u){ return '<button type="button" data-rd-mode="' + u.id + '" aria-pressed="' + (R.mode === u.id) + '">' + (bolehUbah(u) ? 'Edit: ' : '') + esc(u.judul + (u.unit ? ' · ' + u.unit : '')) + (bolehUbah(u) ? '' : ' (' + (ST[u.status] || u.status) + ')') + '</button>'; }).join('') +
-    '</div></div>';
+  var ada = usulanSaya(); if (ada.length < 2) return '';
+  return '<div class="form noprint rd-pilih"><label class="f" for="rdUsulan">Usulan yang diedit<select id="rdUsulan">' +
+    ada.map(function(u){ return '<option value="' + u.id + '"' + (u.id === R.mode ? ' selected' : '') + '>' + esc(u.judul + (u.unit ? ' · ' + u.unit : '')) + '</option>'; }).join('') + '</select></label></div>';
 }
-export function modeEdit(){ if (!R.daftar){ muatDaftar(); return false; } return R.mode != null && R.mode !== 'dipa'; }
+/* true selama daftar usulan belum dimuat (renderRedesain menampilkan "memuat") atau ada usulan yang diedit */
+export function modeEdit(){ return !R.daftar || (R.mode != null && R.mode !== 'dipa'); }
 
 /* ---------- susunan baris (seperti SAKTI) ---------- */
 var TK = [
@@ -109,7 +108,9 @@ function dihapus(){ var ada = {}; R.rows.forEach(function(r){ if (r.anggaran_id 
 function kunci51(r){ return sess().role === 'UNIT' && /^51/.test(r.akun); }
 
 /* ---------- halaman ---------- */
-export function renderRedesain(pilihVersi){
+export function renderRedesain(){
+  if (!R.daftar){ muatDaftar(); return '<div class="loading">Memuat Belanja Redesain…</div>'; }
+  if (R.mode === 'dipa') return null;
   var u = (R.daftar || []).filter(function(x){ return x.id === R.mode; })[0];
   if (!u){ R.mode = 'dipa'; return null; }
   if (R.err) return '<div class="page-sec grid">' + card('rd', 'Belanja Redesain', '', barMode() + '<p class="note">' + esc(R.err) + '</p>', '') + '</div>' + ikat();
@@ -138,6 +139,12 @@ export function renderRedesain(pilihVersi){
     hapus.map(function(b){ return '<tr><td class="code">' + esc(b.akun) + '</td><td>' + esc(b.uraian) + '</td><td class="n">' + rp(b.jumlah) + '</td><td>' + (ubah ? '<button class="btn" type="button" data-rd-pulih="' + b.id + '">Kembalikan</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>', '');
   return '<div class="page-sec grid">' + card('rd', 'Belanja Redesain — ' + esc(u.judul), esc((u.unit || u.kategori || '') + ' · basis ' + 'DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru.',
     barMode() + ring + alat + grid, '') + daftarHapus + '</div>' + ikat();
+}
+/* gambar ulang tanpa kehilangan posisi: gulir halaman & gulir tabel dicatat lalu dikembalikan di bind() */
+function gambarUlang(){
+  var g = document.querySelector('.rd-grid');
+  R.posisi = { y: window.scrollY, g: g ? g.scrollTop : 0, x: g ? g.scrollLeft : 0 };
+  refresh();
 }
 function tb(id, t, aktif){ return '<button class="btn" type="button" data-rd="' + id + '"' + (aktif ? '' : ' disabled') + '>' + t + '</button>'; }
 function ikat(){ setTimeout(bind, 0); return ''; }
@@ -207,7 +214,7 @@ function sisip(dasar, setelah, isi, judul, judul2){
   r.id = null; r.anggaran_id = null; r.blokir = false; r.judul = judul; r.judul2 = judul2;
   r.uraian = isi.uraian; r.volume = isi.volume; r.satuan = isi.satuan; r.harga = isi.harga; r.jumlah = Math.round(isi.volume * isi.harga);
   r.urutan = urutanSetelah(setelah); R.rows.push(r); urut();
-  R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; keepScroll();
+  R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; gambarUlang();
 }
 function kosong(){ return { uraian: '', volume: null, satuan: '', harga: null, jumlah: 0, blokir: false }; }
 function aksi(nama){
@@ -219,44 +226,50 @@ function aksi(nama){
     function(h){ sisip(b.r, b.jenis === 'item' ? b.r : akhir, h, b.r.judul, b.r.judul2); });
   else if (nama === 'ubah' && b.jenis === 'item'){
     var r = b.r;
-    formItem('Ubah Detail', konteks, r, null, function(h){ r.uraian = h.uraian; r.volume = h.volume; r.satuan = h.satuan; r.harga = h.harga; r.jumlah = jumlahDari(r, R.basis[r.anggaran_id]); R.kotor = true; keepScroll(); });
+    formItem('Ubah Detail', konteks, r, null, function(h){ r.uraian = h.uraian; r.volume = h.volume; r.satuan = h.satuan; r.harga = h.harga; r.jumlah = jumlahDari(r, R.basis[r.anggaran_id]); R.kotor = true; gambarUlang(); });
   }
   else if (nama === 'ubah') formHeader(b.jenis === 'h1' ? 'Ubah Header 1' : 'Ubah Header 2', konteks, b.n, function(v){
-    ang.forEach(function(r){ if (b.jenis === 'h1') r.judul = v; else r.judul2 = v; }); R.sel = null; R.kotor = true; keepScroll();
+    ang.forEach(function(r){ if (b.jenis === 'h1') r.judul = v; else r.judul2 = v; }); R.sel = null; R.kotor = true; gambarUlang();
   });
   else if (nama === 'hapus'){
     var pesan = b.jenis === 'item' ? 'Detail "' + b.r.uraian + '" (Rp ' + rp(b.r.jumlah) + ') dihapus dari usulan.' : ang.length + ' detail di bawah header "' + b.n + '" (Rp ' + rp(b.j) + ') dihapus dari usulan.';
     tanya({ judul: b.jenis === 'item' ? 'Hapus detail?' : 'Hapus header beserta detailnya?', pesan: pesan + ' Perubahan baru tersimpan setelah Anda klik Simpan.', ya: 'Hapus', bahaya: true }).then(function(ya){
-      if (!ya) return; R.rows = R.rows.filter(function(r){ return ang.indexOf(r) < 0; }); R.sel = null; R.kotor = true; keepScroll();
+      if (!ya) return; R.rows = R.rows.filter(function(r){ return ang.indexOf(r) < 0; }); R.sel = null; R.kotor = true; gambarUlang();
     });
   }
 }
 function pulihkan(id){
   var b = R.basis[id]; if (!b) return;
   var r = {}; Object.keys(b).forEach(function(k){ r[k] = b[k]; }); r.anggaran_id = b.id; r.id = null;
-  R.rows.push(r); urut(); R.kotor = true; keepScroll();
+  R.rows.push(r); urut(); R.kotor = true; gambarUlang();
 }
 function simpan(){
   if (!R.kotor || R.simpan) return;
-  R.simpan = true; keepScroll();
+  R.simpan = true; gambarUlang();
   var kirim = R.rows.map(function(r){ return { anggaran_id: r.anggaran_id, urutan: r.urutan, judul: r.judul || '', judul2: r.judul2 || '', uraian: r.uraian, volume: r.volume, satuan: r.satuan || '', harga: r.harga,
     prog: r.prog, kro: r.kro, ro: r.ro, sub: r.sub, akun: r.akun }; });
   SB.simpanSalinan(R.u.id, kirim).then(function(x){
-    R.simpan = false; R.kotor = false; R.rows = null; R.u = null; R.daftar = null; lupakanUsulan();
+    R.simpan = false; R.kotor = false; lupakanUsulan();
+    R.rows.forEach(function(r){ r.jumlah = jumlahDari(r, R.basis[r.anggaran_id]); });
     toast('Pagu usulan Rp ' + rp(x.pagu) + (x.selisih ? ' — selisih ' + tanda(x.selisih) + ' terhadap DIPA; usulan harus seimbang sebelum diajukan.' : ' — seimbang dengan DIPA.') + ' ' + x.perubahan + ' baris perubahan tercatat.', x.selisih ? 'warn' : 'ok', 'Usulan disimpan');
-    refresh();
-  }).catch(function(e){ R.simpan = false; keepScroll(); toast(errMsg(e), 'err', 'Usulan belum tersimpan'); });
+    gambarUlang();
+  }).catch(function(e){ R.simpan = false; gambarUlang(); toast(errMsg(e), 'err', 'Usulan belum tersimpan'); });
 }
 
 /* ---------- interaksi ---------- */
 function bind(){
   var pg = $('page'); if (!pg) return;
-  [].forEach.call(pg.querySelectorAll('[data-rd-mode]'), function(el){ el.onclick = function(){
-    var m = el.getAttribute('data-rd-mode'); m = m === 'dipa' ? 'dipa' : +m;
+  if (R.posisi){
+    var g = pg.querySelector('.rd-grid'), p = R.posisi; R.posisi = null;
+    if (g){ g.scrollTop = p.g; g.scrollLeft = p.x; }
+    window.scrollTo(0, p.y);
+  }
+  if ($('rdUsulan')) $('rdUsulan').onchange = function(){
+    var sel = this, m = +sel.value;
     var ganti = function(){ R.mode = m; R.kotor = false; R.rows = null; R.u = null; R.sel = null; refresh(); };
-    if (R.kotor && m !== R.mode) tanya({ judul: 'Tinggalkan perubahan yang belum disimpan?', pesan: 'Perubahan pada Belanja Redesain akan hilang.', ya: 'Tinggalkan', bahaya: true }).then(function(ya){ if (ya) ganti(); });
+    if (R.kotor) tanya({ judul: 'Tinggalkan perubahan yang belum disimpan?', pesan: 'Perubahan pada Belanja Redesain akan hilang.', ya: 'Tinggalkan', bahaya: true }).then(function(ya){ if (ya) ganti(); else sel.value = R.mode; });
     else ganti();
-  }; });
+  };
   [].forEach.call(pg.querySelectorAll('[data-rd-sel]'), function(el){
     var pilih = function(){ R.sel = { key: el.getAttribute('data-rd-sel') }; [].forEach.call(pg.querySelectorAll('.rd-grid tr.sel'), function(t){ t.classList.remove('sel'); }); el.classList.add('sel'); perbaruiAlat(); };
     el.onclick = pilih;
@@ -266,7 +279,7 @@ function bind(){
   [].forEach.call(pg.querySelectorAll('[data-rd]'), function(el){ el.onclick = function(){
     var a = el.getAttribute('data-rd');
     if (a === 'simpan') simpan();
-    else if (a === 'batal') tanya({ judul: 'Batalkan semua perubahan?', pesan: 'Belanja Redesain kembali ke kondisi terakhir yang disimpan.', ya: 'Batalkan perubahan', bahaya: true }).then(function(ya){ if (ya){ R.kotor = false; R.rows = null; R.u = null; refresh(); } });
+    else if (a === 'batal') tanya({ judul: 'Batalkan semua perubahan?', pesan: 'Belanja Redesain kembali ke kondisi terakhir yang disimpan.', ya: 'Batalkan perubahan', bahaya: true }).then(function(ya){ if (ya){ R.kotor = false; R.rows = null; R.u = null; R.posisi = null; refresh(); } });
     else aksi(a);
   }; });
   [].forEach.call(pg.querySelectorAll('[data-rd-pulih]'), function(el){ el.onclick = function(){ pulihkan(+el.getAttribute('data-rd-pulih')); }; });
