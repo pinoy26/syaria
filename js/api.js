@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611151028';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611151028';
+import { BOOT } from './state.js?v=202611151113';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611151113';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -322,6 +322,12 @@ SB.salinan = function(usulanId){
   return sbAll(function(){ return SBC.from('usulan_salinan').select('id,anggaran_id,urutan,' + KOLOM_ANGGARAN.replace('id,urutan,', '')).eq('usulan_id', usulanId).order('urutan'); })
     .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.urutan = +x.urutan; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; return x; }); });
 };
+/* nilai blokir per item (RKK − FA Detail, atau blokir manual) & realisasi item; dihitung di database */
+SB.blokirItem = function(versiId){
+  /* hasil fungsi bisa > 1000 baris (batas satu permintaan): ambil per halaman */
+  return sbAll(function(){ return SBC.rpc('blokir_item', { p_versi_id: versiId }).order('anggaran_id'); }).then(function(rs){ var m = {}; (rs || []).forEach(function(x){ m[x.anggaran_id] = { blokir: +x.blokir || 0, rkk: !!x.dari_rkk, manual: !!x.manual, realisasi: +x.realisasi || 0 }; }); return m; });
+};
+SB.aturBlokirManual = function(anggaranId, nilai){ return rpc('atur_blokir_manual', { p_anggaran_id: anggaranId, p_nilai: nilai }); };
 SB.simpanSalinan = function(usulanId, rows){ return rpc('simpan_salinan', { p_id: usulanId, p_rows: rows }); };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });

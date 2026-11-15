@@ -1,13 +1,13 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611151028';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611151028';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611151028';
-import { SB } from '../api.js?v=202611151028';
-import { refresh } from '../nav.js?v=202611151028';
-import { hitungBlokir } from '../blokir.js?v=202611151028';
-import { renderRedesain, modeEdit, barMode } from './redesain.js?v=202611151028';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611151113';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611151113';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611151113';
+import { SB } from '../api.js?v=202611151113';
+import { refresh } from '../nav.js?v=202611151113';
+import { hitungBlokir } from '../blokir.js?v=202611151113';
+import { renderRedesain } from './redesain.js?v=202611151113';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
@@ -180,12 +180,8 @@ export function renderAnggaranUnit(){
 
 /* ================= Rincian Anggaran (RKK) — susunan seperti SAKTI ================= */
 export function renderAnggaranRKK(){
-  /* ada usulan revisi aktif: Belanja Redesain menampilkan salinan kerja usulan yang bisa diedit */
-  if (modeEdit()){ var ed = renderRedesain(); if (ed != null) return ed; }
-  var t = siap(); if (t) return t;
-  setTimeout(bindAnggaran, 0);
-  return '<div class="page-sec grid">' + card('ag-t-rkk', 'Belanja Redesain', keterangan() + ' · Program → Kegiatan → KRO → RO → Komponen → Sub komponen → Akun → Judul → Item.',
-    barMode() + pohon('ag-t-rkk', AG.rows, [LA.prog, LA.keg, LA.kro, LA.ro, LA.komp, LA.sub, LA.akun, LA.judul]), pilihVersi()) + '</div>';
+  /* lembar kerja seperti SAKTI: DIPA (lihat) atau salinan usulan revisi yang sedang disusun (edit) */
+  return renderRedesain();
 }
 
 /* ================= Riwayat Revisi Anggaran: bandingkan dua versi RKK sampai tingkat item =================
