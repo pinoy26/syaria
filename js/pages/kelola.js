@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611141514';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611141514';
-import { card, openModal } from '../ui-components.js?v=202611141514';
-import { SB } from '../api.js?v=202611141514';
-import { refresh } from '../nav.js?v=202611141514';
-import { reboot, loadData } from '../main.js?v=202611141514';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611141514';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150504';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150504';
+import { card, openModal } from '../ui-components.js?v=202611150504';
+import { SB } from '../api.js?v=202611150504';
+import { refresh } from '../nav.js?v=202611150504';
+import { reboot, loadData } from '../main.js?v=202611150504';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150504';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -149,7 +149,7 @@ function doUpload(){
 export function renderKelolaUser(){
   var A=ensureAdmin(); if (!A) return '<div class="loading">Memuat data admin…</div>';
   var units={Fakultas:{},Rektorat:{}}; A.rules.forEach(function(r){ if(r[4]) (units[r[4]]=units[r[4]]||{})[r[5]]=1; });
-  var peranName={SUPERADMIN:'Super admin',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Unit'};
+  var peranName={SUPERADMIN:'Admin perencanaan',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Unit'};
   var emailSaya=sess().email;
   var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th><th></th></tr></thead><tbody>'+
     A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]), sendiri=u[0]===emailSaya;

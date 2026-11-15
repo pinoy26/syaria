@@ -1,18 +1,18 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611141514';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611141514';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611141514';
-import { THEME_BTN } from './theme.js?v=202611141514';
-import { renderFilters } from './filters.js?v=202611141514';
-import { pdfCard, printCard, printAll } from './export.js?v=202611141514';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611141514';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611141514';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611141514';
-import { renderPerhatian } from './pages/perhatian.js?v=202611141514';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611141514';
-import { renderLaporan } from './pages/laporan.js?v=202611141514';
-import { renderKelolaBerita } from './pages/berita.js?v=202611141514';
-import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611141514';
+import { $, esc } from './utils.js?v=202611150504';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611150504';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611150504';
+import { THEME_BTN } from './theme.js?v=202611150504';
+import { renderFilters } from './filters.js?v=202611150504';
+import { pdfCard, printCard, printAll } from './export.js?v=202611150504';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611150504';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611150504';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611150504';
+import { renderPerhatian } from './pages/perhatian.js?v=202611150504';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611150504';
+import { renderLaporan } from './pages/laporan.js?v=202611150504';
+import { renderKelolaBerita } from './pages/berita.js?v=202611150504';
+import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611150504';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -32,7 +32,7 @@ export var PAGES=[
 var BOTTOM_MAIN=['ringkasan','unit','riwayat','perhatian'];
 var MORE_IC='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>';
 var IC_CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-var ROLE_NAME={SUPERADMIN:'Super admin',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'};
+var ROLE_NAME={SUPERADMIN:'Admin perencanaan',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'};
 export function renderNav(){
   var visible=PAGES.filter(function(p){ return (!p.admin||isAdmin()) && (!p.superadmin||isSuperAdmin()) && (DB||p.noData); });
   /* menu horizontal (desktop): satu tombol per kelompok; kelompok berisi lebih dari satu halaman jadi menu turun */
