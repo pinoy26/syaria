@@ -1,14 +1,14 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150540';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150540';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611150540';
-import { SB } from '../api.js?v=202611150540';
-import { refresh } from '../nav.js?v=202611150540';
-import { hitungBlokir } from '../blokir.js?v=202611150540';
+import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150637';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150637';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611150637';
+import { SB } from '../api.js?v=202611150637';
+import { refresh } from '../nav.js?v=202611150637';
+import { hitungBlokir } from '../blokir.js?v=202611150637';
 
-export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk'];
+export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
 
 /* ---------- pemuatan data ---------- */
@@ -183,4 +183,96 @@ export function renderAnggaranRKK(){
   setTimeout(bindAnggaran, 0);
   return '<div class="page-sec grid">' + card('ag-t-rkk', 'Rincian anggaran (RKK)', keterangan() + ' · Program → Kegiatan → KRO → RO → Komponen → Sub komponen → Akun → Judul → Item.',
     pohon('ag-t-rkk', AG.rows, [LA.prog, LA.keg, LA.kro, LA.ro, LA.komp, LA.sub, LA.akun, LA.judul]), pilihVersi()) + '</div>';
+}
+
+/* ================= Riwayat Revisi Anggaran: bandingkan dua versi RKK sampai tingkat item =================
+   Item RKK tidak bernomor: item dikenali dari kelompok (sub komponen + akun), judul, sub judul dan uraian
+   (rincian dalam kurung [..] diabaikan karena bisa berubah saat revisi); nama kembar dipasangkan urut kemunculan. */
+function normal(s){ return String(s || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+function kunciItem(r){ return [r.prog, r.kro, r.ro, r.sub, r.akun].join('|') + '#' + normal(r.judul) + '#' + normal(r.judul2) + '#' + normal(r.uraian); }
+export function bandingRKK(lama, baru){
+  var peta = function(rs){ var m = {}; rs.slice().sort(function(a, b){ return a.urutan - b.urutan; }).forEach(function(r){ var k = kunciItem(r); (m[k] = m[k] || []).push(r); }); return m; };
+  var A = peta(lama), B = peta(baru), keys = {}, hasil = [];
+  Object.keys(A).concat(Object.keys(B)).forEach(function(k){ keys[k] = 1; });
+  Object.keys(keys).forEach(function(k){
+    var a = A[k] || [], b = B[k] || [], n = Math.max(a.length, b.length);
+    for (var i = 0; i < n; i++){
+      var x = a[i] || null, y = b[i] || null, st = [];
+      if (!x) st.push('baru'); else if (!y) st.push('hapus');
+      else {
+        if (x.jumlah !== y.jumlah || x.volume !== y.volume || x.harga !== y.harga || x.satuan !== y.satuan) st.push('ubah');
+        if (!x.blokir && y.blokir) st.push('blokir+');
+        if (x.blokir && !y.blokir) st.push('blokir-');
+      }
+      if (st.length) hasil.push({ st: st, a: x, b: y, r: y || x, selisih: (y ? y.jumlah : 0) - (x ? x.jumlah : 0) });
+    }
+  });
+  var tot = function(rs){ return rs.reduce(function(s, r){ return s + r.jumlah; }, 0); };
+  return { item: hasil, totalLama: tot(lama), totalBaru: tot(baru) };
+}
+var LABEL_ST = { 'baru': ['st-good', 'Baru'], 'hapus': ['st-crit', 'Dihapus'], 'ubah': ['st-info', 'Berubah'], 'blokir+': ['st-warn', 'Blokir baru'], 'blokir-': ['st-good', 'Blokir dibuka'] };
+var AG2 = { id: null, rows: null, memuat: false, err: null };
+function muatPembanding(id){
+  if (AG2.memuat) return; AG2.memuat = true; AG2.err = null;
+  SB.anggaranItem(id).then(function(rs){ AG2.id = id; AG2.rows = rs; AG2.memuat = false; if (S.page === 'anggaran-revisi') refresh(); })
+    .catch(function(e){ AG2.memuat = false; AG2.err = errMsg(e); if (S.page === 'anggaran-revisi') refresh(); });
+}
+export function renderAnggaranRevisi(){
+  var t = siap(); if (t) return t;
+  var v = versiAktif(), lain = (AG.versi || []).filter(function(x){ return x.posisi < v.posisi && x.tahun === v.tahun; });
+  setTimeout(bindRevisi, 0);
+  if (!lain.length) return '<div class="page-sec grid">' + card('ag-rev', 'Riwayat revisi anggaran', keterangan(),
+    '<div class="empty">Belum ada versi RKK lain sebelum ' + tgl(v.posisi) + ' di TA ' + v.tahun + '. Perbandingan muncul setelah RKK lebih dari satu tanggal posisi diunggah di Kelola Data (mis. RKK sebelum dan sesudah revisi).</div>', pilihVersi()) + '</div>';
+  var idLama = AG.pembanding && lain.some(function(x){ return x.id === AG.pembanding; }) ? AG.pembanding : lain[lain.length - 1].id;
+  var pilihLama = '<label class="f ag-versi" for="agLama"><span class="sr-only">Dibandingkan dengan</span><select id="agLama">' +
+    lain.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === idLama ? ' selected' : '') + '>dibanding RKK ' + tgl(x.posisi) + '</option>'; }).join('') + '</select></label>';
+  if (AG2.err) return '<div class="glass card"><h2>Versi pembanding gagal dimuat</h2><p class="note">' + esc(AG2.err) + '</p></div>';
+  if (AG2.id !== idLama || !AG2.rows){ muatPembanding(idLama); return '<div class="loading">Membandingkan versi RKK…</div>'; }
+  var vl = (AG.versi || []).filter(function(x){ return x.id === idLama; })[0];
+  var H = bandingRKK(AG2.rows, AG.rows), it = H.item;
+  var hitung = function(st){ return it.filter(function(x){ return x.st.indexOf(st) >= 0; }); };
+  var tile = function(lbl, nilai, ket){ return '<div class="ag-tile"><span>' + lbl + '</span><b>' + nilai + '</b>' + (ket ? '<small>' + ket + '</small>' : '') + '</div>'; };
+  var sel = H.totalBaru - H.totalLama, tanda = function(n){ return (n > 0 ? '+' : n < 0 ? '−' : '') + rp(Math.abs(n)); };
+  var ring = '<div class="ag-tiles">' +
+    tile('Pagu ' + tgl(vl.posisi) + ' → ' + tgl(v.posisi), '<small>Rp</small> ' + rp(H.totalBaru), 'Semula Rp ' + rp(H.totalLama) + ' · selisih ' + tanda(sel)) +
+    tile('Item berubah nilai', rp(hitung('ubah').length), 'Baru ' + hitung('baru').length + ' · dihapus ' + hitung('hapus').length) +
+    tile('Status blokir', rp(hitung('blokir+').length + hitung('blokir-').length), 'Blokir baru ' + hitung('blokir+').length + ' item · dibuka ' + hitung('blokir-').length + ' item') +
+  '</div>';
+  /* ringkasan per unit & per akun (pergeseran) */
+  var agregat = function(fn){
+    var m = {}; AG2.rows.forEach(function(r){ var k = fn(r); (m[k] = m[k] || { a: 0, b: 0, r: r }).a += r.jumlah; });
+    AG.rows.forEach(function(r){ var k = fn(r); (m[k] = m[k] || { a: 0, b: 0, r: r }).b += r.jumlah; m[k].r = r; });
+    return Object.keys(m).map(function(k){ return { k: k, a: m[k].a, b: m[k].b, r: m[k].r }; }).filter(function(x){ return x.a !== x.b; });
+  };
+  var tabelSel = function(judulKol, baris, label){
+    if (!baris.length) return '<p class="note">Tidak ada perubahan.</p>';
+    return '<div class="tbl"><table><thead><tr><th>' + judulKol + '</th><th class="n">Pagu ' + tgl(vl.posisi) + '</th><th class="n">Pagu ' + tgl(v.posisi) + '</th><th class="n">Selisih</th></tr></thead><tbody>' +
+      baris.sort(function(x, y){ return (x.b - x.a) - (y.b - y.a); }).map(function(x){ var d = x.b - x.a; return '<tr><td>' + label(x) + '</td><td class="n">' + rp(x.a) + '</td><td class="n">' + rp(x.b) + '</td><td class="n' + (d < 0 ? ' neg' : '') + '">' + tanda(d) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  };
+  var perUnit = tabelSel('Unit kerja', agregat(function(r){ return (r.kategori || '?') + '|' + (r.unit || '?'); }), function(x){ var p = x.k.split('|'); return '<span class="note">' + esc(p[0]) + '</span> <b>' + esc(p[1]) + '</b>'; });
+  var perAkun = tabelSel('Akun', agregat(function(r){ return r.akun + '|' + (r.sumber || ''); }), function(x){ return '<span class="code">' + esc(x.r.akun) + '</span> ' + esc(x.r.akun_n) + ' <span class="chip ag-sd">' + (x.r.sumber === 'PNP' ? 'PNBP' : esc(x.r.sumber)) + '</span>'; });
+  var nilaiItem = function(r){ return r ? vol(r.volume) + ' ' + esc(r.satuan) + ' × ' + (r.harga == null ? '' : rp(r.harga)) + ' = <b>' + rp(r.jumlah) + '</b>' + (r.blokir ? ' <span class="ag-blv">*</span>' : '') : '<span class="note">—</span>'; };
+  var filt = AG.filterRev || '';
+  var tampil = it.filter(function(x){ return !filt || x.st.indexOf(filt) >= 0; })
+    .sort(function(x, y){ return ((x.r.kategori || '') + (x.r.unit || '') + kunciItem(x.r)) < ((y.r.kategori || '') + (y.r.unit || '') + kunciItem(y.r)) ? -1 : 1; });
+  var pilihan = '<label class="f" for="agFilt" style="max-width:260px">Tampilkan<select id="agFilt"><option value="">Semua perubahan (' + it.length + ')</option>' +
+    ['ubah', 'baru', 'hapus', 'blokir+', 'blokir-'].map(function(s){ return '<option value="' + s + '"' + (s === filt ? ' selected' : '') + '>' + LABEL_ST[s][1] + ' (' + hitung(s).length + ')</option>'; }).join('') + '</select></label>';
+  var rinci = !tampil.length ? '<p class="note">Tidak ada item untuk pilihan ini.</p>' :
+    '<div class="tbl"><table><thead><tr><th>Status</th><th>Unit</th><th>Sub komponen · Akun</th><th>Uraian</th><th class="n">Semula</th><th class="n">Menjadi</th><th class="n">Selisih</th></tr></thead><tbody>' +
+    tampil.map(function(x){ var r = x.r, p = String(r.sub || '').split('.');
+      return '<tr><td>' + x.st.map(function(s){ return '<span class="pill ' + LABEL_ST[s][0] + ' ag-bl"><i></i>' + LABEL_ST[s][1] + '</span>'; }).join(' ') + '</td>' +
+        '<td>' + esc(r.unit || '') + '</td><td><span class="code">' + esc(p[p.length - 1]) + '</span> ' + esc(r.sub_n || '') + '<br><span class="code">' + esc(r.akun) + '</span> <span class="note">' + esc(r.judul || '') + '</span></td>' +
+        '<td>' + esc(r.uraian) + '</td><td class="n">' + nilaiItem(x.a) + '</td><td class="n">' + nilaiItem(x.b) + '</td><td class="n' + (x.selisih < 0 ? ' neg' : '') + '">' + (x.selisih ? tanda(x.selisih) : '') + '</td></tr>'; }).join('') +
+    '</tbody></table></div>';
+  return '<div class="page-sec grid">' +
+    card('ag-rev', 'Riwayat revisi anggaran', keterangan() + ' · dibandingkan dengan RKK ' + tgl(vl.posisi), ring, pilihVersi() + pilihLama) +
+    '<div class="two eq">' + card('ag-rev-unit', 'Perubahan pagu per unit', 'Unit yang pagunya bertambah atau berkurang.', perUnit, '') +
+      card('ag-rev-akun', 'Pergeseran antar akun', 'Akun yang pagunya bertambah atau berkurang (per sumber dana).', perAkun, '') + '</div>' +
+    card('ag-rev-item', 'Rincian item yang berubah', 'Semula → menjadi: volume × harga satuan = jumlah. Tanda * = item kena blokir.', '<div class="noprint" style="margin-bottom:10px">' + pilihan + '</div>' + rinci, '') +
+  '</div>';
+}
+function bindRevisi(){
+  bindAnggaran();
+  var l = $('agLama'); if (l) l.onchange = function(){ AG.pembanding = +this.value; AG2.rows = null; AG2.id = null; refresh(); };
+  var f = $('agFilt'); if (f) f.onchange = function(){ AG.filterRev = this.value; refresh(); };
 }
