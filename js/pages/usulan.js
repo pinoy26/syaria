@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611150917';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611150917';
-import { card } from '../ui-components.js?v=202611150917';
-import { SB } from '../api.js?v=202611150917';
-import { refresh, keepScroll } from '../nav.js?v=202611150917';
-import { kunciItem } from './anggaran.js?v=202611150917';
-import { muatPdfLib } from './laporan.js?v=202611150917';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611150917';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151008';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611151008';
+import { card } from '../ui-components.js?v=202611151008';
+import { SB } from '../api.js?v=202611151008';
+import { refresh, keepScroll } from '../nav.js?v=202611151008';
+import { kunciItem } from './anggaran.js?v=202611151008';
+import { muatPdfLib } from './laporan.js?v=202611151008';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611151008';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -231,7 +231,7 @@ function renderDetail(){
   /* tindakan sesuai peran & status */
   var aksi = '';
   if ((pemilik || adminP) && (u.status === 'draf' || u.status === 'dikembalikan'))
-    aksi += '<div class="tools"><button class="btn" type="button" data-us-edit>Ubah usulan</button><button class="btn primary" type="button" data-us-ajukan>Ajukan</button><button class="btn" type="button" data-us-hapus>Hapus</button></div>';
+    aksi += '<div class="tools">' + (u.histori ? '<button class="btn" type="button" data-us-redesain="' + u.id + '">Edit di Belanja Redesain</button>' : '<button class="btn" type="button" data-us-edit>Ubah usulan</button>') + '<button class="btn primary" type="button" data-us-ajukan>Ajukan</button><button class="btn" type="button" data-us-hapus>Hapus</button></div>';
   if (adminP && u.status === 'diajukan')
     aksi += '<label class="f" for="usCatatan">Catatan (wajib bila dikembalikan/ditolak)<textarea id="usCatatan" rows="2"></textarea></label>' +
       '<div class="tools" style="margin-top:8px"><button class="btn primary" type="button" data-us-proses="setujui">Setujui</button><button class="btn" type="button" data-us-proses="kembalikan">Kembalikan ke pengusul</button><button class="btn danger" type="button" data-us-proses="tolak">Tolak</button></div>';
@@ -316,6 +316,7 @@ function bind(){
   if ($('usFlTelaah')) $('usFlTelaah').onchange = function(){ FL.telaah = this.checked; keepScroll(); };
   on('[data-us-baru]', function(){ U.draft = null; U.detail = null; ke('edit'); });
   on('[data-us-buka]', function(el){ U.tab = 'pengajuan'; ke('detail', +el.getAttribute('data-us-buka')); });
+  on('[data-us-redesain]', function(el){ document.dispatchEvent(new CustomEvent('edit-redesain', { detail: +el.getAttribute('data-us-redesain') })); });
   on('[data-us-tab]', function(el){ U.tab = el.getAttribute('data-us-tab'); if (U.tab === 'pengajuan'){ U.view = 'daftar'; U.list = null; } HS.v = null; refresh(); });
   if ($('usHistUnit')) $('usHistUnit').onchange = function(){ HS.unit = this.value; keepScroll(); };
   on('[data-us-histori]', function(el){ buatHistori(el); });
@@ -363,6 +364,8 @@ function bind(){
   on('[data-us-matriks]', function(el){ unduhMatriks(el.getAttribute('data-us-matriks')); });
 }
 export function renderKelolaUsulan(){ return renderUsulan(); }
+/* dipanggil setelah salinan disimpan di Belanja Redesain: daftar, status histori & monitoring dimuat ulang */
+export function lupakanUsulan(){ U.list = null; U.detail = null; HS.v = null; MO.data = null; }
 
 /* ================= tahap 8: Status Histori (tombol "Usulan Revisi") ================= */
 var AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
@@ -406,8 +409,8 @@ function renderHistori(){
     (bolehBuat() ? '<div><button class="btn primary" type="button" data-us-histori' + (aktif ? ' disabled title="Unit ini masih memiliki usulan aktif"' : '') + '>Usulan Revisi</button></div>' : '') + '</div>';
   var ket;
   if (!aktif) ket = '<div class="status-box us-telaah">Klik <b>Usulan Revisi</b> untuk membentuk <b>Usulan Revisi ke ' + noBaru + '</b> dari ' + esc(labelVersi(v)) + '. Seluruh rincian anggaran ' + esc(un.nama) + ' disalin sebagai bahan revisi; DIPA aslinya tidak berubah. Satu unit hanya dapat memiliki satu usulan aktif.</div>';
-  else if (aktif.status === 'draf' || aktif.status === 'dikembalikan') ket = '<div class="status-box s-ok"><div><b>' + esc(aktif.judul) + '</b> sedang disusun (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Lakukan perubahan anggaran, lalu ajukan lewat tab <b>Pengajuan Revisi</b>. Riwayatnya tampil di menu Monitoring Submit &amp; Approve.' +
-    '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-us-buka="' + aktif.id + '">Buka usulan</button>' +
+  else if (aktif.status === 'draf' || aktif.status === 'dikembalikan') ket = '<div class="status-box s-ok"><div><b>' + esc(aktif.judul) + '</b> sedang disusun (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Ubah rincian anggarannya di menu <b>Belanja Redesain</b>, lalu ajukan lewat tab <b>Pengajuan Revisi</b>. Riwayatnya tampil di menu Monitoring Submit &amp; Approve.' +
+    '<div class="tools" style="margin-top:10px"><button class="btn primary" type="button" data-us-redesain="' + aktif.id + '">Edit di Belanja Redesain</button><button class="btn" type="button" data-us-buka="' + aktif.id + '">Buka usulan</button>' +
     (aktif.dibuat_email === sess().email || isSuperAdmin() ? '<button class="btn danger" type="button" data-us-batal="' + aktif.id + '" data-judul="' + esc(aktif.judul) + '">Batalkan usulan</button>' : '') + '</div></div></div>';
   else ket = '<div class="status-box us-telaah"><div><b>' + esc(aktif.judul) + '</b> sedang diproses Admin perencanaan (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Usulan baru dapat dibentuk setelah No. Revisi SAKTI dicatat.' +
     '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-us-buka="' + aktif.id + '">Lihat usulan</button></div></div></div>';

@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150917';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150917';
+import { BOOT } from './state.js?v=202611151008';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611151008';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -280,7 +280,7 @@ SB.anggaranVersi = function(){
     if (r.error) throw r.error; return r.data || [];
   }).catch(function(e){ CACHE_AG.versi = null; throw e; });
 };
-var KOLOM_ANGGARAN = 'urutan,prog,prog_n,keg,keg_n,kro,kro_n,ro,ro_n,komp,komp_n,sub,sub_n,akun,akun_n,sumber,kategori,unit,judul,judul2,uraian,volume,satuan,harga,jumlah,blokir';
+var KOLOM_ANGGARAN = 'id,urutan,prog,prog_n,keg,keg_n,kro,kro_n,ro,ro_n,komp,komp_n,sub,sub_n,akun,akun_n,sumber,kategori,unit,judul,judul2,uraian,volume,satuan,harga,jumlah,blokir';
 SB.anggaranItem = function(versiId){
   if (CACHE_AG.item[versiId]) return CACHE_AG.item[versiId];
   return CACHE_AG.item[versiId] = sbAll(function(){ return SBC.from('anggaran').select(KOLOM_ANGGARAN).eq('versi_id', versiId).order('urutan'); })
@@ -317,6 +317,12 @@ SB.paguUnitVersi = function(){ return rpc('pagu_unit_versi', {}).then(function(r
 SB.refAkun = function(){
   return SBC.from('ref_akun').select('kode,nama,asal').order('kode').then(function(r){ if (r.error) throw r.error; return r.data || []; });
 };
+/* ---------- tahap 9: salinan kerja usulan (Belanja Redesain) ---------- */
+SB.salinan = function(usulanId){
+  return sbAll(function(){ return SBC.from('usulan_salinan').select('id,anggaran_id,urutan,' + KOLOM_ANGGARAN.replace('id,urutan,', '')).eq('usulan_id', usulanId).order('urutan'); })
+    .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.urutan = +x.urutan; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; return x; }); });
+};
+SB.simpanSalinan = function(usulanId, rows){ return rpc('simpan_salinan', { p_id: usulanId, p_rows: rows }); };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };
