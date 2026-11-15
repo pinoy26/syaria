@@ -1,11 +1,12 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150511';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150511';
-import { card, openModal } from '../ui-components.js?v=202611150511';
-import { SB } from '../api.js?v=202611150511';
-import { refresh } from '../nav.js?v=202611150511';
-import { reboot, loadData } from '../main.js?v=202611150511';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150511';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150527';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150527';
+import { card, openModal } from '../ui-components.js?v=202611150527';
+import { SB } from '../api.js?v=202611150527';
+import { refresh } from '../nav.js?v=202611150527';
+import { reboot, loadData } from '../main.js?v=202611150527';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150527';
+import { lupakanAnggaran } from './anggaran.js?v=202611150527';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -76,7 +77,7 @@ function bindKelolaData(){
   [].forEach.call(document.querySelectorAll('[data-delrkk]'),function(b){ b.onclick=function(){
     tanya({ judul:'Hapus RKK posisi '+tgl(b.dataset.delrkk)+'?', pesan:'Versi RKK ini dihapus dari Monev Anggaran. Pemetaan sumber dana tidak ikut berubah.', ya:'Hapus' }).then(function(ya){
       if(!ya) return; b.disabled=true;
-      SB.hapusRKK(b.dataset.delrkk).then(function(r){ toast(r.pesan,'ok','RKK dihapus'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus RKK'); });
+      SB.hapusRKK(b.dataset.delrkk).then(function(r){ toast(r.pesan,'ok','RKK dihapus'); S.admin=null; lupakanAnggaran(); refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus RKK'); });
     });
   }; });
   [].forEach.call(document.querySelectorAll('[data-arsip]'),function(b){ b.onclick=function(){
@@ -154,7 +155,7 @@ function doUpload(){
         var inp=$('upFile'); if(inp) inp.value='';
         upBerhasil(r, f.name);
         S.admin=null; S.trend={}; S.cmp=null;
-        if (jenis==='RKK') refresh(); else reboot(r.periode, true);
+        if (jenis==='RKK'){ lupakanAnggaran(); refresh(); } else reboot(r.periode, true);
       }).catch(function(x){ upGagal('Gagal mengunggah: '+errMsg(x)); });
     } catch(ex){ upGagal('File tidak bisa dibaca: '+ex.message+'. Pastikan file adalah ekspor Excel dari SAKTI.'); }
   };

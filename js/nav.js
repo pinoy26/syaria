@@ -1,35 +1,39 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611150511';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611150511';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611150511';
-import { THEME_BTN } from './theme.js?v=202611150511';
-import { renderFilters } from './filters.js?v=202611150511';
-import { pdfCard, printCard, printAll } from './export.js?v=202611150511';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611150511';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611150511';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611150511';
-import { renderPerhatian } from './pages/perhatian.js?v=202611150511';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611150511';
-import { renderLaporan } from './pages/laporan.js?v=202611150511';
-import { renderKelolaBerita } from './pages/berita.js?v=202611150511';
-import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611150511';
+import { $, esc } from './utils.js?v=202611150527';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611150527';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611150527';
+import { THEME_BTN } from './theme.js?v=202611150527';
+import { renderFilters } from './filters.js?v=202611150527';
+import { pdfCard, printCard, printAll } from './export.js?v=202611150527';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611150527';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611150527';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611150527';
+import { renderPerhatian } from './pages/perhatian.js?v=202611150527';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611150527';
+import { renderLaporan } from './pages/laporan.js?v=202611150527';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, HAL_ANGGARAN } from './pages/anggaran.js?v=202611150527';
+import { renderKelolaBerita } from './pages/berita.js?v=202611150527';
+import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611150527';
 
 /* ================= navigasi ================= */
 export var PAGES=[
   {id:'ringkasan',t:'Ringkasan',g:'Dasbor',ic:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4v4h6V4zM4 20h6v-4H4z"/>',r:renderRingkasan,after:loadTrend},
-  {id:'unit',t:'Unit Kerja',g:'Analisis',ic:'<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/>',r:renderUnit},
-  {id:'unit-rincian',t:'Rincian Unit Kerja',g:'Analisis',ic:'<path d="M4 5h16v14H4zM4 10h16M10 10v9"/>',r:renderUnitRincian},
-  {id:'sumber',t:'Sumber Dana',g:'Analisis',ic:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h8"/>',r:renderSumber},
-  {id:'jenis',t:'Jenis Belanja',g:'Analisis',ic:'<path d="M4 6h16M4 12h10M4 18h6"/>',r:renderJenis},
-  {id:'dipa',t:'Struktur DIPA',g:'Analisis',ic:'<path d="M5 4h5v5H5zM14 15h5v5h-5zM7.5 9v4.5h9V15"/>',r:renderDipa},
-  {id:'riwayat',t:'Riwayat & Revisi',g:'Pemantauan',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',r:renderRiwayat,after:loadCompare},
-  {id:'perhatian',t:'Perlu Perhatian',g:'Pemantauan',ic:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',r:renderPerhatian},
+  {id:'anggaran',t:'Ringkasan Anggaran',g:'Monev Anggaran',ic:'<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/>',r:renderAnggaran,noData:true},
+  {id:'anggaran-unit',t:'Anggaran per Unit',g:'Monev Anggaran',ic:'<path d="M3 21h18M5 21V9l7-4 7 4v12"/><path d="M9 13h6M9 17h6"/>',r:renderAnggaranUnit,noData:true},
+  {id:'anggaran-rkk',t:'Rincian Anggaran (RKK)',g:'Monev Anggaran',ic:'<path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/>',r:renderAnggaranRKK,noData:true},
+  {id:'unit',t:'Unit Kerja',g:'Monev Realisasi',ic:'<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/>',r:renderUnit},
+  {id:'unit-rincian',t:'Rincian Unit Kerja',g:'Monev Realisasi',ic:'<path d="M4 5h16v14H4zM4 10h16M10 10v9"/>',r:renderUnitRincian},
+  {id:'sumber',t:'Sumber Dana',g:'Monev Realisasi',ic:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h8"/>',r:renderSumber},
+  {id:'jenis',t:'Jenis Belanja',g:'Monev Realisasi',ic:'<path d="M4 6h16M4 12h10M4 18h6"/>',r:renderJenis},
+  {id:'dipa',t:'Struktur DIPA',g:'Monev Realisasi',ic:'<path d="M5 4h5v5H5zM14 15h5v5h-5zM7.5 9v4.5h9V15"/>',r:renderDipa},
+  {id:'riwayat',t:'Riwayat & Revisi',g:'Monev Realisasi',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',r:renderRiwayat,after:loadCompare},
+  {id:'perhatian',t:'Perlu Perhatian',g:'Monev Realisasi',ic:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',r:renderPerhatian},
   {id:'laporan',t:'Laporan',g:'Laporan',ic:'<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',r:renderLaporan},
   {id:'kelola',t:'Kelola Data',g:'Admin',ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',r:renderKelola,superadmin:true,noData:true},
   {id:'kelola-user',t:'Kelola Pengguna',g:'Admin',ic:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5-.2 4.4 1.4 5 4.8"/>',r:renderKelolaUser,superadmin:true,noData:true},
   {id:'kelola-berita',t:'Kelola Berita',g:'Admin',ic:IC_BERITA,r:renderKelolaBerita,admin:true,noData:true}
 ];
-var BOTTOM_MAIN=['ringkasan','unit','riwayat','perhatian'];
+var BOTTOM_MAIN=['ringkasan','anggaran','unit','perhatian'];
 var MORE_IC='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>';
 var IC_CHEV='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 var ROLE_NAME={SUPERADMIN:'Admin perencanaan',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Pengguna unit'};
@@ -95,7 +99,7 @@ export function refresh(){
   if (!p){ $('page').innerHTML='<div class="glass card"><h2>Belum ada data</h2><p class="note">Admin keuangan belum mengunggah laporan realisasi.</p></div>'; closeFilterDrawer(); renderNav(); return; }
   S.page=p.id; persist(); clearPageState(); hideTip();
   renderNav();
-  var noF=!DB||p.id==='kelola'||p.id==='kelola-user'||p.id==='kelola-berita'||p.id==='unit'||p.id==='laporan';
+  var noF=!DB||HAL_ANGGARAN.indexOf(p.id)>=0||p.id==='kelola'||p.id==='kelola-user'||p.id==='kelola-berita'||p.id==='unit'||p.id==='laporan';
   if (noF) closeFilterDrawer();
   if (!noF) renderFilters();
   var fBtn=$('btnFilterToggle');
@@ -107,6 +111,8 @@ export function refresh(){
   /* kotak judul halaman sudah tidak ada: judul halaman tampil di tab browser */
   document.title=(p.id==='ringkasan'?'Ringkasan Realisasi':p.id==='unit-rincian'?('Rincian — '+(function(c){return c.charAt(0).toUpperCase()+c.slice(1);})(unitCaption())):p.t)+' · LENTERA';
   var toolsEl=$('pageTools');
+  /* pemilih tahun/posisi realisasi tidak berlaku di Monev Anggaran (punya pemilih versi RKK sendiri) */
+  if (toolsEl) toolsEl.classList.toggle('pt-ag', HAL_ANGGARAN.indexOf(p.id)>=0);
   if (toolsEl) $('page').parentNode.insertBefore(toolsEl,$('page'));
   /* halaman Laporan meminjam pemilih posisi data ke formulirnya; kembalikan ke tempatnya sebelum isi halaman diganti */
   ['selTahun','selPeriode'].forEach(function(id){

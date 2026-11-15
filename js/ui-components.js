@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611150511';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611150511';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611150527';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611150527';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -161,6 +161,8 @@ export function tree(id,R,levels){
     '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
 /* pre: isi tambahan di atas tabel (mis. tombol pilihan urutan) */
+/* daftarkan tabel bertingkat buatan halaman lain agar tombol Buka satu tingkat / Buka semua ikut bekerja */
+export function daftarPohon(id,R,levels){ TREES[id]={rows:R,levels:levels}; }
 export function treeCard(id,title,sub,R,levels,act,pre){ TREES[id]={rows:R,levels:levels}; return card(id,title,sub,(pre||'')+tree(id,R,levels),act); }
 export function openLevel(id){
   var T=TREES[id]; if(!T) return;

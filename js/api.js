@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150511';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150511';
+import { BOOT } from './state.js?v=202611150527';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150527';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -264,6 +264,17 @@ SB.rapikanArsip = function(tahun){
     var d = r.data || {};
     return { ok: true, pesan: 'Arsip TA ' + d.tahun + ' dirapikan: ' + d.posisi_dihapus + ' posisi (' + d.baris_dihapus + ' baris) dihapus, ' + d.posisi_disisakan + ' posisi akhir bulan disisakan.' };
   });
+};
+/* ---------- Monev Anggaran: versi RKK & item (RLS membatasi item sesuai cakupan unit) ---------- */
+SB.anggaranVersi = function(){
+  return SBC.from('anggaran_versi').select('id,tahun,posisi,jumlah_item,pagu,item_blokir,pagu_item_blokir').order('posisi').then(function(r){
+    if (r.error) throw r.error; return r.data || [];
+  });
+};
+var KOLOM_ANGGARAN = 'urutan,prog,prog_n,keg,keg_n,kro,kro_n,ro,ro_n,komp,komp_n,sub,sub_n,akun,akun_n,sumber,kategori,unit,judul,judul2,uraian,volume,satuan,harga,jumlah,blokir';
+SB.anggaranItem = function(versiId){
+  return sbAll(function(){ return SBC.from('anggaran').select(KOLOM_ANGGARAN).eq('versi_id', versiId).order('urutan'); })
+    .then(function(rs){ return rs.map(function(x){ x.jumlah = +x.jumlah || 0; x.harga = x.harga == null ? null : +x.harga; x.volume = x.volume == null ? null : +x.volume; x.a2 = String(x.akun || '').slice(0, 2); return x; }); });
 };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
