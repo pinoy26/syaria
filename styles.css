@@ -858,3 +858,13 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .rd-ket{margin:8px 2px 0}
 .rd-blokir{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .rd-blnilai{width:150px;text-align:right}
+/* Bagan Akun Standar (Rekam Akun / Ganti Akun) */
+.rd-bas{display:grid;grid-template-columns:minmax(150px,200px) 1fr;gap:12px}
+.rd-bas-jenis{display:flex;flex-direction:column;gap:6px}
+.rd-bas-daftar{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rd-bas-list{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.rd-bas-list button{display:flex;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:500 12.5px var(--sans);padding:7px 10px;cursor:pointer}
+.rd-bas-list button:hover{background:var(--glass-strong)}
+.rd-bas-list button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.rd-bas-list .code{min-width:56px;font-weight:700}
+@media (max-width:600px){ .rd-bas{grid-template-columns:1fr} .rd-bas-jenis{flex-direction:row;flex-wrap:wrap} }

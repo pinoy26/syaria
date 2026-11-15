@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611151113';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611151113';
+import { BOOT } from './state.js?v=202611151221';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611151221';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -327,6 +327,13 @@ SB.blokirItem = function(versiId){
   /* hasil fungsi bisa > 1000 baris (batas satu permintaan): ambil per halaman */
   return sbAll(function(){ return SBC.rpc('blokir_item', { p_versi_id: versiId }).order('anggaran_id'); }).then(function(rs){ var m = {}; (rs || []).forEach(function(x){ m[x.anggaran_id] = { blokir: +x.blokir || 0, rkk: !!x.dari_rkk, manual: !!x.manual, realisasi: +x.realisasi || 0 }; }); return m; });
 };
+/* realisasi per sub komponen + akun (posisi terakhir tahun RKK) — syarat ubah sub komponen/akun */
+SB.realisasiKelompok = function(versiId){
+  return sbAll(function(){ return SBC.rpc('realisasi_kelompok', { p_versi_id: versiId }).order('sub').order('akun'); })
+    .then(function(rs){ var m = {}; (rs || []).forEach(function(x){ var k = [x.prog, x.kro, x.ro, x.sub].join('|'); m[k] = (m[k] || 0) + (+x.sd || 0); m[k + '|' + x.akun] = (m[k + '|' + x.akun] || 0) + (+x.sd || 0); }); return m; });
+};
+var CACHE_BAS = null;
+SB.bagianAkun = function(){ return CACHE_BAS || (CACHE_BAS = SB.refAkun().then(function(l){ return l.filter(function(a){ return /^\d{6}$/.test(a.kode); }); }).catch(function(e){ CACHE_BAS = null; throw e; })); };
 SB.aturBlokirManual = function(anggaranId, nilai){ return rpc('atur_blokir_manual', { p_anggaran_id: anggaranId, p_nilai: nilai }); };
 SB.simpanSalinan = function(usulanId, rows){ return rpc('simpan_salinan', { p_id: usulanId, p_rows: rows }); };
 SB.hapusRKK = function(posisi){
