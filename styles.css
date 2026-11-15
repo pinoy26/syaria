@@ -871,5 +871,26 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 /* kolom centang hapus di ujung lembar kerja */
 .rd-grid .c-cek{width:50px}
 .rd-grid .rd-cek{text-align:center}
-.rd-grid .rd-cek input{width:16px;height:16px;cursor:pointer;accent-color:var(--crit,#b4232a)}
+.rd-grid .rd-cek input{width:16px;height:16px;cursor:pointer;accent-color:#1f2328}
 .rd-grid .rd-cek input:disabled{cursor:not-allowed;opacity:.35}
+/* Belanja Redesain: garis kolom tipis, baris sub komponen berwarna samar, centang hitam biasa */
+.rd-grid table{border-collapse:collapse}
+.rd-grid th,.rd-grid td{border:1px solid var(--line)}
+.rd-grid tr.rd-sub td{background:rgba(11,74,88,.075);font-weight:700}
+.rd-grid tr.rd-sub td:first-child{box-shadow:inset 3px 0 0 rgba(11,74,88,.35)}
+.rd-grid tr.rd-ubah td{background:rgba(234,179,8,.16)} .rd-grid tr.rd-baru td{background:rgba(34,160,90,.16)}
+.rd-grid tr.sel td{background:var(--accent);color:var(--accent-ink)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .rd-grid tr.rd-sub td{background:rgba(120,200,215,.10)} :root:not([data-theme="light"]) .rd-grid .rd-cek input{accent-color:#e6e8ea} }
+:root[data-theme="dark"] .rd-grid tr.rd-sub td{background:rgba(120,200,215,.10)}
+:root[data-theme="dark"] .rd-grid .rd-cek input{accent-color:#e6e8ea}
+/* jendela isian Belanja Redesain lebih lebar: dua baris isian */
+.modal:has(.rd-form){width:min(980px,calc(100vw - 32px))}
+.rd-baris1{display:flex;flex-wrap:wrap;gap:8px}
+.rd-baris1 .f{flex:2 1 260px} .rd-baris1 .rd-f-sd{flex:0 0 120px}
+.rd-hitung{flex-wrap:nowrap}
+.rd-hitung .f{flex:1 1 90px;min-width:0}
+.rd-hitung .rd-f-jml{flex:1.2 1 120px} .rd-hitung .rd-f-bl{flex:1.4 1 170px}
+.rd-f-bl .rd-blokir{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.rd-f-bl .rd-blnilai{flex:1;width:auto;min-width:0}
+.rd-blket{margin:-4px 0 0}
+@media (max-width:760px){ .rd-hitung{flex-wrap:wrap} }
