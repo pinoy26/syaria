@@ -113,3 +113,76 @@ export function parseRKK(rows) {
   if (!n) throw new Error('Tidak ada akun terbaca. Pastikan file adalah "Rincian Kertas Kerja Satker" dari SAKTI.');
   return { map: map, count: n };
 }
+
+/**
+ * Rincian Kertas Kerja Satker (SAKTI) — LENGKAP, untuk Monev Anggaran.
+ * Menghasilkan semua item detail beserta hierarki, judul kelompok (> dan >>), volume, satuan,
+ * harga satuan, jumlah, sumber dana (dari baris akun) dan tanda blokir (*).
+ * Letak kolom angka bisa bergeser antarhalaman, jadi: jumlah = angka TERAKHIR di baris item,
+ * harga satuan = angka sebelumnya; tanda blokir = sel berisi "*" di mana pun pada baris item.
+ */
+var SUMBER_DANA = /^(RM|PNP|PNBP|BLU|PLN|HLN|SBSN)$/;
+function _namaSetelahKode(row) {
+  for (var c = 1; c < row.length; c++) {
+    var t = _txt(row[c]);
+    if (t && !_isNum(row[c]) && !SUMBER_DANA.test(t) && t !== '*' && !/^\d+$/.test(t)) return t;
+  }
+  return '';
+}
+export function parseRKKLengkap(rows) {
+  var cur = {}, items = [], warn = [], total = { program: 0 };
+  var judul = '', judul2 = '';
+  for (var r = 0; r < rows.length; r++) {
+    var row = rows[r] || [];
+    var a = _txt(row[0]), m;
+    var penanda = _txt(row[3]);
+    if (a) {
+      if ((m = a.match(/^\d{3}\.\d{2}\.([A-Z]{2})$/))) {
+        cur = { prog: m[1], prog_n: _namaSetelahKode(row) }; judul = judul2 = '';
+        for (var c0 = 1; c0 < row.length; c0++) if (_isNum(row[c0])) { total.program += row[c0]; break; }
+        continue;
+      }
+      if (/^\d{4}$/.test(a)) { cur.keg = a; cur.keg_n = _namaSetelahKode(row); continue; }
+      if ((m = a.match(/^\d{4}\.([A-Z0-9]{3})$/))) { cur.kro = m[1]; cur.kro_n = _namaSetelahKode(row); continue; }
+      if ((m = a.match(/^\d{4}\.([A-Z0-9]{3}\.\d{3})$/))) { cur.ro = m[1]; cur.ro_n = _namaSetelahKode(row); continue; }
+      if (/^\d{6}$/.test(a)) {
+        cur.akun = a; cur.akun_n = _namaSetelahKode(row); cur.sumber = '';
+        for (var c1 = 1; c1 < row.length; c1++) { var t1 = _txt(row[c1]); if (SUMBER_DANA.test(t1)) cur.sumber = (t1 === 'PNBP' ? 'PNP' : t1); }
+        judul = judul2 = '';
+        continue;
+      }
+      if (/^\d{3}$/.test(a)) { cur.komp = a; cur.komp_n = _namaSetelahKode(row); continue; }
+      if (/^[A-Z0-9]{1,2}$/.test(a)) {
+        cur.sub = cur.komp + '.' + (a.length === 1 ? '0' + a : a); cur.sub_n = _namaSetelahKode(row);
+        judul = judul2 = '';
+        continue;
+      }
+      if (/^Lokasi\b/i.test(a)) continue;
+      warn.push('Baris ' + (r + 1) + ' tidak dikenali: ' + a.substring(0, 60));
+      continue;
+    }
+    if (/^>>+$/.test(penanda)) { judul2 = _txt(row[4]); continue; }
+    if (penanda === '>') { judul = _txt(row[4]); judul2 = ''; continue; }
+    if (penanda !== '-') continue; // baris KPPN, kosong, dll.
+    var nums = [];
+    for (var c = 5; c < row.length; c++) if (_isNum(row[c])) nums.push(row[c]);
+    if (!nums.length) { warn.push('Item tanpa nilai di baris ' + (r + 1) + ': ' + _txt(row[4]).substring(0, 50)); continue; }
+    var vol = _txt(row[6]).match(/^([\d.,]+)\s*(.*)$/);
+    var bintang = false;
+    for (var c2 = 5; c2 < row.length; c2++) if (_txt(row[c2]) === '*') bintang = true;
+    items.push({
+      urutan: items.length + 1,
+      prog: cur.prog, prog_n: cur.prog_n, keg: cur.keg, keg_n: cur.keg_n, kro: cur.kro, kro_n: cur.kro_n,
+      ro: cur.ro, ro_n: cur.ro_n, komp: cur.komp, komp_n: cur.komp_n, sub: cur.sub, sub_n: cur.sub_n,
+      akun: cur.akun, akun_n: cur.akun_n, sumber: cur.sumber || '',
+      judul: judul, judul2: judul2, uraian: _txt(row[4]).replace(/\s+/g, ' '),
+      volume: vol ? Number(vol[1].replace(/,/g, '')) : null, satuan: vol ? vol[2].trim() : '',
+      harga: nums.length >= 2 ? nums[nums.length - 2] : null,
+      jumlah: nums[nums.length - 1], blokir: bintang
+    });
+  }
+  if (!items.length) throw new Error('Tidak ada item terbaca. Pastikan file adalah "Rincian Kertas Kerja Satker" dari SAKTI.');
+  var jumlah = items.reduce(function (s, it) { return s + it.jumlah; }, 0);
+  return { items: items, total: { item: jumlah, program: total.program, selisih: Math.round(jumlah - total.program) },
+           blokir: items.filter(function (it) { return it.blokir; }).length, warnings: warn.slice(0, 20) };
+}

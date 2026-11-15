@@ -1,6 +1,6 @@
 // supabase/functions/admin-delete-user/index.ts
 // Menghapus akun pengguna (auth + baris pengguna/cakupan ikut terhapus lewat ON DELETE CASCADE).
-// Hanya super admin yang boleh memanggil ini — memakai service_role di sisi server saja.
+// Hanya Admin perencanaan yang boleh memanggil ini — memakai service_role di sisi server saja.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS = {
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization") || "";
 
-    // 1) pastikan pemanggil adalah super admin yang aktif
+    // 1) pastikan pemanggil adalah Admin perencanaan yang aktif
     const caller = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: who, error: whoErr } = await caller.auth.getUser();
     if (whoErr || !who.user) return json({ error: "Sesi tidak valid, silakan masuk ulang." }, 401);
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       .from("pengguna").select("peran,aktif").eq("id", who.user.id).maybeSingle();
     if (profilErr) return json({ error: profilErr.message }, 400);
     if (!profil || profil.peran !== "SUPERADMIN" || !profil.aktif) {
-      return json({ error: "Hanya super admin yang bisa menghapus pengguna." }, 403);
+      return json({ error: "Hanya Admin perencanaan yang bisa menghapus pengguna." }, 403);
     }
 
     // 2) validasi input

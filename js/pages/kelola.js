@@ -1,11 +1,11 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150504';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150504';
-import { card, openModal } from '../ui-components.js?v=202611150504';
-import { SB } from '../api.js?v=202611150504';
-import { refresh } from '../nav.js?v=202611150504';
-import { reboot, loadData } from '../main.js?v=202611150504';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150504';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150511';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150511';
+import { card, openModal } from '../ui-components.js?v=202611150511';
+import { SB } from '../api.js?v=202611150511';
+import { refresh } from '../nav.js?v=202611150511';
+import { reboot, loadData } from '../main.js?v=202611150511';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150511';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -19,8 +19,8 @@ function ensureAdmin(){
 export function renderKelola(){
   var A=ensureAdmin(); if (!A) return '<div class="loading">Memuat data admin…</div>';
   var thAktif=A.periods.length?String(A.periods[A.periods.length-1].periode).slice(0,4):'';
-  var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (sumber dana)</option></select></label>'+
-    '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi data<input type="date" id="upTgl"></label>'+
+  var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (anggaran lengkap &amp; sumber dana)</option></select></label>'+
+    '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi (tanggal unduh dari SAKTI)<input type="date" id="upTgl"></label>'+
     '<label class="f" for="upTahun" id="upTahunWrap" hidden>Tahun anggaran RKK<input type="number" id="upTahun" min="2000" max="2100" step="1" inputmode="numeric"></label>'+
     '<label class="f" for="upFile">File Excel (.xlsx / .xls)<input type="file" id="upFile" accept=".xlsx,.xls"></label>'+
     '<div><button class="btn primary" type="button" id="btnUp">Unggah &amp; proses</button></div></div><div id="upMsg" class="status-box" role="status" aria-live="polite" hidden></div>'+
@@ -41,8 +41,17 @@ export function renderKelola(){
   setTimeout(bindKelolaData,0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
     card('k-log','Riwayat unggahan','Cek harus "Cocok": total detail sama dengan baris JUMLAH SELURUHNYA pada laporan.',log)+
+    card('k-rkk','Versi RKK (Monev Anggaran)','Setiap unggahan RKK disimpan utuh sebagai satu versi per tanggal posisi; unggah ulang tanggal yang sama menggantikan versinya.',rkkHtml(A))+
     card('k-arsip','Arsip tahun anggaran','Tahun anggaran yang sudah selesai cukup menyimpan satu posisi per bulan untuk menghemat ruang database.',arsipHtml(A,thAktif))+
     card('k-rule','Aturan unit kerja','Menentukan Fakultas/Rektorat setiap sub komponen.',rules)+'</div>';
+}
+/* daftar versi RKK yang tersimpan */
+function rkkHtml(A){
+  var v=(A.rkk||[]).slice().reverse();
+  if (!v.length) return '<div class="empty">Belum ada RKK lengkap yang tersimpan. Unggah file "Rincian Kertas Kerja Satker" dari SAKTI lewat formulir di atas.</div>';
+  return '<div class="tbl"><table><thead><tr><th>Posisi</th><th>TA</th><th>Diunggah</th><th>File</th><th class="n">Item</th><th class="n">Pagu (termasuk blokir)</th><th class="n">Item blokir</th><th></th></tr></thead><tbody>'+
+    v.map(function(x){ return '<tr><td><b>'+tgl(x.posisi)+'</b></td><td>'+x.tahun+'</td><td>'+esc(x.diunggah)+'<br><span class="note">'+esc(x.pengunggah)+'</span></td><td>'+esc(x.file)+'</td><td class="n">'+rp(x.item)+'</td><td class="n">'+rp(x.pagu)+'</td><td class="n">'+rp(x.blokir)+'</td><td><button class="btn" type="button" data-delrkk="'+x.posisi+'">Hapus</button></td></tr>'; }).join('')+
+    '</tbody></table></div>';
 }
 /* pratinjau rapikan arsip per tahun anggaran lama (sebelum tahun data terbaru) */
 var KB_PER_BARIS=0.65; /* ukuran rata-rata satu baris realisasi beserta indeksnya (terukur ±0,65 KB) */
@@ -64,6 +73,12 @@ function arsipHtml(A,thAktif){
 }
 function bindKelolaData(){
   if (!$('btnUp')) return;
+  [].forEach.call(document.querySelectorAll('[data-delrkk]'),function(b){ b.onclick=function(){
+    tanya({ judul:'Hapus RKK posisi '+tgl(b.dataset.delrkk)+'?', pesan:'Versi RKK ini dihapus dari Monev Anggaran. Pemetaan sumber dana tidak ikut berubah.', ya:'Hapus' }).then(function(ya){
+      if(!ya) return; b.disabled=true;
+      SB.hapusRKK(b.dataset.delrkk).then(function(r){ toast(r.pesan,'ok','RKK dihapus'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus RKK'); });
+    });
+  }; });
   [].forEach.call(document.querySelectorAll('[data-arsip]'),function(b){ b.onclick=function(){
     var y=+b.dataset.arsip;
     tanya({ judul:'Rapikan arsip TA '+y+'?', pesan:b.dataset.n+' posisi data TA '+y+' akan dihapus permanen. Yang disisakan: '+b.dataset.sisa+' posisi akhir bulan. Tindakan ini tidak bisa dibatalkan.', ya:'Rapikan arsip' }).then(function(ya){
@@ -75,7 +90,8 @@ function bindKelolaData(){
   var today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
   $('upTgl').value=today;
   $('upTahun').value=new Date().getFullYear();
-  $('upJenis').onchange=function(){ var rkk=this.value==='RKK'; $('upTglWrap').hidden=rkk; $('upTahunWrap').hidden=!rkk; };
+  $('upJenis').onchange=function(){ var rkk=this.value==='RKK'; $('upTahunWrap').hidden=!rkk; };
+  $('upTgl').addEventListener('change',function(){ if(this.value) $('upTahun').value=this.value.slice(0,4); });
   if ($('btnSalinAturan')) $('btnSalinAturan').onclick=function(){
     var b=this, dari=+b.dataset.dari, ke=+b.dataset.ke;
     tanya({ judul:'Salin aturan unit kerja ke TA '+ke+'?', pesan:'Semua aturan unit kerja TA '+dari+' disalin menjadi aturan TA '+ke+'. Setelah itu aturan TA '+ke+' bisa diubah tanpa memengaruhi data TA '+dari+'.', ya:'Salin', bahaya:false }).then(function(ya){
@@ -122,7 +138,7 @@ function upBerhasil(r, namaFile){
 function doUpload(){
   var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value, tahun=parseInt($('upTahun').value,10);
   if (!f){ upStatus('err','Pilih file Excel terlebih dahulu.'); return; }
-  if (jenis==='REALISASI' && !tg){ upStatus('err','Isi tanggal posisi data.'); return; }
+  if (!tg){ upStatus('err', jenis==='RKK'?'Isi tanggal posisi RKK (tanggal RKK diunduh dari SAKTI).':'Isi tanggal posisi data.'); return; }
   if (jenis==='RKK' && !(tahun>=2000 && tahun<=2100)){ upStatus('err','Isi tahun anggaran RKK, misalnya '+new Date().getFullYear()+'.'); return; }
   if (typeof XLSX==='undefined'){ upGagal('Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
   upButton(true); upStatus('busy','Membaca file '+f.name+'…');
@@ -138,7 +154,7 @@ function doUpload(){
         var inp=$('upFile'); if(inp) inp.value='';
         upBerhasil(r, f.name);
         S.admin=null; S.trend={}; S.cmp=null;
-        reboot(r.periode, true);
+        if (jenis==='RKK') refresh(); else reboot(r.periode, true);
       }).catch(function(x){ upGagal('Gagal mengunggah: '+errMsg(x)); });
     } catch(ex){ upGagal('File tidak bisa dibaca: '+ex.message+'. Pastikan file adalah ekspor Excel dari SAKTI.'); }
   };

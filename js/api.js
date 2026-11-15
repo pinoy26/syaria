@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150504';
-import { parseRealisasi, parseRKK } from './parser.js?v=202611150504';
+import { BOOT } from './state.js?v=202611150511';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150511';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -136,16 +136,18 @@ function bandingBlok(a, b){
 /* ---------- unggah file SAKTI ---------- */
 SB.unggah = function(jenis, tanggal, namaFile, rowsX, tahun){
   if (jenis === 'RKK'){
-    var k = parseRKK(rowsX);
-    var baris = Object.keys(k.map).map(function(key){
-      var p = key.split('|');
-      return { kunci: key, prog: p[0], kro: p[1], ro: p[2], sub: p[3], akun: p[4], sumber: k.map[key] };
-    });
-    /* RKK SAKTI tidak memuat tahun anggaran: tahun dipilih admin; hanya pemetaan tahun itu yang diganti */
-    return SBC.rpc('simpan_rkk', { p_rows: baris, p_tahun: tahun }).then(function(r){
+    /* RKK disimpan utuh per versi (Monev Anggaran) + memperbarui pemetaan sumber dana tahun itu.
+       RKK SAKTI tidak memuat tahun anggaran: tahun dipilih admin. */
+    var h = parseRKKLengkap(rowsX);
+    if (h.total.selisih) h.warnings.unshift('Jumlah item (' + h.total.item + ') berbeda dari total baris Program (' + h.total.program + ').');
+    return SBC.rpc('simpan_rkk_lengkap', { p_tahun: tahun, p_posisi: tanggal, p_nama_file: namaFile || '', p_rows: h.items }).then(function(r){
       if (r.error) throw r.error;
-      return { ok: true, pesan: 'Sumber dana TA ' + ((r.data && r.data.tahun) || tahun) + ' diperbarui dari RKK: ' + (r.data.jumlah || baris.length) + ' akun. ' +
-        'Klik "Terapkan ke posisi terbaru" bila data realisasi sudah pernah diunggah.' };
+      var d = r.data || {};
+      var rp = function(v){ return new Intl.NumberFormat('id-ID').format(Math.round(v || 0)); };
+      return { ok: true, periode: null, peringatan: h.warnings, subBaru: [],
+        pesan: 'RKK TA ' + d.tahun + ' posisi ' + tanggal + ' tersimpan: ' + rp(d.jumlah_item) + ' item, pagu Rp ' + rp(d.pagu) +
+          (d.item_blokir ? ', ' + d.item_blokir + ' item bertanda blokir (*)' : '') + '. Pemetaan sumber dana diperbarui (' + rp(d.akun_sumber) + ' akun). ' +
+          'Klik "Terapkan ke posisi terbaru" bila data realisasi tahun ini sudah pernah diunggah.' };
     });
   }
   var res = parseRealisasi(rowsX);
@@ -177,7 +179,8 @@ SB.adminInfo = function(){
     SBC.from('periode').select('*').order('periode'),
     SBC.from('ref_unit').select('*').order('id'),
     SBC.from('pengguna').select('id,email,nama,peran,aktif,keterangan').order('email'),
-    SBC.from('pengguna_cakupan').select('user_id,kategori,unit')
+    SBC.from('pengguna_cakupan').select('user_id,kategori,unit'),
+    SBC.from('anggaran_versi').select('*').order('posisi')
   ]).then(function(r){
     r.forEach(function(x){ if (x.error) throw x.error; });
     var cak = {};
@@ -194,6 +197,7 @@ SB.adminInfo = function(){
         var c = cak[u.id] || [];
         return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
       }),
+      rkk: (r[4].data || []).map(function(v){ return { posisi: v.posisi, tahun: v.tahun, file: v.nama_file, diunggah: (v.diunggah_pada || '').replace('T', ' ').slice(0, 16), pengunggah: v.diunggah_oleh, item: v.jumlah_item, pagu: v.pagu, blokir: v.item_blokir }; }),
       domain: '', sheetUrl: sbDashboardUrl('editor')
     };
   });
@@ -260,6 +264,9 @@ SB.rapikanArsip = function(tahun){
     var d = r.data || {};
     return { ok: true, pesan: 'Arsip TA ' + d.tahun + ' dirapikan: ' + d.posisi_dihapus + ' posisi (' + d.baris_dihapus + ' baris) dihapus, ' + d.posisi_disisakan + ' posisi akhir bulan disisakan.' };
   });
+};
+SB.hapusRKK = function(posisi){
+  return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };
 SB.aktifkan = function(id, aktif){
   return SBC.from('pengguna').update({ aktif: aktif }).eq('id', id)

@@ -1,18 +1,18 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611150504';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611150504';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611150504';
-import { THEME_BTN } from './theme.js?v=202611150504';
-import { renderFilters } from './filters.js?v=202611150504';
-import { pdfCard, printCard, printAll } from './export.js?v=202611150504';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611150504';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611150504';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611150504';
-import { renderPerhatian } from './pages/perhatian.js?v=202611150504';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611150504';
-import { renderLaporan } from './pages/laporan.js?v=202611150504';
-import { renderKelolaBerita } from './pages/berita.js?v=202611150504';
-import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611150504';
+import { $, esc } from './utils.js?v=202611150511';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611150511';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611150511';
+import { THEME_BTN } from './theme.js?v=202611150511';
+import { renderFilters } from './filters.js?v=202611150511';
+import { pdfCard, printCard, printAll } from './export.js?v=202611150511';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611150511';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611150511';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611150511';
+import { renderPerhatian } from './pages/perhatian.js?v=202611150511';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611150511';
+import { renderLaporan } from './pages/laporan.js?v=202611150511';
+import { renderKelolaBerita } from './pages/berita.js?v=202611150511';
+import { IC_BERITA, isiPanelBerita } from './berita.js?v=202611150511';
 
 /* ================= navigasi ================= */
 export var PAGES=[
