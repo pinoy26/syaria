@@ -1,12 +1,12 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150709';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150709';
-import { card, openModal } from '../ui-components.js?v=202611150709';
-import { SB } from '../api.js?v=202611150709';
-import { refresh } from '../nav.js?v=202611150709';
-import { reboot, loadData } from '../main.js?v=202611150709';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150709';
-import { lupakanAnggaran } from './anggaran.js?v=202611150709';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611150917';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611150917';
+import { card, openModal } from '../ui-components.js?v=202611150917';
+import { SB } from '../api.js?v=202611150917';
+import { refresh } from '../nav.js?v=202611150917';
+import { reboot, loadData } from '../main.js?v=202611150917';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611150917';
+import { lupakanAnggaran } from './anggaran.js?v=202611150917';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -23,6 +23,7 @@ export function renderKelola(){
   var up='<div class="form"><label class="f" for="upJenis">Jenis file<select id="upJenis"><option value="REALISASI">Laporan Ketersediaan Dana Detail</option><option value="RKK">Rincian Kertas Kerja Satker (anggaran lengkap &amp; sumber dana)</option></select></label>'+
     '<label class="f" for="upTgl" id="upTglWrap">Tanggal posisi (tanggal unduh dari SAKTI)<input type="date" id="upTgl"></label>'+
     '<label class="f" for="upTahun" id="upTahunWrap" hidden>Tahun anggaran RKK<input type="number" id="upTahun" min="2000" max="2100" step="1" inputmode="numeric"></label>'+
+    '<label class="f" for="upRevisi" id="upRevisiWrap" hidden>DIPA – Revisi ke (kosongkan = otomatis)<input type="number" id="upRevisi" min="0" max="999" step="1" inputmode="numeric" placeholder="otomatis"></label>'+
     '<label class="f" for="upFile">File Excel (.xlsx / .xls)<input type="file" id="upFile" accept=".xlsx,.xls"></label>'+
     '<div><button class="btn primary" type="button" id="btnUp">Unggah &amp; proses</button></div></div><div id="upMsg" class="status-box" role="status" aria-live="polite" hidden></div>'+
     '<p class="note">Setelah revisi DIPA/POK: unggah RKK terlebih dahulu, lalu Laporan Ketersediaan Dana. Mengunggah ulang tanggal yang sama akan menggantikan data tanggal tersebut. <b>Awal tahun anggaran baru:</b> unggah RKK dengan tahun anggaran baru sebelum data realisasi pertama tahun itu; RKK tahun lain tidak ikut berubah.</p>';
@@ -42,7 +43,7 @@ export function renderKelola(){
   setTimeout(bindKelolaData,0);
   return '<div class="page-sec grid">'+card('k-up','Unggah laporan SAKTI','File dibaca di browser, dicocokkan dengan baris JUMLAH SELURUHNYA, lalu disimpan per tanggal posisi.',up)+
     card('k-log','Riwayat unggahan','Cek harus "Cocok": total detail sama dengan baris JUMLAH SELURUHNYA pada laporan.',log)+
-    card('k-rkk','Versi RKK (Monev Anggaran)','Setiap unggahan RKK disimpan utuh sebagai satu versi per tanggal posisi; unggah ulang tanggal yang sama menggantikan versinya.',rkkHtml(A))+
+    card('k-rkk','Versi RKK (Monev Anggaran)','Setiap unggahan RKK disimpan utuh sebagai satu versi per tanggal posisi; unggah ulang tanggal yang sama menggantikan versinya. Nomor revisi menjadi label "DIPA – Revisi ke N" yang dilihat unit di Status Histori — samakan dengan nomor revisi di SAKTI.',rkkHtml(A))+
     card('k-arsip','Arsip tahun anggaran','Tahun anggaran yang sudah selesai cukup menyimpan satu posisi per bulan untuk menghemat ruang database.',arsipHtml(A,thAktif))+
     card('k-rule','Aturan unit kerja','Menentukan Fakultas/Rektorat setiap sub komponen.',rules)+'</div>';
 }
@@ -50,8 +51,8 @@ export function renderKelola(){
 function rkkHtml(A){
   var v=(A.rkk||[]).slice().reverse();
   if (!v.length) return '<div class="empty">Belum ada RKK lengkap yang tersimpan. Unggah file "Rincian Kertas Kerja Satker" dari SAKTI lewat formulir di atas.</div>';
-  return '<div class="tbl"><table><thead><tr><th>Posisi</th><th>TA</th><th>Diunggah</th><th>File</th><th class="n">Item</th><th class="n">Pagu (termasuk blokir)</th><th class="n">Item blokir</th><th></th></tr></thead><tbody>'+
-    v.map(function(x){ return '<tr><td><b>'+tgl(x.posisi)+'</b></td><td>'+x.tahun+'</td><td>'+esc(x.diunggah)+'<br><span class="note">'+esc(x.pengunggah)+'</span></td><td>'+esc(x.file)+'</td><td class="n">'+rp(x.item)+'</td><td class="n">'+rp(x.pagu)+'</td><td class="n">'+rp(x.blokir)+'</td><td><button class="btn" type="button" data-delrkk="'+x.posisi+'">Hapus</button></td></tr>'; }).join('')+
+  return '<div class="tbl"><table><thead><tr><th>Revisi DIPA</th><th>Posisi</th><th>TA</th><th>Diunggah</th><th>File</th><th class="n">Item</th><th class="n">Pagu (termasuk blokir)</th><th class="n">Item blokir</th><th></th></tr></thead><tbody>'+
+    v.map(function(x){ return '<tr><td class="nowrap">Revisi ke <input type="number" class="us-in" style="width:64px" min="0" max="999" step="1" inputmode="numeric" value="'+(x.revisi==null?'':x.revisi)+'" data-revrkk="'+x.id+'" aria-label="Nomor revisi DIPA posisi '+tgl(x.posisi)+'"></td><td><b>'+tgl(x.posisi)+'</b></td><td>'+x.tahun+'</td><td>'+esc(x.diunggah)+'<br><span class="note">'+esc(x.pengunggah)+'</span></td><td>'+esc(x.file)+'</td><td class="n">'+rp(x.item)+'</td><td class="n">'+rp(x.pagu)+'</td><td class="n">'+rp(x.blokir)+'</td><td><button class="btn" type="button" data-delrkk="'+x.posisi+'">Hapus</button></td></tr>'; }).join('')+
     '</tbody></table></div>';
 }
 /* pratinjau rapikan arsip per tahun anggaran lama (sebelum tahun data terbaru) */
@@ -74,6 +75,13 @@ function arsipHtml(A,thAktif){
 }
 function bindKelolaData(){
   if (!$('btnUp')) return;
+  [].forEach.call(document.querySelectorAll('[data-revrkk]'),function(el){ el.onchange=function(){
+    var n=el.value.trim();
+    if (!/^\d{1,3}$/.test(n)){ toast('Nomor revisi harus angka 0–999.','err','Belum tersimpan'); return; }
+    el.disabled=true;
+    SB.aturRevisiVersi(+el.dataset.revrkk,+n).then(function(){ el.disabled=false; S.admin=null; lupakanAnggaran(); toast('Label versi menjadi "DIPA – Revisi ke '+n+'".','ok','Nomor revisi disimpan'); })
+      .catch(function(e){ el.disabled=false; toast(errMsg(e),'err','Gagal menyimpan nomor revisi'); });
+  }; });
   [].forEach.call(document.querySelectorAll('[data-delrkk]'),function(b){ b.onclick=function(){
     tanya({ judul:'Hapus RKK posisi '+tgl(b.dataset.delrkk)+'?', pesan:'Versi RKK ini dihapus dari Monev Anggaran. Pemetaan sumber dana tidak ikut berubah.', ya:'Hapus' }).then(function(ya){
       if(!ya) return; b.disabled=true;
@@ -91,7 +99,7 @@ function bindKelolaData(){
   var today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
   $('upTgl').value=today;
   $('upTahun').value=new Date().getFullYear();
-  $('upJenis').onchange=function(){ var rkk=this.value==='RKK'; $('upTahunWrap').hidden=!rkk; };
+  $('upJenis').onchange=function(){ var rkk=this.value==='RKK'; $('upTahunWrap').hidden=!rkk; $('upRevisiWrap').hidden=!rkk; };
   $('upTgl').addEventListener('change',function(){ if(this.value) $('upTahun').value=this.value.slice(0,4); });
   if ($('btnSalinAturan')) $('btnSalinAturan').onclick=function(){
     var b=this, dari=+b.dataset.dari, ke=+b.dataset.ke;
@@ -137,10 +145,11 @@ function upBerhasil(r, namaFile){
     '<p class="note" style="margin:0">'+esc(namaFile)+'</p>'+daftar('Sub komponen baru dibanding posisi sebelumnya',r.subBaru)+daftar('Catatan pembacaan',r.peringatan)));
 }
 function doUpload(){
-  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value, tahun=parseInt($('upTahun').value,10);
+  var f=$('upFile').files[0], jenis=$('upJenis').value, tg=$('upTgl').value, tahun=parseInt($('upTahun').value,10), revisi=$('upRevisi')?$('upRevisi').value.trim():'';
   if (!f){ upStatus('err','Pilih file Excel terlebih dahulu.'); return; }
   if (!tg){ upStatus('err', jenis==='RKK'?'Isi tanggal posisi RKK (tanggal RKK diunduh dari SAKTI).':'Isi tanggal posisi data.'); return; }
   if (jenis==='RKK' && !(tahun>=2000 && tahun<=2100)){ upStatus('err','Isi tahun anggaran RKK, misalnya '+new Date().getFullYear()+'.'); return; }
+  if (jenis==='RKK' && revisi!=='' && !(/^\d{1,3}$/.test(revisi))){ upStatus('err','Nomor revisi DIPA harus angka 0–999, atau kosongkan agar dihitung otomatis.'); return; }
   if (typeof XLSX==='undefined'){ upGagal('Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
   upButton(true); upStatus('busy','Membaca file '+f.name+'…');
   var rd=new FileReader();
@@ -150,7 +159,7 @@ function doUpload(){
       var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       var rowsX=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''}).map(function(r){ var k=r.length; while(k>0&&r[k-1]==='') k--; return r.slice(0,k); });
       upStatus('busy','Memproses '+rp(rowsX.length)+' baris di server… Mohon tunggu, jangan tutup halaman ini.');
-      SB.unggah(jenis,tg,f.name,rowsX,tahun).then(function(r){
+      SB.unggah(jenis,tg,f.name,rowsX,tahun,jenis==='RKK'?revisi:null).then(function(r){
         upButton(false); upStatus('ok',r.pesan||'File berhasil diproses.');
         var inp=$('upFile'); if(inp) inp.value='';
         upBerhasil(r, f.name);

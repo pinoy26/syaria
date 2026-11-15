@@ -815,3 +815,10 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .nw-usulan .eyebrow{display:block;margin-bottom:8px}
 .us-saring{margin-bottom:12px}
 
+/* Status Histori (usulan revisi pola SAKTI) */
+.nowrap{white-space:nowrap}
+.us-hist-info{display:grid;grid-template-columns:max-content 1fr;gap:6px 24px;margin:0 0 16px}
+.us-hist-info dt{font-weight:600;color:var(--ink2)}
+.us-hist-info dd{margin:0;font-weight:600}
+.us-hist-form{align-items:end;margin-bottom:14px}
+.us-hist-form select:disabled{opacity:1;color:var(--ink);cursor:default}

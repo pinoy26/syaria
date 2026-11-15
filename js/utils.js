@@ -12,6 +12,8 @@ export function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c
 var BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 var BLN_PANJANG=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 export function tgl(p){ if(!p) return ''; var a=p.split('-'); return (+a[2])+' '+BLN[+a[1]-1]+' '+a[0]; }
+/* label versi RKK seperti SAKTI: "DIPA – Revisi ke 14" (nomor dari Kelola Data) */
+export function labelVersi(v){ return v ? 'DIPA – Revisi ke '+(v.revisi_ke==null?'?':v.revisi_ke) : ''; }
 export function tglPendek(p){ return tgl(p).replace(/ \d{4}$/,''); }
 export function blnTahun(p){ if(!p) return ''; var a=p.split('-'); return BLN_PANJANG[+a[1]-1]+' '+a[0]; }
 export function yearFrac(p){ var a=p.split('-').map(Number); var d=Date.UTC(a[0],a[1]-1,a[2]),s=Date.UTC(a[0],0,1),e=Date.UTC(a[0]+1,0,1); return ((d-s)/864e5+1)/((e-s)/864e5); }

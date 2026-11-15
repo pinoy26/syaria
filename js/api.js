@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611150709';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150709';
+import { BOOT } from './state.js?v=202611150917';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611150917';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -134,18 +134,24 @@ function bandingBlok(a, b){
 }
 
 /* ---------- unggah file SAKTI ---------- */
-SB.unggah = function(jenis, tanggal, namaFile, rowsX, tahun){
+SB.unggah = function(jenis, tanggal, namaFile, rowsX, tahun, revisi){
   if (jenis === 'RKK'){
     /* RKK disimpan utuh per versi (Monev Anggaran) + memperbarui pemetaan sumber dana tahun itu.
        RKK SAKTI tidak memuat tahun anggaran: tahun dipilih admin. */
     var h = parseRKKLengkap(rowsX);
     if (h.total.selisih) h.warnings.unshift('Jumlah item (' + h.total.item + ') berbeda dari total baris Program (' + h.total.program + ').');
+    var nRev = null;
     return SBC.rpc('simpan_rkk_lengkap', { p_tahun: tahun, p_posisi: tanggal, p_nama_file: namaFile || '', p_rows: h.items }).then(function(r){
       if (r.error) throw r.error;
       var d = r.data || {};
+      /* nomor revisi DIPA: kosong = otomatis menurut urutan unggahan; diisi = koreksi Admin perencanaan */
+      var lanjut = (revisi != null && revisi !== '' && d.versi) ? rpc('atur_revisi_versi', { p_id: d.versi, p_revisi: +revisi }) : Promise.resolve();
+      return lanjut.then(function(){ return SBC.from('anggaran_versi').select('revisi_ke').eq('id', d.versi).maybeSingle(); })
+        .then(function(x){ nRev = x && x.data ? x.data.revisi_ke : null; return d; });
+    }).then(function(d){
       var rp = function(v){ return new Intl.NumberFormat('id-ID').format(Math.round(v || 0)); };
       return { ok: true, periode: null, peringatan: h.warnings, subBaru: [],
-        pesan: 'RKK TA ' + d.tahun + ' posisi ' + tanggal + ' tersimpan: ' + rp(d.jumlah_item) + ' item, pagu Rp ' + rp(d.pagu) +
+        pesan: 'RKK TA ' + d.tahun + ' posisi ' + tanggal + (nRev != null ? ' (DIPA – Revisi ke ' + nRev + ')' : '') + ' tersimpan: ' + rp(d.jumlah_item) + ' item, pagu Rp ' + rp(d.pagu) +
           (d.item_blokir ? ', ' + d.item_blokir + ' item bertanda blokir (*)' : '') + '. Pemetaan sumber dana diperbarui (' + rp(d.akun_sumber) + ' akun). ' +
           'Klik "Terapkan ke posisi terbaru" bila data realisasi tahun ini sudah pernah diunggah.' };
     });
@@ -197,7 +203,7 @@ SB.adminInfo = function(){
         var c = cak[u.id] || [];
         return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
       }),
-      rkk: (r[4].data || []).map(function(v){ return { posisi: v.posisi, tahun: v.tahun, file: v.nama_file, diunggah: (v.diunggah_pada || '').replace('T', ' ').slice(0, 16), pengunggah: v.diunggah_oleh, item: v.jumlah_item, pagu: v.pagu, blokir: v.item_blokir }; }),
+      rkk: (r[4].data || []).map(function(v){ return { id: v.id, revisi: v.revisi_ke, posisi: v.posisi, tahun: v.tahun, file: v.nama_file, diunggah: (v.diunggah_pada || '').replace('T', ' ').slice(0, 16), pengunggah: v.diunggah_oleh, item: v.jumlah_item, pagu: v.pagu, blokir: v.item_blokir }; }),
       domain: '', sheetUrl: sbDashboardUrl('editor')
     };
   });
@@ -270,7 +276,7 @@ var CACHE_AG = { versi: null, item: {} };
 SB.lupakanCacheAnggaran = function(){ CACHE_AG = { versi: null, item: {} }; };
 SB.anggaranVersi = function(){
   if (CACHE_AG.versi) return CACHE_AG.versi;
-  return CACHE_AG.versi = SBC.from('anggaran_versi').select('id,tahun,posisi,jumlah_item,pagu,item_blokir,pagu_item_blokir').order('posisi').then(function(r){
+  return CACHE_AG.versi = SBC.from('anggaran_versi').select('id,tahun,posisi,revisi_ke,jumlah_item,pagu,item_blokir,pagu_item_blokir').order('posisi').then(function(r){
     if (r.error) throw r.error; return r.data || [];
   }).catch(function(e){ CACHE_AG.versi = null; throw e; });
 };
@@ -304,6 +310,13 @@ SB.hapusUsulan = function(id){ return rpc('hapus_usulan', { p_id: id }); };
 SB.prosesUsulan = function(id, aksi, catatan){ return rpc('proses_usulan', { p_id: id, p_aksi: aksi, p_catatan: catatan || '' }); };
 SB.catatNoRevisi = function(id, no, catatan){ return rpc('catat_no_revisi', { p_id: id, p_no: no, p_catatan: catatan || '' }); };
 SB.selesaikanUsulan = function(id, catatan){ return rpc('selesaikan_usulan', { p_id: id, p_catatan: catatan || '' }); };
+/* ---------- tahap 8: Status Histori, label revisi DIPA, Bagan Akun Standar, pagu unit per versi ---------- */
+SB.buatHistori = function(versiId, kategori, unit){ return rpc('buat_histori', { p_versi_id: versiId, p_kategori: kategori, p_unit: unit || '' }); };
+SB.aturRevisiVersi = function(id, n){ return rpc('atur_revisi_versi', { p_id: id, p_revisi: n }).then(function(r){ CACHE_AG.versi = null; return r; }); };
+SB.paguUnitVersi = function(){ return rpc('pagu_unit_versi', {}).then(function(rs){ return (rs || []).map(function(x){ x.pagu = +x.pagu || 0; return x; }); }); };
+SB.refAkun = function(){
+  return SBC.from('ref_akun').select('kode,nama,asal').order('kode').then(function(r){ if (r.error) throw r.error; return r.data || []; });
+};
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };

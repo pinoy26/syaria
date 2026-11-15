@@ -1,14 +1,14 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, errMsg } from '../utils.js?v=202611150709';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150709';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611150709';
-import { SB } from '../api.js?v=202611150709';
-import { refresh } from '../nav.js?v=202611150709';
-import { hitungBlokir } from '../blokir.js?v=202611150709';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611150917';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611150917';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611150917';
+import { SB } from '../api.js?v=202611150917';
+import { refresh } from '../nav.js?v=202611150917';
+import { hitungBlokir } from '../blokir.js?v=202611150917';
 
-export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'kelola-usulan'];
+export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
 
 /* ---------- pemuatan data ---------- */
@@ -48,7 +48,7 @@ function siap(){
 function pilihVersi(){
   var vs = (AG.versi || []).slice().reverse();
   return '<label class="f ag-versi" for="agVersi"><span class="sr-only">Versi RKK</span><select id="agVersi">' +
-    vs.map(function(v){ return '<option value="' + v.id + '"' + (v.id === AG.id ? ' selected' : '') + '>RKK ' + tgl(v.posisi) + ' · TA ' + v.tahun + '</option>'; }).join('') + '</select></label>';
+    vs.map(function(v){ return '<option value="' + v.id + '"' + (v.id === AG.id ? ' selected' : '') + '>' + labelVersi(v) + ' · ' + tgl(v.posisi) + ' · TA ' + v.tahun + '</option>'; }).join('') + '</select></label>';
 }
 export function bindAnggaran(){
   var s = $('agVersi');
@@ -125,7 +125,7 @@ function pohon(id, R, levels){
 function keterangan(){
   HB = nilaiBlokir();
   var v = versiAktif();
-  return v ? 'RKK posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun + (isUnitUser() ? ' · cakupan ' + esc(unitCaption()) : '') : '';
+  return v ? labelVersi(v) + ' · posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun + (isUnitUser() ? ' · cakupan ' + esc(unitCaption()) : '') : '';
 }
 
 /* ================= Ringkasan Anggaran ================= */
@@ -181,7 +181,7 @@ export function renderAnggaranUnit(){
 export function renderAnggaranRKK(){
   var t = siap(); if (t) return t;
   setTimeout(bindAnggaran, 0);
-  return '<div class="page-sec grid">' + card('ag-t-rkk', 'Rincian anggaran (RKK)', keterangan() + ' · Program → Kegiatan → KRO → RO → Komponen → Sub komponen → Akun → Judul → Item.',
+  return '<div class="page-sec grid">' + card('ag-t-rkk', 'Belanja Redesain', keterangan() + ' · Program → Kegiatan → KRO → RO → Komponen → Sub komponen → Akun → Judul → Item.',
     pohon('ag-t-rkk', AG.rows, [LA.prog, LA.keg, LA.kro, LA.ro, LA.komp, LA.sub, LA.akun, LA.judul]), pilihVersi()) + '</div>';
 }
 
@@ -225,7 +225,7 @@ export function renderAnggaranRevisi(){
     '<div class="empty">Belum ada versi RKK lain sebelum ' + tgl(v.posisi) + ' di TA ' + v.tahun + '. Perbandingan muncul setelah RKK lebih dari satu tanggal posisi diunggah di Kelola Data (mis. RKK sebelum dan sesudah revisi).</div>', pilihVersi()) + '</div>';
   var idLama = AG.pembanding && lain.some(function(x){ return x.id === AG.pembanding; }) ? AG.pembanding : lain[lain.length - 1].id;
   var pilihLama = '<label class="f ag-versi" for="agLama"><span class="sr-only">Dibandingkan dengan</span><select id="agLama">' +
-    lain.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === idLama ? ' selected' : '') + '>dibanding RKK ' + tgl(x.posisi) + '</option>'; }).join('') + '</select></label>';
+    lain.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === idLama ? ' selected' : '') + '>dibanding ' + labelVersi(x) + ' · ' + tgl(x.posisi) + '</option>'; }).join('') + '</select></label>';
   if (AG2.err) return '<div class="glass card"><h2>Versi pembanding gagal dimuat</h2><p class="note">' + esc(AG2.err) + '</p></div>';
   if (AG2.id !== idLama || !AG2.rows){ muatPembanding(idLama); return '<div class="loading">Membandingkan versi RKK…</div>'; }
   var vl = (AG.versi || []).filter(function(x){ return x.id === idLama; })[0];
