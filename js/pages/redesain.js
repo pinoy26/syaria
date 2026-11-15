@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151221';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611151221';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611151221';
-import { SB } from '../api.js?v=202611151221';
-import { refresh } from '../nav.js?v=202611151221';
-import { lupakanUsulan } from './usulan.js?v=202611151221';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151253';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611151253';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611151253';
+import { SB } from '../api.js?v=202611151253';
+import { refresh } from '../nav.js?v=202611151253';
+import { lupakanUsulan } from './usulan.js?v=202611151253';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -162,7 +162,7 @@ export function renderRedesain(){
       '<div><span class="note">Status</span><b>' + esc(ST[u.status] || u.status) + (R.kotor ? ' · <span class="neg">belum disimpan</span>' : '') + '</b></div></div>';
     alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
-        tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + tb('hapus', 'Hapus', sel.hapus) +
+        tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + tb('hapus', 'Hapus', sel.hapus) +
         '<span class="rd-sp"></span><button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
         '<button class="btn primary" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
         '<p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
@@ -203,8 +203,8 @@ function barisTerpilih(baris){ return R.sel ? baris.filter(function(b){ return b
 function anggota(b){ return R.rows.filter(function(r){ return jalur(r)[b.d] === b.key; }); }
 function pilihan(baris){
   var dipa = R.u && R.u.dipa;
-  var o = { akun: false, h1: false, h2: false, det: false, ubah: false, hapus: false, blokir: false,
-    ket: dipa ? 'Pilih detail untuk mengatur blokir manual.' : 'Pilih baris akun, header, atau detail untuk merekam / mengubah.' };
+  var o = { subbaru: false, akun: false, h1: false, h2: false, det: false, ubah: false, hapus: false, blokir: false,
+    ket: dipa ? 'Pilih detail untuk mengatur blokir manual.' : 'Urutan merekam: 1. Rekam Sub Komponen (pilih baris komponen) → 2. Rekam Akun (pilih sub komponen) → 3. Rekam Header → 4. Rekam Detail.' };
   var b = barisTerpilih(baris); if (!b) return o;
   if (dipa){
     if (b.jenis !== 'item') o.ket = 'Blokir diatur per detail: pilih baris detail.';
@@ -215,9 +215,10 @@ function pilihan(baris){
   if (kunci51(b.r)){ o.ket = 'Akun 51 (Belanja Pegawai) dikunci untuk fakultas/unit.'; return o; }
   var ang = b.jenis === 'item' ? [b.r] : anggota(b), adaH1 = ang.some(function(r){ return r.judul; }), adaH2 = ang.some(function(r){ return r.judul2; });
   var adaBl = ang.some(function(r){ return blk(r).blokir > 0; }), bisaHapus = ang.length && !adaBl;
-  if (b.jenis === 'sub'){
+  if (b.jenis === 'komp'){ o.subbaru = true; o.ket = 'Komponen ' + b.kode + ': Rekam Sub Komponen baru (beserta akun dan detail pertamanya).'; }
+  else if (b.jenis === 'sub'){
     var rs = realSub(ang);
-    o.akun = true; o.ubah = !rs && !adaBl;
+    o.subbaru = true; o.akun = true; o.ubah = !rs && !adaBl;
     o.ket = 'Sub komponen ' + b.kode + ': Rekam Akun baru' + (rs ? '. Kode/uraian tidak dapat diubah karena sudah ada realisasi Rp ' + rp(rs) + '.' : adaBl ? '. Kode/uraian tidak dapat diubah karena memuat item berblokir.' : ', atau Ubah kode/uraian (realisasi Rp 0).');
   }
   else if (b.jenis === 'akun'){
@@ -311,13 +312,16 @@ function formSub(b, ang){
 }
 /* Bagan Akun Standar (gambar 5): pilih akun per jenis belanja; mode rekam juga meminta detail pertama */
 var JENIS = { '51': 'Belanja Pegawai', '52': 'Belanja Barang', '53': 'Belanja Modal', '57': 'Belanja Bantuan Sosial' };
-function formAkun(judul, sub, rekam, sumberList, onOk){
+function formAkun(judul, sub, rekam, sumberList, onOk, subBaru){
   var bas = R.bas.filter(function(a){ return !(sess().role === 'UNIT' && /^51/.test(a.kode)); });
   var jenis = []; bas.forEach(function(a){ var j = a.kode.slice(0, 2); if (jenis.indexOf(j) < 0) jenis.push(j); }); jenis.sort();
   var pilih = { jenis: jenis.indexOf('52') >= 0 ? '52' : jenis[0], akun: null, q: '' };
   var fld = function(id, lbl, ph, mode){ return '<label class="f" for="' + id + '">' + lbl + '<input type="text" id="' + id + '" placeholder="' + (ph || '') + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' autocomplete="off"></label>'; };
   openModal('<div class="modal-hd"><div><span class="note">' + esc(sub) + '</span><h3>' + esc(judul) + '</h3></div><button type="button" class="icon" data-modal-close aria-label="Tutup">' + IC_X + '</button></div>' +
-    '<form id="rdForm" class="rd-form" novalidate><div class="rd-bas"><div class="rd-bas-jenis" role="radiogroup" aria-label="Jenis belanja">' +
+    '<form id="rdForm" class="rd-form" novalidate>' +
+      (subBaru ? '<div class="rd-hitung"><label class="f" for="rdSubKode" style="flex:0 0 130px">Kode sub komponen<input type="text" id="rdSubKode" maxlength="4" placeholder="mis. ZA" autocomplete="off" style="text-transform:uppercase"></label>' +
+        '<label class="f" for="rdSubN">Uraian sub komponen<input type="text" id="rdSubN" placeholder="mis. PENYUSUNAN KURIKULUM" autocomplete="off"></label></div><p class="note" style="margin:0">Pilih akun pertama untuk sub komponen ini:</p>' : '') +
+      '<div class="rd-bas"><div class="rd-bas-jenis" role="radiogroup" aria-label="Jenis belanja">' +
       jenis.map(function(j){ return '<label class="chk"><input type="radio" name="rdJenis" value="' + j + '"' + (j === pilih.jenis ? ' checked' : '') + '><span>' + esc(JENIS[j] || ('Akun ' + j)) + '</span></label>'; }).join('') + '</div>' +
       '<div class="rd-bas-daftar"><input type="search" id="rdCariAkun" placeholder="Cari kode atau nama akun" autocomplete="off"><div id="rdDaftarAkun" class="rd-bas-list" role="listbox" aria-label="Bagan Akun Standar"></div></div></div>' +
       '<p class="note" id="rdAkunPilih" style="margin:0">Belum ada akun dipilih.</p>' +
@@ -342,8 +346,15 @@ function formAkun(judul, sub, rekam, sumberList, onOk){
   $('rdForm').onsubmit = function(e){
     e.preventDefault();
     var salah = function(m){ $('rdMsg').textContent = m; $('rdMsg').hidden = false; };
+    var h = {};
+    if (subBaru){
+      h.kode = $('rdSubKode').value.trim().toUpperCase(); h.subN = $('rdSubN').value.trim();
+      if (!/^[A-Z0-9]{1,4}$/.test(h.kode)) return salah('Kode sub komponen 1–4 huruf kapital/angka, mis. ZA.');
+      if (h.subN.length < 3) return salah('Uraian sub komponen wajib diisi (minimal 3 karakter).');
+      if (R.rows.some(function(r){ return r.ro === subBaru.ro && r.sub === subBaru.komp + '.' + h.kode; })) return salah('Kode ' + h.kode + ' sudah dipakai sub komponen lain di komponen ini.');
+    }
     if (!pilih.akun) return salah('Pilih akun dari Bagan Akun Standar.');
-    var h = { akun: pilih.akun };
+    h.akun = pilih.akun;
     if (rekam){
       h.header = $('rdHeader').value.trim(); h.sumber = $('rdSD') ? $('rdSD').value : sumberList[0];
       h.uraian = $('rdUraian').value.trim(); h.volume = angka($('rdVol').value); h.satuan = $('rdSat').value.trim(); h.harga = angka($('rdHarga').value);
@@ -354,7 +365,7 @@ function formAkun(judul, sub, rekam, sumberList, onOk){
     }
     closeModal(); onOk(h);
   };
-  setTimeout(function(){ $('rdCariAkun').focus(); }, 60);
+  setTimeout(function(){ ($('rdSubKode') || $('rdCariAkun')).focus(); }, 60);
 }
 /* ganti akun satu kelompok; bila akun tujuan sudah ada di sub komponen itu, detail dipindah ke ujung kelompok tujuan */
 function gantiAkun(ang, a){
@@ -415,6 +426,14 @@ function aksi(nama){
   if (nama === 'ubah' && b.jenis === 'akun') return formAkun('Ganti Akun', 'Akun semula ' + konteks + ' · ' + ang.length + ' detail Rp ' + rp(b.j), false, [], function(h){
     if (h.akun.kode === b.r.akun) return; gantiAkun(ang, h.akun); R.sel = null; R.kotor = true; gambarUlang();
   });
+  if (nama === 'subbaru'){
+    /* sub komponen baru di komponen yang sama; diletakkan di ujung komponen */
+    var kompRows = R.rows.filter(function(r){ return r.prog === b.r.prog && r.kro === b.r.kro && r.ro === b.r.ro && r.komp === b.r.komp; });
+    var sbr = []; kompRows.forEach(function(r){ if (r.sumber && sbr.indexOf(r.sumber) < 0) sbr.push(r.sumber); });
+    return formAkun('Rekam Sub Komponen', 'Komponen ' + b.r.komp + ' ' + (b.r.komp_n || ''), true, sbr, function(h){
+      sisip(b.r, kompRows[kompRows.length - 1], h, h.header || '', '', { sub: b.r.komp + '.' + h.kode, sub_n: h.subN, akun: h.akun.kode, akun_n: h.akun.nama, sumber: h.sumber });
+    }, { komp: b.r.komp, ro: b.r.ro });
+  }
   if (nama === 'akun'){
     var sumber = []; ang.forEach(function(r){ if (r.sumber && sumber.indexOf(r.sumber) < 0) sumber.push(r.sumber); });
     if (!sumber.length) R.rows.forEach(function(r){ if (r.sumber && sumber.indexOf(r.sumber) < 0) sumber.push(r.sumber); });
@@ -492,6 +511,6 @@ function bind(){
 /* tombol bilah alat diperbarui tanpa menggambar ulang tabel (tabel bisa ratusan baris) */
 function perbaruiAlat(){
   var o = pilihan(susun()), pg = $('page');
-  ['akun', 'h1', 'h2', 'det', 'ubah', 'hapus', 'blokir'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !o[k]; });
+  ['subbaru', 'akun', 'h1', 'h2', 'det', 'ubah', 'hapus', 'blokir'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !o[k]; });
   var p = pg.querySelector('.rd-petunjuk'); if (p) p.textContent = o.ket;
 }
