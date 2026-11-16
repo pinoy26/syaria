@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160628';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611160628';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611160628';
-import { SB } from '../api.js?v=202611160628';
-import { refresh } from '../nav.js?v=202611160628';
-import { lupakanUsulan } from './usulan.js?v=202611160628';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160922';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611160922';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611160922';
+import { SB } from '../api.js?v=202611160922';
+import { refresh } from '../nav.js?v=202611160922';
+import { lupakanUsulan } from './usulan.js?v=202611160922';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -43,7 +43,8 @@ function jumlahDari(r, b){ return b && r.volume === b.volume && r.harga === b.ha
 /* ---------- mode: lihat DIPA atau edit/lihat usulan histori ---------- */
 function usulanSaya(){
   var me = sess().email;
-  return (R.daftar || []).filter(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0 && (!isSuperAdmin() || u.dibuat_email === me) && bolehUbah(u); });
+  /* Super admin: semua usulan unit yang masih dapat diedit; pengguna lain: usulannya sendiri */
+  return (R.daftar || []).filter(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0 && (isSuperAdmin() || u.dibuat_email === me) && bolehUbah(u); });
 }
 function bolehUbah(u){ return !!u && BISA_EDIT.indexOf(u.status) >= 0 && (u.dibuat_email === sess().email || isSuperAdmin()); }
 function muatDaftar(){
@@ -53,7 +54,8 @@ function muatDaftar(){
     var ada = usulanSaya();
     var dilihat = R.lihat && R.lihat === R.mode && l.some(function(u){ return u.id === R.lihat; });
     if (!dilihat) R.lihat = null;
-    if (!dilihat && !ada.some(function(u){ return u.id === R.mode; })) R.mode = ada.length ? ada[0].id : 'dipa';
+    /* Super admin membuka lembar kerja DIPA lebih dulu (untuk blokir manual); usulan unit dipilih dari daftar */
+    if (!dilihat && !ada.some(function(u){ return u.id === R.mode; })) R.mode = ada.length && !isSuperAdmin() ? ada[0].id : 'dipa';
     if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.daftar = []; R.mode = 'dipa'; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
@@ -84,9 +86,10 @@ function muatDipa(){
 /* Belanja Redesain langsung terbuka dalam mode edit bila unit punya usulan yang sedang disusun.
    Pemilih hanya muncul bila pengguna memegang lebih dari satu usulan (mis. cakupan beberapa unit). */
 export function barMode(){
-  var ada = usulanSaya(); if (ada.length < 2) return '';
-  return '<div class="form noprint rd-pilih"><label class="f" for="rdUsulan">Usulan yang diedit<select id="rdUsulan">' +
-    ada.map(function(u){ return '<option value="' + u.id + '"' + (u.id === R.mode ? ' selected' : '') + '>' + esc(u.judul + (u.unit ? ' · ' + u.unit : '')) + '</option>'; }).join('') + '</select></label></div>';
+  var ada = usulanSaya(), sa = isSuperAdmin(); if (ada.length < (sa ? 1 : 2)) return '';
+  return '<div class="form noprint rd-pilih"><label class="f" for="rdUsulan">' + (sa ? 'Tampilan' : 'Usulan yang diedit') + '<select id="rdUsulan">' +
+    (sa ? '<option value="dipa"' + (R.mode === 'dipa' ? ' selected' : '') + '>Lembar kerja DIPA (lihat & blokir)</option>' : '') +
+    ada.map(function(u){ return '<option value="' + u.id + '"' + (u.id === R.mode ? ' selected' : '') + '>' + esc(u.judul + ' · ' + (u.unit || u.kategori || '') + ' · ' + (ST[u.status] || u.status)) + '</option>'; }).join('') + '</select></label></div>';
 }
 
 /* ---------- susunan baris (seperti SAKTI) ---------- */
@@ -532,7 +535,7 @@ function bind(){
   [].forEach.call(pg.querySelectorAll('[data-rd-tutup]'), function(el){ el.onclick = function(){ R.lihat = null; R.mode = null; R.daftar = null; R.u = null; R.rows = null; refresh(); }; });
   if ($('rdVersi')) $('rdVersi').onchange = function(){ R.dv = +this.value; R.rows = null; R.u = null; R.sel = null; refresh(); };
   if ($('rdUsulan')) $('rdUsulan').onchange = function(){
-    var sel = this, m = +sel.value;
+    var sel = this, m = sel.value === 'dipa' ? 'dipa' : +sel.value;
     var ganti = function(){ R.mode = m; R.kotor = false; R.rows = null; R.u = null; R.sel = null; refresh(); };
     if (R.kotor) tanya({ judul: 'Tinggalkan perubahan yang belum disimpan?', pesan: 'Perubahan pada Belanja Redesain akan hilang.', ya: 'Tinggalkan', bahaya: true }).then(function(ya){ if (ya) ganti(); else sel.value = R.mode; });
     else ganti();

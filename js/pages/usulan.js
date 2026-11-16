@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160628';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611160628';
-import { card } from '../ui-components.js?v=202611160628';
-import { SB } from '../api.js?v=202611160628';
-import { refresh, keepScroll } from '../nav.js?v=202611160628';
-import { kunciItem } from './anggaran.js?v=202611160628';
-import { muatPdfLib } from './laporan.js?v=202611160628';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611160628';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160922';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611160922';
+import { card } from '../ui-components.js?v=202611160922';
+import { SB } from '../api.js?v=202611160922';
+import { refresh, keepScroll } from '../nav.js?v=202611160922';
+import { kunciItem } from './anggaran.js?v=202611160922';
+import { muatPdfLib } from './laporan.js?v=202611160922';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611160922';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -124,6 +124,8 @@ function renderPengajuan(){
   if (!modeKelola() && U.view === 'daftar' && !U.semua && !U.err){
     if (!U.list){ muatDaftar(); return '<div class="loading">Memuat pengajuan revisi…</div>'; }
     var aktif = U.list.filter(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0; });
+    /* lebih dari satu (Super admin / cakupan beberapa unit): buka usulan unit yang dipilih di Status Histori */
+    if (aktif.length > 1 && HS.unit) aktif = aktif.filter(function(u){ return kunciUnit(u.kategori, u.unit) === HS.unit; });
     if (aktif.length === 1){ U.view = 'detail'; U.id = aktif[0].id; U.detail = null; }
   }
   if (U.err) return '<div class="glass card"><h2>Usulan revisi</h2><p class="note">' + esc(U.err) + '</p><div class="tools"><button class="btn" type="button" data-us-ke="daftar">Kembali ke daftar</button></div></div>' + ikat();

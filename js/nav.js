@@ -1,28 +1,28 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611160628';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611160628';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611160628';
-import { THEME_BTN } from './theme.js?v=202611160628';
-import { renderFilters } from './filters.js?v=202611160628';
-import { pdfCard, printCard, printAll } from './export.js?v=202611160628';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611160628';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611160628';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611160628';
-import { renderPerhatian } from './pages/perhatian.js?v=202611160628';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611160628';
-import { renderLaporan } from './pages/laporan.js?v=202611160628';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611160628';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611160628';
-import { renderKelolaBerita } from './pages/berita.js?v=202611160628';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611160628';
+import { $, esc } from './utils.js?v=202611160922';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611160922';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611160922';
+import { THEME_BTN } from './theme.js?v=202611160922';
+import { renderFilters } from './filters.js?v=202611160922';
+import { pdfCard, printCard, printAll } from './export.js?v=202611160922';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611160922';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611160922';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611160922';
+import { renderPerhatian } from './pages/perhatian.js?v=202611160922';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611160922';
+import { renderLaporan } from './pages/laporan.js?v=202611160922';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611160922';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611160922';
+import { renderKelolaBerita } from './pages/berita.js?v=202611160922';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611160922';
 
 /* ================= navigasi ================= */
 export var PAGES=[
   {id:'ringkasan',t:'Ringkasan',g:'Dasbor',ic:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4v4h6V4zM4 20h6v-4H4z"/>',r:renderRingkasan,after:loadTrend},
   {id:'anggaran',t:'Ringkasan Anggaran',g:'Monev Anggaran',ic:'<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/>',r:renderAnggaran,noData:true},
   {id:'anggaran-rkk',t:'Belanja Redesain',g:'Monev Anggaran',ic:'<path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/>',r:renderAnggaranRKK,noData:true},
-  {id:'anggaran-usulan',t:'Usulan Revisi',g:'Monev Anggaran',ic:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',r:renderUsulan,noData:true,notSuper:true},
-  {id:'anggaran-monitor',t:'Monitoring Submit & Approve',g:'Monev Anggaran',ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',r:renderMonitor,noData:true,notSuper:true},
+  {id:'anggaran-usulan',t:'Usulan Revisi',g:'Monev Anggaran',ic:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',r:renderUsulan,noData:true},
+  {id:'anggaran-monitor',t:'Monitoring Submit & Approve',g:'Monev Anggaran',ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',r:renderMonitor,noData:true},
   {id:'anggaran-unit',t:'Anggaran per Unit',g:'Monev Anggaran',ic:'<path d="M3 21h18M5 21V9l7-4 7 4v12"/><path d="M9 13h6M9 17h6"/>',r:renderAnggaranUnit,noData:true,notUnit:true},
   {id:'anggaran-revisi',t:'Riwayat Revisi Anggaran',g:'Monev Anggaran',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 8v4l3 2"/>',r:renderAnggaranRevisi,noData:true,notUnit:true},
   {id:'unit',t:'Unit Kerja',g:'Monev Realisasi',ic:'<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/>',r:renderUnit},
