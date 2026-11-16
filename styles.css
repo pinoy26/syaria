@@ -928,3 +928,5 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .pr-kel{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:0;display:flex;flex-direction:column;gap:4px}
 .pr-kel legend{font-weight:600;font-size:12.5px;padding:0 4px;color:var(--ink2)}
 .modal:has(.pr-form){width:min(760px,calc(100vw - 32px))}
+.rd-rinci{margin:-2px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.rd-rinci .btn{padding:3px 10px;font-size:12.5px}

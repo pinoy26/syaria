@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161023';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611161023';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611161023';
-import { SB } from '../api.js?v=202611161023';
-import { refresh } from '../nav.js?v=202611161023';
-import { lupakanUsulan } from './usulan.js?v=202611161023';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161040';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611161040';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161040';
+import { SB } from '../api.js?v=202611161040';
+import { refresh } from '../nav.js?v=202611161040';
+import { lupakanUsulan } from './usulan.js?v=202611161040';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -285,6 +285,34 @@ function pilihan(baris){
 }
 
 /* ---------- jendela isian (Form R/U/H Item & Form Rekam Header) ---------- */
+/* rincian volume di uraian detail, seperti SAKTI: "Biaya Kebutuhan Tamu [95 Org x 4 Kali x 12 Bulan]"
+   → volume = 95 × 4 × 12 = 4.560. Diambil dari kurung siku terakhir; pemisah x / × / *. */
+function rincianVolume(uraian){
+  var m = String(uraian || '').match(/\[([^\[\]]*)\][^\[\]]*$/); if (!m) return null;
+  var bagian = m[1].split(/\s*[x×*]\s*(?=\d)/i), angkaL = [], hasil = 1;
+  for (var i = 0; i < bagian.length; i++){
+    var t = bagian[i].trim().match(/^(\d[\d.,]*)\s*(.*)$/); if (!t) return null;
+    var n = angka(t[1]); if (n == null || isNaN(n)) return null;
+    angkaL.push(t[1]); hasil *= n;
+  }
+  return angkaL.length ? { volume: Math.round(hasil * 10000) / 10000, rumus: angkaL.join(' × ') } : null;
+}
+/* hubungkan uraian ↔ volume: mengetik rincian dalam [ ] langsung mengisi Volume; beda → tampilkan tombol Terapkan */
+function pasangRincian(hitung){
+  var u = $('rdUraian'), v = $('rdVol'), k = $('rdRinci'); if (!u || !v || !k) return;
+  var tampil = function(otomatis){
+    var x = rincianVolume(u.value);
+    if (!x){ k.hidden = true; return; }
+    if (otomatis && !u.disabled){ v.value = vol(x.volume); hitung(); }
+    var sama = angka(v.value) === x.volume;
+    k.innerHTML = 'Rincian volume: ' + esc(x.rumus) + ' = <b>' + vol(x.volume) + '</b>' + (sama ? ' ✓' : ' · Volume saat ini ' + esc(v.value || '0') + ' <button type="button" class="btn" id="rdRinciPakai">Gunakan ' + vol(x.volume) + '</button>');
+    k.hidden = false;
+    var b = $('rdRinciPakai'); if (b) b.onclick = function(){ v.value = vol(x.volume); hitung(); tampil(false); };
+  };
+  u.addEventListener('input', function(){ tampil(true); });
+  v.addEventListener('input', function(){ tampil(false); });
+  tampil(false);
+}
 function formItem(judul, sub, r, header, onOk){
   var fld = function(id, lbl, v, ph, mode){ return '<label class="f" for="' + id + '">' + lbl + '<input type="text" id="' + id + '" value="' + esc(v == null ? '' : v) + '" placeholder="' + (ph || '') + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' autocomplete="off"></label>'; };
   openModal('<div class="modal-hd"><div><span class="note">' + esc(sub) + '</span><h3>' + esc(judul) + '</h3></div><button type="button" class="icon" data-modal-close aria-label="Tutup">' + IC_X + '</button></div>' +
@@ -296,11 +324,12 @@ function formItem(judul, sub, r, header, onOk){
         (function(){ var i = blk(r); return '<div class="f rd-f-bl">Blokir<span class="rd-blokir"><input type="checkbox" disabled' + (i.blokir ? ' checked' : '') + ' aria-label="Blokir">' +
           '<input type="text" class="rd-blnilai" value="' + rp(i.blokir) + '" disabled aria-label="Nilai blokir"></span></div>'; })() + '</div>' +
         (function(){ var i = blk(r); return i.blokir ? '<p class="note rd-blket">Blokir dikunci' + (i.manual ? ' (blokir manual Admin perencanaan)' : ' (RKK SAKTI)') + '. Realisasi Rp ' + rp(i.realisasi) + ' → jumlah minimal <b>Rp ' + rp(i.blokir + i.realisasi) + '</b>.</p>' : ''; })() : '') +
+      (r ? '<p class="note rd-rinci" id="rdRinci" hidden></p>' : '') +
       '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div>' +
       '<div class="tools"><button type="submit" class="btn primary">Ok</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
   var f = $('rdForm');
   var hitung = function(){ if (!$('rdJml')) return; var v = angka($('rdVol').value), h = angka($('rdHarga').value); $('rdJml').textContent = v == null || h == null || isNaN(v) || isNaN(h) ? '—' : rp(Math.round(v * h)); };
-  if ($('rdVol')){ $('rdVol').oninput = hitung; $('rdHarga').oninput = hitung; }
+  if ($('rdVol')){ $('rdVol').oninput = hitung; $('rdHarga').oninput = hitung; pasangRincian(hitung); }
   [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
   f.onsubmit = function(e){
     e.preventDefault();
@@ -373,6 +402,7 @@ function formAkun(judul, sub, rekam, sumberList, onOk, subBaru){
       (rekam ? '<div class="rd-baris1">' + fld('rdHeader', 'Header 1 (opsional)', 'mis. BELANJA BAHAN') + fld('rdUraian', 'Uraian detail pertama', 'mis. Belanja ATK') +
         (sumberList.length > 1 ? '<label class="f rd-f-sd" for="rdSD">Sumber dana<select id="rdSD">' + sumberList.map(function(x){ return '<option value="' + esc(x) + '">' + esc(sd(x)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' +
         '<div class="rd-hitung">' + fld('rdVol', 'Volume', '0', 'decimal') + fld('rdSat', 'Satuan', 'mis. PKT') + '<span class="rd-op">×</span>' + fld('rdHarga', 'Harga satuan', '0', 'decimal') + '<span class="rd-op">=</span><div class="f">Jumlah<output id="rdJml" class="rd-jml">0</output></div></div>' : '') +
+      (rekam ? '<p class="note rd-rinci" id="rdRinci" hidden></p>' : '') +
       '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div><div class="tools"><button type="submit" class="btn primary">Ok</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
   var gambar = function(){
     var q = pilih.q.toLowerCase(), l = bas.filter(function(a){ return a.kode.slice(0, 2) === pilih.jenis && (!q || (a.kode + ' ' + a.nama).toLowerCase().indexOf(q) >= 0); });
@@ -386,7 +416,7 @@ function formAkun(judul, sub, rekam, sumberList, onOk, subBaru){
   gambar();
   [].forEach.call(document.querySelectorAll('#rdForm [name=rdJenis]'), function(x){ x.onchange = function(){ pilih.jenis = x.value; gambar(); }; });
   $('rdCariAkun').oninput = function(){ pilih.q = this.value.trim(); gambar(); };
-  if (rekam){ var hitung = function(){ var v = angka($('rdVol').value), h = angka($('rdHarga').value); $('rdJml').textContent = v == null || h == null || isNaN(v) || isNaN(h) ? '—' : rp(Math.round(v * h)); }; $('rdVol').oninput = hitung; $('rdHarga').oninput = hitung; }
+  if (rekam){ var hitung = function(){ var v = angka($('rdVol').value), h = angka($('rdHarga').value); $('rdJml').textContent = v == null || h == null || isNaN(v) || isNaN(h) ? '—' : rp(Math.round(v * h)); }; $('rdVol').oninput = hitung; $('rdHarga').oninput = hitung; pasangRincian(hitung); }
   [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
   $('rdForm').onsubmit = function(e){
     e.preventDefault();
