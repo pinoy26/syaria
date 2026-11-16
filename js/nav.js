@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611160240';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611160240';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611160240';
-import { THEME_BTN } from './theme.js?v=202611160240';
-import { renderFilters } from './filters.js?v=202611160240';
-import { pdfCard, printCard, printAll } from './export.js?v=202611160240';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611160240';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611160240';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611160240';
-import { renderPerhatian } from './pages/perhatian.js?v=202611160240';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611160240';
-import { renderLaporan } from './pages/laporan.js?v=202611160240';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611160240';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611160240';
-import { renderKelolaBerita } from './pages/berita.js?v=202611160240';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611160240';
+import { $, esc } from './utils.js?v=202611160425';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611160425';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611160425';
+import { THEME_BTN } from './theme.js?v=202611160425';
+import { renderFilters } from './filters.js?v=202611160425';
+import { pdfCard, printCard, printAll } from './export.js?v=202611160425';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611160425';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611160425';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611160425';
+import { renderPerhatian } from './pages/perhatian.js?v=202611160425';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611160425';
+import { renderLaporan } from './pages/laporan.js?v=202611160425';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611160425';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611160425';
+import { renderKelolaBerita } from './pages/berita.js?v=202611160425';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611160425';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -46,6 +46,19 @@ function lencana(id,H){ var n=H[id]||0; return n?'<span class="nav-badge" aria-l
 document.addEventListener('notif-usulan',function(){ if($('app') && !$('app').hidden && BOOT && BOOT.session && BOOT.session.allowed) renderNav(); });
 /* hak tampil menu: admin/superadmin, sembunyikan dari Admin perencanaan (notSuper) atau pengguna unit (notUnit) */
 function tampil(p){ return (!p.admin||isAdmin()) && (!p.superadmin||isSuperAdmin()) && (!p.notSuper||!isSuperAdmin()) && (!p.notUnit||sess().role!=='UNIT') && (DB||p.noData); }
+/* Monev Anggaran masih tahap pengembangan: pengguna unit/fakultas melihat pemberitahuan saja,
+   Admin perencanaan (dan peran lain) tetap bisa memakai untuk memantau perubahan sebelum dirilis.
+   Ubah ke false bila sudah siap dibuka untuk unit. */
+var ANGGARAN_DIKEMBANGKAN=true;
+function terkunci(p){ return ANGGARAN_DIKEMBANGKAN && p.g==='Monev Anggaran' && sess().role==='UNIT'; }
+function halPengembangan(p){
+  return '<div class="glass card dev-card"><div class="card-h"><h2>'+esc(p.t)+'</h2></div>'+
+    '<div class="dev-isi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>'+
+    '<div><b>Fitur sedang dalam tahap pengembangan</b>'+
+    '<p class="note">Menu Monev Anggaran (Ringkasan Anggaran, Belanja Redesain, Usulan Revisi, dan Monitoring Submit &amp; Approve) '+
+    'sedang disiapkan oleh Admin perencanaan dan belum dapat diakses oleh fakultas/unit. Fitur ini akan dibuka setelah selesai diuji. '+
+    'Sementara itu, menu Dasbor dan Monev Realisasi tetap dapat digunakan seperti biasa.</p></div></div></div>';
+}
 export function renderNav(){
   var H=hitungMenuUsulan();
   var visible=PAGES.filter(tampil);
@@ -129,7 +142,8 @@ export function refresh(){
     var el=$(id), rumah=document.querySelector('#pageTools label[for="'+id+'"]');
     if (el && rumah && !rumah.contains(el)) rumah.appendChild(el);
   });
-  $('page').innerHTML=p.r();
+  var kunci=terkunci(p);
+  $('page').innerHTML=kunci?halPengembangan(p):p.r();
   var pg=$('page');
   var firstHd=pg.querySelector('.card-h');
   if (firstHd && toolsEl) firstHd.appendChild(toolsEl);
@@ -147,6 +161,6 @@ export function refresh(){
   [].forEach.call(pg.querySelectorAll('[data-printall]'),function(b){ b.onclick=printAll; });
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
   isiPanelBerita();
-  if (p.after) p.after();
+  if (p.after && !kunci) p.after();
 }
 export function keepScroll(){ var y=window.scrollY; refresh(); window.scrollTo(0,y); }
