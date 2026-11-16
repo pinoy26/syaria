@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611151315';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611151315';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611151315';
-import { SB } from '../api.js?v=202611151315';
-import { refresh } from '../nav.js?v=202611151315';
-import { lupakanUsulan } from './usulan.js?v=202611151315';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160235';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611160235';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611160235';
+import { SB } from '../api.js?v=202611160235';
+import { refresh } from '../nav.js?v=202611160235';
+import { lupakanUsulan } from './usulan.js?v=202611160235';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };

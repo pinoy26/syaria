@@ -25,8 +25,9 @@ export function pill(p){ var s=status(p,WAKTU); return '<span class="pill '+s[0]
 /* ================= filter & cakupan pengguna ================= */
 export var EMPTY_F = function(){ return {prog:'',keg:'',kro:'',ro:'',komp:'',sub:'',unit:'',sumber:'',a2:'',a3:'',noGaji:false}; };
 export var S = { page:'ringkasan', open:{}, q:'', pg:0, f:EMPTY_F(), trend:{}, cmp:null, cmpKey:'', admin:null };
-try { var sv=JSON.parse(localStorage.getItem('dasbor-v2')||'null'); if(sv&&sv.page) S.page=sv.page; } catch(e){}
-export function persist(){ try{ localStorage.setItem('dasbor-v2', JSON.stringify({page:S.page})); }catch(e){} }
+/* setiap kali sistem dibuka, mulai dari halaman utama (Ringkasan) — halaman terakhir tidak lagi diingat */
+try { localStorage.removeItem('dasbor-v2'); } catch(e){}
+export function persist(){}
 export function sess(){ return BOOT.session; }
 export function isAdmin(){ return sess().role==='ADMIN'||sess().role==='SUPERADMIN'; }
 export function isSuperAdmin(){ return sess().role==='SUPERADMIN'; }

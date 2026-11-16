@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611151315';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611151315';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611151315';
-import { THEME_BTN } from './theme.js?v=202611151315';
-import { renderFilters } from './filters.js?v=202611151315';
-import { pdfCard, printCard, printAll } from './export.js?v=202611151315';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611151315';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611151315';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611151315';
-import { renderPerhatian } from './pages/perhatian.js?v=202611151315';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611151315';
-import { renderLaporan } from './pages/laporan.js?v=202611151315';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611151315';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611151315';
-import { renderKelolaBerita } from './pages/berita.js?v=202611151315';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611151315';
+import { $, esc } from './utils.js?v=202611160235';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611160235';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611160235';
+import { THEME_BTN } from './theme.js?v=202611160235';
+import { renderFilters } from './filters.js?v=202611160235';
+import { pdfCard, printCard, printAll } from './export.js?v=202611160235';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611160235';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611160235';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611160235';
+import { renderPerhatian } from './pages/perhatian.js?v=202611160235';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611160235';
+import { renderLaporan } from './pages/laporan.js?v=202611160235';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611160235';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611160235';
+import { renderKelolaBerita } from './pages/berita.js?v=202611160235';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611160235';
 
 /* ================= navigasi ================= */
 export var PAGES=[

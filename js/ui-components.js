@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611151315';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611151315';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611160235';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611160235';
 
 /* ================= komponen UI ================= */
 export var IC = {
