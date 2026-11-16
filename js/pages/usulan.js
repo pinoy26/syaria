@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160922';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611160922';
-import { card } from '../ui-components.js?v=202611160922';
-import { SB } from '../api.js?v=202611160922';
-import { refresh, keepScroll } from '../nav.js?v=202611160922';
-import { kunciItem } from './anggaran.js?v=202611160922';
-import { muatPdfLib } from './laporan.js?v=202611160922';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611160922';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160957';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611160957';
+import { card } from '../ui-components.js?v=202611160957';
+import { SB } from '../api.js?v=202611160957';
+import { refresh, keepScroll } from '../nav.js?v=202611160957';
+import { kunciItem } from './anggaran.js?v=202611160957';
+import { muatPdfLib } from './laporan.js?v=202611160957';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611160957';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -386,6 +386,8 @@ var FIELD = [
   ['pengusul_jabatan', 'Jabatan pengusul', 'mis. Operator perencanaan FTIK', 150],
   ['pengusul_hp', 'Nomor HP pengusul', 'mis. 0812 3456 7890', 30]
 ];
+/* surat usulan wajib hanya untuk revisi dari fakultas/unit (bukan usulan Super admin / Admin perencanaan) */
+function wajibSurat(u){ return ['SUPERADMIN', 'PERENCANAAN'].indexOf(u.pembuat_peran || '') < 0; }
 function bisaUbahPj(u){ return (u.dibuat_email === sess().email || isSuperAdmin()) && (u.status === 'draf' || u.status === 'dikembalikan'); }
 function formPj(u){
   if (!U.form[u.id]){ var f = { kotor: false, alasan: u.alasan || '' }; FIELD.forEach(function(x){ f[x[0]] = u[x[0]] || ''; }); U.form[u.id] = f; }
@@ -401,15 +403,15 @@ function kotakProses(){
   return '<label class="f" for="usCatatan">Catatan untuk pengusul (wajib bila dikembalikan)<textarea id="usCatatan" rows="3" maxlength="2000" placeholder="mis. Lengkapi rincian volume pada akun 521211; lampirkan TOR kegiatan."></textarea></label>' +
     '<div class="tools" style="margin-top:8px"><button class="btn primary" type="button" data-us-proses="setujui">Validasi &amp; Setujui</button><button class="btn" type="button" data-us-proses="kembalikan">Kembalikan untuk diperbaiki</button></div>';
 }
-function lampiranHtml(u, jenis, judul, ket, accept, bisa){
+function lampiranHtml(u, jenis, judul, ket, accept, bisa, wajib){
   var path = u[jenis + '_path'], nama = u[jenis + '_nama'];
-  return '<div class="pj-lamp"><div class="pj-lamp-t"><b>' + judul + '</b>' + (jenis === 'surat' ? ' <span class="neg" title="Wajib">*</span>' : '') + '<span class="note">' + ket + '</span></div><div class="pj-lamp-isi">' +
+  return '<div class="pj-lamp"><div class="pj-lamp-t"><b>' + judul + '</b>' + (wajib ? ' <span class="neg" title="Wajib">*</span>' : '') + '<span class="note">' + ket + '</span></div><div class="pj-lamp-isi">' +
     (path ? '<button class="btn" type="button" data-pj-lihat="' + esc(path) + '" data-nama="' + esc(nama) + '">' + esc(nama || 'Lihat berkas') + ' · ' + ukuran(u[jenis + '_ukuran']) + '</button>' : '<span class="note">Belum ada berkas</span>') +
     (bisa ? '<label class="btn">' + (path ? 'Ganti' : 'Pilih berkas') + '<input type="file" class="sr-only" accept="' + accept + '" data-pj-unggah="' + jenis + '"></label>' + (path ? '<button class="btn" type="button" data-pj-buang="' + jenis + '">Hapus</button>' : '') : '') +
     '</div></div>';
 }
 function renderPengajuanForm(){
-  var d = U.detail, u = d.u, adminP = isSuperAdmin(), pemilikU = u.dibuat_email === sess().email, bisa = bisaUbahPj(u), f = formPj(u);
+  var d = U.detail, u = d.u, adminP = isSuperAdmin(), pemilikU = u.dibuat_email === sess().email, bisa = bisaUbahPj(u), f = formPj(u), wajib = wajibSurat(u);
   if (pemilikU) tandaiUsulanDilihat(u.id, u.status);
   var draf = u.status === 'draf' || u.status === 'dikembalikan';
   if (draf && !U.jenis[u.id]){ U.jenis[u.id] = 'muat'; SB.jenisUsulan(u.id).then(function(j){ U.jenis[u.id] = j; if (HAL_USULAN.indexOf(S.page) >= 0) keepScroll(); }).catch(function(){ U.jenis[u.id] = []; }); }
@@ -439,14 +441,15 @@ function renderPengajuanForm(){
   var isian = '<div class="form pj-form">' + FIELD.map(function(x){
       return '<label class="f' + (x[0] === 'perihal' ? ' pj-lebar' : '') + '" for="pj_' + x[0] + '">' + x[1] + '<input type="text" id="pj_' + x[0] + '" data-pj="' + x[0] + '" maxlength="' + x[3] + '"' + (/nip|hp/.test(x[0]) ? ' inputmode="numeric"' : '') + ' value="' + esc(f[x[0]]) + '" placeholder="' + esc(x[2]) + '"' + dis + '></label>'; }).join('') +
     '<label class="f pj-lebar" for="pj_alasan">Keterangan / alasan revisi<textarea id="pj_alasan" data-pj="alasan" rows="4" maxlength="5000" placeholder="Jelaskan latar belakang dan tujuan pergeseran anggaran."' + dis + '>' + esc(f.alasan) + '</textarea></label></div>';
-  var kartu2 = card('pj-surat', 'Data surat usulan', 'Isian ini tercantum pada surat usulan dan matriks. Pimpinan unit diisi manual.', isian, '');
+  var kartu2 = card('pj-surat', 'Data surat usulan' + (wajib ? '' : ' (tidak wajib)'), wajib ? 'Isian ini tercantum pada surat usulan dan matriks. Pimpinan unit diisi manual.' :
+    'Usulan ini dibentuk Super admin / Admin perencanaan: isian surat boleh dikosongkan. Keterangan / alasan revisi tetap wajib.', isian, '');
   var templat = U.templat ? '<div class="pj-lamp"><div class="pj-lamp-t"><b>Templat surat usulan</b><span class="note">Disediakan Admin perencanaan. Unduh, isi, tanda tangani, lalu unggah sebagai PDF.</span></div><div class="pj-lamp-isi"><button class="btn" type="button" data-pj-lihat="' + esc(U.templat.path) + '" data-nama="' + esc(U.templat.nama) + '">Unduh ' + esc(U.templat.nama) + '</button></div></div>' :
     U.templat === false ? '<div class="pj-lamp"><div class="pj-lamp-t"><b>Templat surat usulan</b><span class="note">Belum disediakan Admin perencanaan.</span></div></div>' : '';
-  var kartu3 = card('pj-lamp', 'Lampiran', 'Surat usulan wajib (PDF, maks. 10 MB). Dokumen pendukung bila ada (PDF/ZIP, maks. 20 MB).',
-    templat + lampiranHtml(u, 'surat', 'Surat usulan', 'PDF · maks. 10 MB · ditandatangani pimpinan unit', '.pdf,application/pdf', bisa) +
-    lampiranHtml(u, 'pendukung', 'Dokumen pendukung', 'PDF atau ZIP · maks. 20 MB · mis. TOR, RAB, data dukung', '.pdf,.zip,application/pdf,application/zip', bisa), '');
+  var kartu3 = card('pj-lamp', 'Lampiran', (wajib ? 'Surat usulan wajib (PDF, maks. 10 MB).' : 'Surat usulan tidak wajib untuk usulan Super admin / Admin perencanaan.') + ' Dokumen pendukung bila ada (PDF/ZIP, maks. 20 MB).',
+    templat + lampiranHtml(u, 'surat', 'Surat usulan', wajib ? 'PDF · maks. 10 MB · ditandatangani pimpinan unit' : 'Tidak wajib · PDF · maks. 10 MB', '.pdf,application/pdf', bisa, wajib) +
+    lampiranHtml(u, 'pendukung', 'Dokumen pendukung', 'PDF atau ZIP · maks. 20 MB · mis. TOR, RAB, data dukung', '.pdf,.zip,application/pdf,application/zip', bisa, false), '');
   var aksi = '';
-  if (bisa) aksi = '<p class="note">Simpan menyimpan isian tanpa mengirim. <b>Lanjut &amp; Kirim</b> memeriksa isian, surat usulan, dan aturan revisi; bila lolos, usulan dikirim ke Admin perencanaan dan tidak dapat diubah sampai dikembalikan.</p>' +
+  if (bisa) aksi = '<p class="note">Simpan menyimpan isian tanpa mengirim. <b>Lanjut &amp; Kirim</b> memeriksa ' + (wajib ? 'isian, surat usulan,' : 'keterangan') + ' dan aturan revisi; bila lolos, usulan dikirim ke Admin perencanaan dan tidak dapat diubah sampai dikembalikan.</p>' +
     '<div class="tools"><button class="btn" type="button" data-pj-simpan>' + (f.kotor ? 'Simpan isian' : 'Simpan') + '</button>' +
     '<button class="btn danger" type="button" data-us-batal="' + u.id + '" data-judul="' + esc(u.judul) + '">Batalkan usulan</button>' +
     '<button class="btn primary" type="button" data-pj-kirim>Lanjut &amp; Kirim</button></div>';
