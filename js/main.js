@@ -1,13 +1,14 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611160235';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611160235';
-import { SB, SBC, sbInit } from './api.js?v=202611160235';
-import { closeModal } from './ui-components.js?v=202611160235';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611160235';
-import { tampilMasuk } from './auth.js?v=202611160235';
-import { bukaUbahSandi } from './akun.js?v=202611160235';
-import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611160235';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611160235';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611160240';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611160240';
+import { SB, SBC, sbInit } from './api.js?v=202611160240';
+import { closeModal } from './ui-components.js?v=202611160240';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611160240';
+import { tampilMasuk } from './auth.js?v=202611160240';
+import { bukaUbahSandi } from './akun.js?v=202611160240';
+import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611160240';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611160240';
+import { periksaAwal, pantauAktivitas, pesanKeluar } from './sesi.js?v=202611160240';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -101,7 +102,7 @@ export function mulai(){
     $('boot').hidden = true;
     setBoot(b);
     if (!b.session.allowed){
-      if (!b.session.email) { tampilMasuk(); bukaDariUrl(); return; }
+      if (!b.session.email) { tampilMasuk(pesanKeluar()); bukaDariUrl(); return; }
       tampilMasuk(b.session.tanpaCakupan
         ? 'Akun ' + b.session.email + ' sudah aktif tetapi belum diberi cakupan unit. Hubungi admin keuangan.'
         : 'Akun ' + b.session.email + ' belum diaktifkan admin keuangan.');
@@ -126,7 +127,9 @@ if (sbInit()){
   /* sesi berakhir/gagal diperpanjang saat dasbor terbuka: kembali ke halaman login alih-alih
      diam-diam mengirim permintaan sebagai pengunjung anonim */
   SBC.auth.onAuthStateChange(function(ev){
-    if (ev === 'SIGNED_OUT' && !$('app').hidden){ closeModal(); tampilMasuk('Sesi Anda sudah berakhir. Silakan masuk kembali.'); }
+    if (ev === 'SIGNED_OUT' && !$('app').hidden){ closeModal(); tampilMasuk(pesanKeluar() || 'Sesi Anda sudah berakhir. Silakan masuk kembali.'); }
   });
-  mulai();
+  /* B+C: keluar otomatis bila lama tidak aktif / browser sudah ditutup, baru dasbor dimuat */
+  pantauAktivitas();
+  periksaAwal().then(mulai);
 }

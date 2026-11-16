@@ -1,10 +1,11 @@
 /* js/auth.js — halaman depan publik (beranda) & halaman masuk.
    Alur: beranda → tombol "Masuk" → halaman masuk (#masuk). Tombol kembali browser/HP kembali ke beranda. */
-import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611160235';
-import { THEME_BTN } from './theme.js?v=202611160235';
-import { SBC } from './api.js?v=202611160235';
-import { mulai } from './main.js?v=202611160235';
-import { muatBeritaBeranda } from './berita.js?v=202611160235';
+import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611160240';
+import { THEME_BTN } from './theme.js?v=202611160240';
+import { SBC } from './api.js?v=202611160240';
+import { mulai } from './main.js?v=202611160240';
+import { muatBeritaBeranda } from './berita.js?v=202611160240';
+import { tandaiAktif } from './sesi.js?v=202611160240';
 
 var HASH_MASUK = '#masuk';
 var VIEW = '';
@@ -158,6 +159,7 @@ function halamanMasuk(catatan){
     var b = $('lgBtn'); b.disabled = true; $('lgMsg').textContent = 'Memeriksa…';
     SBC.auth.signInWithPassword({ email: $('lgId').value.trim(), password: $('lgPw').value }).then(function(r){
       if (r.error) throw r.error;
+      tandaiAktif();
       history.replaceState(null, '', location.pathname + location.search);
       VIEW = '';
       $('gate').hidden = true; $('gate').innerHTML = ''; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
