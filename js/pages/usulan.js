@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160957';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611160957';
-import { card } from '../ui-components.js?v=202611160957';
-import { SB } from '../api.js?v=202611160957';
-import { refresh, keepScroll } from '../nav.js?v=202611160957';
-import { kunciItem } from './anggaran.js?v=202611160957';
-import { muatPdfLib } from './laporan.js?v=202611160957';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611160957';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161009';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611161009';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161009';
+import { SB } from '../api.js?v=202611161009';
+import { refresh, keepScroll } from '../nav.js?v=202611161009';
+import { kunciItem } from './anggaran.js?v=202611161009';
+import { muatPdfLib } from './laporan.js?v=202611161009';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611161009';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -156,7 +156,7 @@ function renderDaftar(){
       '<td><button class="btn" type="button" data-us-buka="' + u.id + '">Buka</button></td></tr>'; }).join('') + '</tbody></table></div>';
   var adaAktif = !modeKelola() && U.list.some(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0; });
   var pesanUnit = modeKelola() || adaAktif ? '' : '<div class="status-box us-telaah">Belum ada usulan revisi yang sedang disusun. Bentuk usulan lewat tab <b>Status Histori</b>, ubah rinciannya di <b>Belanja Redesain</b>, lalu kirim dari tab ini.</div>';
-  return '<div class="page-sec grid">' + (modeKelola() && isSuperAdmin() ? kartuTemplat() : '') + card('us-daftar', modeKelola() ? 'Kelola usulan revisi' : 'Riwayat usulan revisi',
+  return '<div class="page-sec grid">' + (modeKelola() && isSuperAdmin() ? kartuPeriode() + kartuTemplat() : '') + card('us-daftar', modeKelola() ? 'Kelola usulan revisi' : 'Riwayat usulan revisi',
     (modeKelola() ? 'Antrean usulan dari seluruh fakultas/unit: periksa rincian & lampiran, lalu Validasi & Setujui atau Kembalikan untuk diperbaiki. Setelah diinput ke SAKTI, catat No. Revisi.' : 'Usulan perubahan anggaran unit Anda; diverifikasi dan ditelaah Admin perencanaan sebelum diinput ke SAKTI.') +
       (menunggu ? ' <b>' + menunggu + ' usulan menunggu persetujuan.</b>' : ''),
     pesanUnit + saring + isi, modeKelola() && bolehBuat() ? '<button class="btn primary" type="button" data-us-baru>Buat usulan</button>' : '') + '</div>' + ikat();
@@ -322,6 +322,7 @@ function bind(){
   var on = function(sel, fn){ [].forEach.call(pg.querySelectorAll(sel), function(el){ el.onclick = function(){ fn(el); }; }); };
   on('[data-us-ke]', function(el){ U.semua = true; ke(el.getAttribute('data-us-ke')); });
   bindPengajuan(pg, on);
+  bindPeriode(pg, on);
   if ($('usFlSt')) $('usFlSt').onchange = function(){ FL.status = this.value; keepScroll(); };
   if ($('usFlUnit')) $('usFlUnit').onchange = function(){ FL.unit = this.value; keepScroll(); };
   if ($('usFlTelaah')) $('usFlTelaah').onchange = function(){ FL.telaah = this.checked; keepScroll(); };
@@ -428,6 +429,7 @@ function renderPengajuanForm(){
     (u.diajukan_pada ? '<div><span class="note">Dikirim</span><b>' + esc(String(u.diajukan_pada).slice(0, 16).replace('T', ' ')) + '</b></div>' : '') +
     (u.no_revisi ? '<div><span class="note">No. Revisi SAKTI</span><b>' + esc(u.no_revisi) + '</b></div>' : '') + '</div>';
   var catatanKembali = u.status === 'dikembalikan' && kembali ? '<div class="status-box s-err"><div><b>Dikembalikan Admin perencanaan untuk diperbaiki</b> · ' + esc(String(kembali.waktu).slice(0, 16).replace('T', ' ')) + '<br>' + esc(kembali.catatan || '') + '</div></div>' : '';
+  var perU = infoPeriode(u.tahun, u.kategori, u.unit), tutupU = !adminP && u.status === 'draf' && perU && !perU.buka;
   var kurang = U.kurang[u.id];
   var kotakKurang = kurang && kurang.length && draf ? '<div class="status-box s-err" id="pjKurang"><div><b>Belum dapat dikirim — lengkapi dulu:</b><ul class="us-list">' + kurang.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>' : '';
   var jenisHtml = '<div class="pj-jenis"><span class="note">Jenis revisi ' + (draf ? '(terdeteksi otomatis dari rincian di Belanja Redesain)' : '') + '</span>' +
@@ -435,7 +437,7 @@ function renderPengajuanForm(){
   var tombolRd = '<div class="tools"><button class="btn" type="button" data-us-' + (bisa ? 'redesain' : 'lihat') + '="' + u.id + '">' + (bisa ? 'Edit di Belanja Redesain' : 'Lihat di Belanja Redesain') + '</button>' +
     '<button class="btn" type="button" data-us-matriks="pdf">Matriks (PDF)</button><button class="btn" type="button" data-us-matriks="xlsx">Matriks (Excel)</button><button class="btn" type="button" data-pj-konsep>Konsep RKK menjadi (Excel)</button></div>';
   var kartu1 = card('pj-info', 'Pengajuan Revisi — ' + esc(u.judul), 'TA ' + u.tahun + ' · usulan #' + u.id + '. Rincian anggaran diubah di Belanja Redesain; tab ini untuk surat usulan, lampiran, dan pengiriman.',
-    catatanKembali + info + kotakKurang + (u.hasil_periksa && (draf || u.status === 'diajukan') ? kotakPeriksa(u.hasil_periksa) : '') + jenisHtml + tombolRd,
+    catatanKembali + info + (tutupU ? kotakPeriode(perU, u.unit || u.kategori) : '') + kotakKurang + (u.hasil_periksa && (draf || u.status === 'diajukan') ? kotakPeriksa(u.hasil_periksa) : '') + jenisHtml + tombolRd,
     '<button class="btn" type="button" data-us-ke="daftar">' + (modeKelola() ? '‹ Daftar usulan' : 'Riwayat usulan') + '</button>');
   var dis = bisa ? '' : ' disabled';
   var isian = '<div class="form pj-form">' + FIELD.map(function(x){
@@ -452,7 +454,7 @@ function renderPengajuanForm(){
   if (bisa) aksi = '<p class="note">Simpan menyimpan isian tanpa mengirim. <b>Lanjut &amp; Kirim</b> memeriksa ' + (wajib ? 'isian, surat usulan,' : 'keterangan') + ' dan aturan revisi; bila lolos, usulan dikirim ke Admin perencanaan dan tidak dapat diubah sampai dikembalikan.</p>' +
     '<div class="tools"><button class="btn" type="button" data-pj-simpan>' + (f.kotor ? 'Simpan isian' : 'Simpan') + '</button>' +
     '<button class="btn danger" type="button" data-us-batal="' + u.id + '" data-judul="' + esc(u.judul) + '">Batalkan usulan</button>' +
-    '<button class="btn primary" type="button" data-pj-kirim>Lanjut &amp; Kirim</button></div>';
+    '<button class="btn primary" type="button" data-pj-kirim' + (tutupU ? ' disabled title="Periode revisi sedang ditutup"' : '') + '>Lanjut &amp; Kirim</button></div>';
   else if (adminP && u.status === 'diajukan') aksi = kotakProses();
   else if (adminP && (u.status === 'disetujui' || u.status === 'diinput_sakti'))
     aksi = '<div class="form"><label class="f" for="usNo">No. Revisi SAKTI<input type="text" id="usNo" value="' + esc(u.no_revisi) + '" placeholder="mis. 2026.307740.015"></label></div>' +
@@ -553,9 +555,118 @@ function unduhKonsep(btn){
     btn.disabled = false;
   }).catch(function(e){ btn.disabled = false; toast(errMsg(e), 'err', 'Konsep gagal dibuat'); });
 }
+
+/* ================= periode revisi fakultas/unit ================= */
+var PR = { list: undefined, units: null };
+function muatPeriode(){
+  if (PR.list !== undefined) return; PR.list = null;
+  SB.periodeRevisi().then(function(l){ PR.list = l; if (HAL_USULAN.indexOf(S.page) >= 0) keepScroll(); })
+    .catch(function(){ PR.list = []; if (HAL_USULAN.indexOf(S.page) >= 0) keepScroll(); });
+}
+function stPeriode(p){ var n = Date.now(); return p.ditutup_pada ? 'ditutup' : n < Date.parse(p.mulai) ? 'jadwal' : n >= Date.parse(p.selesai) ? 'selesai' : 'buka'; }
+var ST_PR = { buka: ['st-good', 'Dibuka'], jadwal: ['st-info', 'Dijadwalkan'], selesai: ['st-draf', 'Selesai'], ditutup: ['st-draf', 'Ditutup lebih awal'] };
+function untukUnit(p, kat, unit){ return p.semua || (p.cakupan || []).some(function(c){ return c.kategori === (kat || '') && (c.unit || '') === (unit || ''); }); }
+function waktu(t){ return new Date(t).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+/* { buka, p (periode terbuka), next (periode terjadwal berikutnya) } untuk unit pada TA; null bila belum dimuat */
+function infoPeriode(tahun, kat, unit){
+  if (PR.list === undefined) muatPeriode();
+  if (!PR.list) return null;
+  var milik = PR.list.filter(function(p){ return p.tahun === tahun && untukUnit(p, kat, unit); });
+  var b = milik.filter(function(p){ return stPeriode(p) === 'buka'; }).sort(function(a, c){ return a.selesai < c.selesai ? 1 : -1; })[0];
+  var j = milik.filter(function(p){ return stPeriode(p) === 'jadwal'; }).sort(function(a, c){ return a.mulai < c.mulai ? -1 : 1; })[0];
+  return { buka: !!b, p: b || null, next: j || null };
+}
+function kotakPeriode(per, nama){
+  if (isSuperAdmin()) return '<p class="note pr-sa">Super admin dapat membentuk, mengedit, dan mengirim usulan kapan saja, di luar periode revisi.</p>';
+  if (!per) return '';
+  if (per.buka) return '<div class="status-box s-ok">Periode revisi dibuka: <b>' + esc(per.p.nama) + '</b>, sampai ' + esc(waktu(per.p.selesai)) + '.' + (per.p.catatan ? ' ' + esc(per.p.catatan) : '') + '</div>';
+  return '<div class="status-box us-telaah"><div>Periode revisi untuk <b>' + esc(nama || 'unit Anda') + '</b> sedang ditutup. Usulan baru dapat dibentuk, diubah, dan dikirim saat periode revisi dibuka Super admin' +
+    (per.next ? ': <b>' + esc(per.next.nama) + '</b>, mulai ' + esc(waktu(per.next.mulai)) + '.' : '.') + ' Usulan yang dikembalikan tetap dapat diperbaiki dan dikirim ulang.</div></div>';
+}
+function cakupanLabel(p){
+  if (p.semua) return 'Semua fakultas & unit';
+  var c = (p.cakupan || []).map(function(x){ return x.unit || x.kategori; });
+  return c.length > 4 ? c.slice(0, 4).join(', ') + ' +' + (c.length - 4) + ' lainnya' : c.join(', ');
+}
+function kartuPeriode(){
+  muatPeriode();
+  if (!PR.list) return card('us-periode', 'Periode revisi fakultas/unit', '', '<div class="loading">Memuat periode revisi…</div>', '');
+  var buka = PR.list.filter(function(p){ return stPeriode(p) === 'buka'; });
+  var ring = buka.length ? '<div class="status-box s-ok"><div><b>Sedang dibuka:</b> ' + buka.map(function(p){ return esc(p.nama) + ' (' + esc(cakupanLabel(p)) + ', sampai ' + esc(waktu(p.selesai)) + ')'; }).join('; ') + '</div></div>' :
+    '<div class="status-box us-telaah">Revisi fakultas/unit sedang <b>ditutup</b>. Fakultas/unit tidak dapat membentuk atau mengirim usulan; Super admin tetap dapat merevisi kapan saja.</div>';
+  var tabel = !PR.list.length ? '<p class="note">Belum ada periode revisi.</p>' :
+    '<div class="tbl"><table><thead><tr><th>Periode</th><th>TA</th><th>Mulai</th><th>Selesai</th><th>Cakupan</th><th>Status</th><th></th></tr></thead><tbody>' +
+    PR.list.slice(0, 12).map(function(p){ var st = stPeriode(p), x = ST_PR[st];
+      return '<tr><td><b>' + esc(p.nama) + '</b>' + (p.catatan ? '<br><span class="note">' + esc(p.catatan) + '</span>' : '') + '</td><td>' + p.tahun + '</td><td>' + esc(waktu(p.mulai)) + '</td><td>' + esc(waktu(p.ditutup_pada || p.selesai)) + '</td>' +
+        '<td>' + esc(cakupanLabel(p)) + '</td><td><span class="pill ' + x[0] + '"><i></i>' + x[1] + '</span></td><td class="row-actions">' +
+        '<button class="btn" type="button" data-pr-ubah="' + p.id + '">' + (st === 'buka' || st === 'jadwal' ? 'Ubah' : 'Buka kembali') + '</button>' +
+        (st === 'buka' ? '<button class="btn danger" type="button" data-pr-tutup="' + p.id + '">Tutup sekarang</button>' : '') +
+        (st === 'jadwal' ? '<button class="btn" type="button" data-pr-hapus="' + p.id + '">Hapus</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  return card('us-periode', 'Periode revisi fakultas/unit', 'Fakultas/unit hanya dapat membentuk, mengubah, dan mengirim usulan selama periode dibuka. Buka untuk revisi terjadwal (awal triwulan) atau di luar jadwal untuk unit tertentu.',
+    ring + tabel, '<button class="btn primary" type="button" data-pr-baru>Buka periode revisi</button>');
+}
+function nilaiLokal(t){ var d = new Date(t), z = function(n){ return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()); }
+function formPeriode(p){
+  if (!PR.units){
+    SB.paguUnitVersi().then(function(l){ var m = {}; PR.units = []; l.forEach(function(x){ var k = (x.kategori || '') + '|' + (x.unit || ''); if (!m[k]){ m[k] = 1; PR.units.push({ kategori: x.kategori || '', unit: x.unit || '' }); } });
+      PR.units.sort(function(a, b){ return (a.kategori + a.unit) < (b.kategori + b.unit) ? -1 : 1; }); formPeriode(p); }).catch(function(e){ toast(errMsg(e), 'err', 'Daftar unit gagal dimuat'); });
+    return;
+  }
+  var kini = new Date(), th = p ? p.tahun : kini.getFullYear(), tw = Math.floor(kini.getMonth() / 3) + 1;
+  var akhir = new Date(kini.getTime() + 14 * 864e5); akhir.setHours(23, 59, 0, 0);
+  var cak = {}; (p && !p.semua ? p.cakupan : []).forEach(function(c){ cak[c.kategori + '|' + (c.unit || '')] = 1; });
+  var kel = {}; PR.units.forEach(function(x){ (kel[x.kategori] = kel[x.kategori] || []).push(x); });
+  var daftar = Object.keys(kel).map(function(k){ return '<fieldset class="pr-kel"><legend>' + esc(k || '—') + '</legend>' + kel[k].map(function(x){ var key = x.kategori + '|' + x.unit;
+    return '<label class="chk"><input type="checkbox" data-pr-unit="' + esc(key) + '"' + (cak[key] ? ' checked' : '') + '><span>' + esc(x.unit || x.kategori) + '</span></label>'; }).join('') + '</fieldset>'; }).join('');
+  var semua = !p || p.semua;
+  openModal('<div class="modal-hd"><div><span class="note">Periode revisi fakultas/unit</span><h3>' + (p ? 'Ubah periode' : 'Buka periode revisi') + '</h3></div><button type="button" class="icon" data-modal-close aria-label="Tutup"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>' +
+    '<form id="prForm" class="rd-form pr-form" novalidate><div class="form">' +
+    '<label class="f pj-lebar" for="prNama">Nama periode<input type="text" id="prNama" maxlength="120" value="' + esc(p ? p.nama : 'Revisi Triwulan ' + ['I', 'II', 'III', 'IV'][tw - 1] + ' TA ' + th) + '" placeholder="mis. Revisi Triwulan II TA 2026 / Revisi mendesak FTIK"></label>' +
+    '<label class="f" for="prTahun">Tahun anggaran<input type="number" id="prTahun" min="2000" max="2100" value="' + th + '"></label>' +
+    '<label class="f" for="prMulai">Mulai<input type="datetime-local" id="prMulai" value="' + nilaiLokal(p ? p.mulai : kini) + '"></label>' +
+    '<label class="f" for="prSelesai">Selesai<input type="datetime-local" id="prSelesai" value="' + nilaiLokal(p && (stPeriode(p) === 'buka' || stPeriode(p) === 'jadwal') ? p.selesai : akhir) + '"></label></div>' +
+    '<div class="pr-cak"><label class="chk"><input type="radio" name="prSemua" value="1"' + (semua ? ' checked' : '') + '><span>Semua fakultas &amp; unit (revisi terjadwal)</span></label>' +
+    '<label class="chk"><input type="radio" name="prSemua" value="0"' + (semua ? '' : ' checked') + '><span>Fakultas/unit tertentu</span></label></div>' +
+    '<div id="prDaftar" class="pr-daftar"' + (semua ? ' hidden' : '') + '>' + daftar + '</div>' +
+    '<label class="f" for="prCatatan">Catatan untuk fakultas/unit (opsional)<textarea id="prCatatan" rows="2" maxlength="1000" placeholder="mis. Revisi untuk efisiensi sesuai arahan KPA.">' + esc(p ? p.catatan : '') + '</textarea></label>' +
+    '<div id="prMsg" class="status-box s-err" role="alert" hidden></div><div class="tools"><button type="submit" class="btn primary">' + (p ? 'Simpan' : 'Buka periode') + '</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
+  [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
+  [].forEach.call(document.querySelectorAll('#modal [name=prSemua]'), function(r){ r.onchange = function(){ $('prDaftar').hidden = this.value === '1'; }; });
+  $('prForm').onsubmit = function(e){
+    e.preventDefault();
+    var salah = function(m){ $('prMsg').textContent = m; $('prMsg').hidden = false; };
+    var sm = document.querySelector('#modal [name=prSemua]:checked').value === '1';
+    var pilih = [].map.call(document.querySelectorAll('#modal [data-pr-unit]:checked'), function(c){ var k = c.getAttribute('data-pr-unit').split('|'); return { kategori: k[0], unit: k[1] }; });
+    var mulai = $('prMulai').value, selesai = $('prSelesai').value;
+    if (!mulai || !selesai) return salah('Isi tanggal mulai dan selesai.');
+    if (new Date(selesai) <= new Date(mulai)) return salah('Tanggal selesai harus sesudah tanggal mulai.');
+    if (!sm && !pilih.length) return salah('Pilih minimal satu fakultas/unit.');
+    var tombol = this.querySelector('[type=submit]'); tombol.disabled = true;
+    SB.aturPeriode(p ? p.id : null, { nama: $('prNama').value, tahun: +$('prTahun').value, mulai: new Date(mulai).toISOString(), selesai: new Date(selesai).toISOString(), semua: sm, cakupan: pilih, catatan: $('prCatatan').value })
+      .then(function(){ closeModal(); PR.list = undefined; toast('Periode revisi disimpan.', 'ok', 'Periode revisi'); keepScroll(); })
+      .catch(function(x){ tombol.disabled = false; salah(errMsg(x)); });
+  };
+}
+function bindPeriode(pg, on){
+  var cari = function(id){ return (PR.list || []).filter(function(p){ return p.id === id; })[0]; };
+  on('[data-pr-baru]', function(){ formPeriode(null); });
+  on('[data-pr-ubah]', function(el){ formPeriode(cari(+el.getAttribute('data-pr-ubah'))); });
+  on('[data-pr-tutup]', function(el){
+    var p = cari(+el.getAttribute('data-pr-tutup'));
+    tanya({ judul: 'Tutup ' + p.nama + ' sekarang?', pesan: 'Fakultas/unit tidak lagi dapat membentuk, mengubah, atau mengirim usulan draf. Usulan yang sudah dikirim tetap diproses; usulan yang dikembalikan tetap dapat diperbaiki.', ya: 'Tutup periode', bahaya: true }).then(function(ya){
+      if (!ya) return; SB.tutupPeriode(p.id).then(function(){ PR.list = undefined; toast(p.nama + ' ditutup.', 'ok', 'Periode revisi'); keepScroll(); }).catch(function(e){ toast(errMsg(e), 'err', 'Gagal menutup'); });
+    });
+  });
+  on('[data-pr-hapus]', function(el){
+    var p = cari(+el.getAttribute('data-pr-hapus'));
+    tanya({ judul: 'Hapus ' + p.nama + '?', pesan: 'Periode yang belum dimulai ini dihapus dari jadwal.', ya: 'Hapus', bahaya: true }).then(function(ya){
+      if (!ya) return; SB.hapusPeriode(p.id).then(function(){ PR.list = undefined; toast('Periode dihapus.', 'ok', 'Periode revisi'); keepScroll(); }).catch(function(e){ toast(errMsg(e), 'err', 'Gagal menghapus'); });
+    });
+  });
+}
 export function renderKelolaUsulan(){ return renderUsulan(); }
 /* dipanggil setelah salinan disimpan di Belanja Redesain: daftar, status histori & monitoring dimuat ulang */
-export function lupakanUsulan(){ U.list = null; U.detail = null; HS.v = null; MO.data = null; }
+export function lupakanUsulan(){ PR.list = undefined; U.list = null; U.detail = null; HS.v = null; MO.data = null; }
 
 /* ================= tahap 8: Status Histori (tombol "Usulan Revisi") ================= */
 var AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
@@ -570,6 +681,7 @@ function daftarUnit(rows){
 }
 function muatHistori(){
   if (HS.memuat) return; HS.memuat = true; HS.err = null;
+  PR.list = undefined;   /* status periode revisi selalu terbaru saat Status Histori dibuka */
   Promise.all([SB.anggaranVersi(), SB.usulanDaftar()]).then(function(r){
     var v = versiTerakhir(r[0]); U.list = r[1];
     if (!v) throw new Error('Belum ada RKK. Admin perencanaan perlu mengunggah RKK lebih dulu.');
@@ -589,6 +701,7 @@ function renderHistori(){
   if (!units.some(function(x){ return x.k === HS.unit; })) HS.unit = units[0].k;
   var un = units.filter(function(x){ return x.k === HS.unit; })[0], aktif = usulanAktif(v.tahun, un);
   var dipa = labelVersi(v) + ' — ' + tgl(v.posisi), noBaru = (v.revisi_ke || 0) + 1;
+  var per = infoPeriode(v.tahun, un.kat, un.unit), tutup = !isSuperAdmin() && per && !per.buka;
   var tujuan = aktif ? aktif.judul + ' (' + (ST[aktif.status] || [0, aktif.status])[1] + ')' : 'Usulan Revisi ke ' + noBaru;
   var info = '<dl class="us-hist-info"><dt>Revisi Terakhir</dt><dd>' + esc(aktif ? aktif.judul + ' · ' + (ST[aktif.status] || [0, aktif.status])[1] : dipa) + '</dd>' +
     '<dt>DIPA Terakhir</dt><dd>' + esc(dipa) + ' · TA ' + v.tahun + '</dd><dt>Pagu unit</dt><dd>Rp ' + rp(un.pagu) + '</dd></dl>';
@@ -596,7 +709,7 @@ function renderHistori(){
     (units.length > 1 ? '<label class="f" for="usHistUnit">Unit<select id="usHistUnit">' + units.map(function(x){ return '<option value="' + esc(x.k) + '"' + (x.k === HS.unit ? ' selected' : '') + '>' + esc(x.nama + (x.unit && x.kat ? ' (' + x.kat + ')' : '')) + '</option>'; }).join('') + '</select></label>' : '') +
     '<label class="f" for="usHistAwal">Histori Awal<select id="usHistAwal" disabled><option>' + esc(labelVersi(v)) + '</option></select></label>' +
     '<label class="f" for="usHistTujuan">Histori Tujuan<select id="usHistTujuan" disabled><option>' + esc(tujuan) + '</option></select></label>' +
-    (bolehBuat() ? '<div><button class="btn primary" type="button" data-us-histori' + (aktif ? ' disabled title="Unit ini masih memiliki usulan aktif"' : '') + '>Usulan Revisi</button></div>' : '') + '</div>';
+    (bolehBuat() ? '<div><button class="btn primary" type="button" data-us-histori' + (aktif ? ' disabled title="Unit ini masih memiliki usulan aktif"' : tutup ? ' disabled title="Periode revisi sedang ditutup"' : '') + '>Usulan Revisi</button></div>' : '') + '</div>';
   var ket;
   if (!aktif) ket = '<div class="status-box us-telaah">Klik <b>Usulan Revisi</b> untuk membentuk <b>Usulan Revisi ke ' + noBaru + '</b> dari ' + esc(labelVersi(v)) + '. Seluruh rincian anggaran ' + esc(un.nama) + ' disalin sebagai bahan revisi; DIPA aslinya tidak berubah. Satu unit hanya dapat memiliki satu usulan aktif.</div>';
   else if (aktif.status === 'draf' || aktif.status === 'dikembalikan') ket = '<div class="status-box s-ok"><div><b>' + esc(aktif.judul) + '</b> sedang disusun (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Ubah rincian anggarannya di menu <b>Belanja Redesain</b>, lalu ajukan lewat tab <b>Pengajuan Revisi</b>. Riwayatnya tampil di menu Monitoring Submit &amp; Approve.' +
@@ -604,7 +717,7 @@ function renderHistori(){
     (aktif.dibuat_email === sess().email || isSuperAdmin() ? '<button class="btn danger" type="button" data-us-batal="' + aktif.id + '" data-judul="' + esc(aktif.judul) + '">Batalkan usulan</button>' : '') + '</div></div></div>';
   else ket = '<div class="status-box us-telaah"><div><b>' + esc(aktif.judul) + '</b> sedang diproses Admin perencanaan (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Usulan baru dapat dibentuk setelah No. Revisi SAKTI dicatat.' +
     '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-us-buka="' + aktif.id + '">Lihat usulan</button></div></div></div>';
-  return '<div class="page-sec grid">' + card('us-hist', judulKartu, 'Bentuk usulan revisi dari DIPA terakhir, seperti menu Memilih Status History di SAKTI.', info + form + ket, '') + '</div>' + ikat();
+  return '<div class="page-sec grid">' + card('us-hist', judulKartu, 'Bentuk usulan revisi dari DIPA terakhir, seperti menu Memilih Status History di SAKTI.', info + kotakPeriode(per, un.nama) + form + ket, '') + '</div>' + ikat();
 }
 function buatHistori(btn){
   var v = HS.v, un = HS.units.filter(function(x){ return x.k === HS.unit; })[0];

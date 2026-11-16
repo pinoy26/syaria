@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611160957';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611160957';
+import { BOOT } from './state.js?v=202611161009';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611161009';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -386,6 +386,13 @@ SB.hapusTemplat = function(lama){
     if (r.error) throw r.error; return lama ? SBC.storage.from(BKT).remove([lama]) : null;
   });
 };
+/* ---------- periode revisi fakultas/unit (dibuka & ditutup Super admin) ---------- */
+SB.periodeRevisi = function(){
+  return SBC.from('periode_revisi').select('*').order('mulai', { ascending: false }).then(function(r){ if (r.error) throw r.error; return r.data || []; });
+};
+SB.aturPeriode = function(id, data){ return rpc('atur_periode_revisi', { p_id: id || null, p_data: data }); };
+SB.tutupPeriode = function(id){ return rpc('tutup_periode_revisi', { p_id: id }); };
+SB.hapusPeriode = function(id){ return rpc('hapus_periode_revisi', { p_id: id }); };
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };
