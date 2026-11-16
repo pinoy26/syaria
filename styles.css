@@ -14,6 +14,7 @@
   --cat-1:#6250d6; --cat-2:#e87ba4; --cat-3:#008300;
   --lv-kro:#7b2fbe; --lv-ro:#c62828; --lv-komp:#856300; --lv-sub:#1565c0;
   --rd-prog:#0a5c63; --rd-keg:#2747a3; --rd-kro:#7b2fbe; --rd-ro:#b3470d; --rd-komp:#7a5b00;
+  --rd-head1:#0a5c63; --rd-head2:#13808a; --rd-head-ink:#ffffff; --rd-head-line:rgba(255,255,255,.22);
   --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
   color-scheme:light;
@@ -33,7 +34,7 @@
     --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
     --surface:#10272b;
     --cat-1:#9085e9; --cat-2:#d55181; --cat-3:#008300;
-    --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a;
+    --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a; --rd-head1:#0c3f45; --rd-head2:#13606a; --rd-head-ink:#e8f6f5; --rd-head-line:rgba(255,255,255,.14);
     color-scheme:dark;
   }
 }
@@ -51,7 +52,7 @@
   --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
   --surface:#10272b;
   --cat-1:#9085e9; --cat-2:#d55181; --cat-3:#008300;
-  --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a;
+  --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a; --rd-head1:#0c3f45; --rd-head2:#13606a; --rd-head-ink:#e8f6f5; --rd-head-line:rgba(255,255,255,.14);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -951,3 +952,12 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 /* selisih pada baris detail yang berubah: tebal agar mudah terlihat */
 .rd-grid tr.rd-item td.rd-sel.pos,.rd-grid tr.rd-item td.rd-sel.neg{font-weight:700}
 .rd-grid tr.sel td:not(.rd-sel):not(.rd-bl),.rd-grid tr.sel td.rd-sel.pos,.rd-grid tr.sel td.rd-sel.neg{color:var(--accent-ink)}
+
+/* Belanja Redesain: baris judul kolom (atas) — pita gradasi toska, teks putih, tetap menempel saat digulir */
+.rd-grid thead th{background:linear-gradient(180deg,var(--rd-head2),var(--rd-head1));color:var(--rd-head-ink);
+  font-weight:700;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding-top:8px;padding-bottom:8px;
+  border-color:var(--rd-head-line);text-shadow:0 1px 0 rgba(0,0,0,.18)}
+.rd-grid thead th:first-child{border-top-left-radius:8px}
+.rd-grid thead th:last-child{border-top-right-radius:8px}
+.rd-grid thead tr{box-shadow:0 2px 6px -2px rgba(10,60,66,.45)}
+.rd-grid thead th.rd-cek{letter-spacing:0;font-size:10.5px;padding-left:2px;padding-right:2px;text-align:center}
