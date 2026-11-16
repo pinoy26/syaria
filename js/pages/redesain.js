@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161009';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611161009';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611161009';
-import { SB } from '../api.js?v=202611161009';
-import { refresh } from '../nav.js?v=202611161009';
-import { lupakanUsulan } from './usulan.js?v=202611161009';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161023';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611161023';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161023';
+import { SB } from '../api.js?v=202611161023';
+import { refresh } from '../nav.js?v=202611161023';
+import { lupakanUsulan } from './usulan.js?v=202611161023';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -63,7 +63,8 @@ function muatSalinan(u){
   if (R.memuat) return; R.memuat = true; R.err = null;
   Promise.all([SB.salinan(u.id), SB.anggaranItem(u.versi_id), SB.blokirItem(u.versi_id), SB.realisasiKelompok(u.versi_id), SB.bagianAkun()]).then(function(r){
     R.u = u; R.rows = r[0]; R.cekKey = {}; R.bl = r[2]; R.rk = r[3]; R.bas = r[4]; R.sel = null; R.kotor = false;
-    R.basis = {}; r[1].forEach(function(b){ if (b.kategori === u.kategori && (b.unit || '') === (u.unit || '')) R.basis[b.id] = b; });
+    /* usulan seluruh satker (kategori kosong): basis = seluruh DIPA */
+    R.basis = {}; r[1].forEach(function(b){ if (u.kategori == null || (b.kategori === u.kategori && (b.unit || '') === (u.unit || ''))) R.basis[b.id] = b; });
     R.memuat = false; if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
@@ -89,7 +90,7 @@ export function barMode(){
   var ada = usulanSaya(), sa = isSuperAdmin(); if (ada.length < (sa ? 1 : 2)) return '';
   return '<div class="form noprint rd-pilih"><label class="f" for="rdUsulan">' + (sa ? 'Tampilan' : 'Usulan yang diedit') + '<select id="rdUsulan">' +
     (sa ? '<option value="dipa"' + (R.mode === 'dipa' ? ' selected' : '') + '>Lembar kerja DIPA (lihat & blokir)</option>' : '') +
-    ada.map(function(u){ return '<option value="' + u.id + '"' + (u.id === R.mode ? ' selected' : '') + '>' + esc(u.judul + ' · ' + (u.unit || u.kategori || '') + ' · ' + (ST[u.status] || u.status)) + '</option>'; }).join('') + '</select></label></div>';
+    ada.map(function(u){ return '<option value="' + u.id + '"' + (u.id === R.mode ? ' selected' : '') + '>' + esc(u.judul + ' · ' + (u.unit || u.kategori || 'Seluruh satker') + ' · ' + (ST[u.status] || u.status)) + '</option>'; }).join('') + '</select></label></div>';
 }
 
 /* ---------- susunan baris (seperti SAKTI) ---------- */
@@ -167,7 +168,7 @@ export function renderRedesain(){
   } else {
     var selisih = pagu - u.pagu_awal;
     judul = 'Belanja Redesain — ' + esc(u.judul);
-    sub = esc((u.unit || u.kategori || '') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru.';
+    sub = esc((u.unit || u.kategori || 'Seluruh satker') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru.';
     ring = '<div class="rd-ring"><div><span class="note">Pagu usulan</span><b>Rp ' + rp(pagu) + '</b></div><div><span class="note">Pagu DIPA unit</span><b>Rp ' + rp(u.pagu_awal) + '</b></div>' +
       '<div><span class="note">Selisih</span><b class="' + (selisih ? 'neg' : 'pos') + '">' + (selisih ? tanda(selisih) : 'Rp 0 · seimbang') + '</b></div>' +
       '<div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div>' +

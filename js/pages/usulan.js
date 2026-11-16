@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161009';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611161009';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611161009';
-import { SB } from '../api.js?v=202611161009';
-import { refresh, keepScroll } from '../nav.js?v=202611161009';
-import { kunciItem } from './anggaran.js?v=202611161009';
-import { muatPdfLib } from './laporan.js?v=202611161009';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611161009';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161023';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611161023';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161023';
+import { SB } from '../api.js?v=202611161023';
+import { refresh, keepScroll } from '../nav.js?v=202611161023';
+import { kunciItem } from './anggaran.js?v=202611161023';
+import { muatPdfLib } from './laporan.js?v=202611161023';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611161023';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -141,8 +141,8 @@ function renderDaftar(){
   var menunggu = isSuperAdmin() ? U.list.filter(function(u){ return u.status === 'diajukan'; }).length : 0;
   var daftar = U.list, saring = '';
   if (modeKelola()){
-    var unitList = []; U.list.forEach(function(u){ var n = u.lintas_unit ? 'Lintas unit' : (u.unit || '—'); if (unitList.indexOf(n) < 0) unitList.push(n); }); unitList.sort();
-    daftar = U.list.filter(function(u){ var n = u.lintas_unit ? 'Lintas unit' : (u.unit || '—');
+    var unitList = []; U.list.forEach(function(u){ var n = namaUnit(u); if (unitList.indexOf(n) < 0) unitList.push(n); }); unitList.sort();
+    daftar = U.list.filter(function(u){ var n = namaUnit(u);
       return (!FL.status || u.status === FL.status) && (!FL.unit || n === FL.unit) && (!FL.telaah || u.perlu_telaah); });
     saring = '<div class="form noprint us-saring"><label class="f" for="usFlSt">Status<select id="usFlSt"><option value="">Semua status (' + U.list.length + ')</option>' +
       Object.keys(ST).map(function(k){ var n = U.list.filter(function(u){ return u.status === k; }).length; return '<option value="' + k + '"' + (k === FL.status ? ' selected' : '') + '>' + ST[k][1] + (k === 'diajukan' ? ' — menunggu persetujuan' : '') + ' (' + n + ')</option>'; }).join('') + '</select></label>' +
@@ -152,7 +152,7 @@ function renderDaftar(){
   var isi = !daftar.length ? (modeKelola() && U.list.length ? '<div class="empty">Tidak ada usulan untuk saringan ini.</div>' : '<div class="empty">Belum ada usulan revisi.' + (!modeKelola() ? ' Bentuk usulan lewat tab <b>Status Histori</b>.' : bolehBuat() ? ' Klik <b>Buat usulan</b> untuk memulai.' : '') + '</div>') :
     '<div class="tbl"><table><thead><tr><th>No</th><th>Judul</th><th>Unit</th><th>Status</th><th>Diperbarui</th><th></th></tr></thead><tbody>' +
     daftar.map(function(u){ return '<tr><td class="code">' + u.id + '</td><td><b>' + esc(u.judul) + '</b>' + (u.perlu_telaah ? ' <span class="pill st-warn ag-bl"><i></i>Perlu telaah</span>' : '') + (u.no_revisi ? '<br><span class="note">No. Revisi ' + esc(u.no_revisi) + '</span>' : '') + '</td>' +
-      '<td>' + (u.lintas_unit ? '<i>Lintas unit</i>' : esc(u.unit || '—')) + '</td><td>' + pillSt(u.status) + '</td><td>' + esc(String(u.diubah_pada || '').slice(0, 16).replace('T', ' ')) + '<br><span class="note">' + esc(u.dibuat_email) + '</span></td>' +
+      '<td>' + esc(namaUnit(u)) + '</td><td>' + pillSt(u.status) + '</td><td>' + esc(String(u.diubah_pada || '').slice(0, 16).replace('T', ' ')) + '<br><span class="note">' + esc(u.dibuat_email) + '</span></td>' +
       '<td><button class="btn" type="button" data-us-buka="' + u.id + '">Buka</button></td></tr>'; }).join('') + '</tbody></table></div>';
   var adaAktif = !modeKelola() && U.list.some(function(u){ return u.histori && AKTIF.indexOf(u.status) >= 0; });
   var pesanUnit = modeKelola() || adaAktif ? '' : '<div class="status-box us-telaah">Belum ada usulan revisi yang sedang disusun. Bentuk usulan lewat tab <b>Status Histori</b>, ubah rinciannya di <b>Belanja Redesain</b>, lalu kirim dari tab ini.</div>';
@@ -227,7 +227,7 @@ function renderDetail(){
   if (pemilik) tandaiUsulanDilihat(u.id, u.status);
   var h = u.hasil_periksa || null, sel = d.baris.reduce(function(a, b){ return a + (b.m_jumlah - b.s_jumlah); }, 0);
   var info = '<div class="us-info"><div><span class="note">Status</span>' + pillSt(u.status) + (u.perlu_telaah ? ' <span class="pill st-warn ag-bl"><i></i>Perlu telaah</span>' : '') + '</div>' +
-    '<div><span class="note">Unit</span><b>' + (u.lintas_unit ? 'Lintas unit' : esc(u.unit || '—')) + '</b></div><div><span class="note">TA</span><b>' + u.tahun + '</b></div>' +
+    '<div><span class="note">Unit</span><b>' + esc(namaUnit(u)) + '</b></div><div><span class="note">TA</span><b>' + u.tahun + '</b></div>' +
     '<div><span class="note">Diusulkan oleh</span><b>' + esc(u.dibuat_email) + '</b></div>' + (u.no_revisi ? '<div><span class="note">No. Revisi SAKTI</span><b>' + esc(u.no_revisi) + '</b></div>' : '') + '</div>' +
     (u.alasan ? '<p class="us-alasan"><span class="note">Alasan</span><br>' + esc(u.alasan) + '</p>' : '');
   var tabel = '<div class="tbl"><table><thead><tr><th>Aksi</th><th>Unit · Sub komponen · Akun</th><th>Uraian</th><th class="n">Semula</th><th class="n">Menjadi</th><th class="n">Selisih</th></tr></thead><tbody>' +
@@ -388,6 +388,8 @@ var FIELD = [
   ['pengusul_hp', 'Nomor HP pengusul', 'mis. 0812 3456 7890', 30]
 ];
 /* surat usulan wajib hanya untuk revisi dari fakultas/unit (bukan usulan Super admin / Admin perencanaan) */
+/* nama unit usulan: usulan histori tanpa unit = seluruh satker; usulan lama lintas unit */
+function namaUnit(u){ return u.unit || u.kategori || (u.histori ? 'Seluruh satker' : u.lintas_unit ? 'Lintas unit' : '—'); }
 function wajibSurat(u){ return ['SUPERADMIN', 'PERENCANAAN'].indexOf(u.pembuat_peran || '') < 0; }
 function bisaUbahPj(u){ return (u.dibuat_email === sess().email || isSuperAdmin()) && (u.status === 'draf' || u.status === 'dikembalikan'); }
 function formPj(u){
@@ -420,7 +422,7 @@ function renderPengajuanForm(){
   var jenis = draf ? (Array.isArray(U.jenis[u.id]) ? U.jenis[u.id] : null) : (u.jenis_revisi || []);
   var selisih = (u.pagu_usulan || 0) - (u.pagu_awal || 0), kembali = d.log.filter(function(l){ return l.aksi === 'dikembalikan'; }).pop();
   var info = '<div class="us-info"><div><span class="note">Status</span>' + pillSt(u.status) + (u.perlu_telaah ? ' <span class="pill st-warn ag-bl"><i></i>Perlu telaah</span>' : '') + '</div>' +
-    '<div><span class="note">Unit</span><b>' + esc(u.unit || u.kategori || '—') + '</b></div>' +
+    '<div><span class="note">Unit</span><b>' + esc(namaUnit(u)) + '</b></div>' +
     '<div><span class="note">Histori awal</span><b>DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + '</b></div>' +
     '<div><span class="note">Pagu DIPA unit</span><b>Rp ' + rp(u.pagu_awal) + '</b></div>' +
     '<div><span class="note">Pagu usulan</span><b>Rp ' + rp(u.pagu_usulan) + '</b></div>' +
@@ -437,7 +439,7 @@ function renderPengajuanForm(){
   var tombolRd = '<div class="tools"><button class="btn" type="button" data-us-' + (bisa ? 'redesain' : 'lihat') + '="' + u.id + '">' + (bisa ? 'Edit di Belanja Redesain' : 'Lihat di Belanja Redesain') + '</button>' +
     '<button class="btn" type="button" data-us-matriks="pdf">Matriks (PDF)</button><button class="btn" type="button" data-us-matriks="xlsx">Matriks (Excel)</button><button class="btn" type="button" data-pj-konsep>Konsep RKK menjadi (Excel)</button></div>';
   var kartu1 = card('pj-info', 'Pengajuan Revisi — ' + esc(u.judul), 'TA ' + u.tahun + ' · usulan #' + u.id + '. Rincian anggaran diubah di Belanja Redesain; tab ini untuk surat usulan, lampiran, dan pengiriman.',
-    catatanKembali + info + (tutupU ? kotakPeriode(perU, u.unit || u.kategori) : '') + kotakKurang + (u.hasil_periksa && (draf || u.status === 'diajukan') ? kotakPeriksa(u.hasil_periksa) : '') + jenisHtml + tombolRd,
+    catatanKembali + info + (tutupU ? kotakPeriode(perU, namaUnit(u)) : '') + kotakKurang + (u.hasil_periksa && (draf || u.status === 'diajukan') ? kotakPeriksa(u.hasil_periksa) : '') + jenisHtml + tombolRd,
     '<button class="btn" type="button" data-us-ke="daftar">' + (modeKelola() ? '‹ Daftar usulan' : 'Riwayat usulan') + '</button>');
   var dis = bisa ? '' : ' disabled';
   var isian = '<div class="form pj-form">' + FIELD.map(function(x){
@@ -544,7 +546,7 @@ function unduhKonsep(btn){
   SB.salinan(u.id).then(function(rows){
     var ubah = {}; d.baris.forEach(function(b){ if (b.aksi === 'ubah' && b.anggaran_id) ubah[b.anggaran_id] = 1; });
     var tot = rows.reduce(function(a, r){ return a + r.jumlah; }, 0);
-    var aoa = [['KONSEP RKK MENJADI — ' + u.judul], [String((BOOT && BOOT.satker) || '') + ' · ' + (u.unit || u.kategori || '') + ' · TA ' + u.tahun],
+    var aoa = [['KONSEP RKK MENJADI — ' + u.judul], [String((BOOT && BOOT.satker) || '') + ' · ' + namaUnit(u) + ' · TA ' + u.tahun],
       ['Basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · Pagu DIPA unit Rp ' + rp(u.pagu_awal) + ' · Pagu usulan Rp ' + rp(tot) + ' · Status ' + ((ST[u.status] || [0, u.status])[1])], [],
       ['Program', 'Kegiatan', 'KRO', 'RO', 'Komponen', 'Sub komponen', 'Uraian sub komponen', 'Akun', 'Uraian akun', 'SD', 'Header 1', 'Header 2', 'Uraian detail', 'Volume', 'Satuan', 'Harga satuan', 'Jumlah', 'Keterangan']];
     rows.forEach(function(r){ aoa.push([r.prog, r.keg, r.kro, r.ro, r.komp, r.sub, r.sub_n || '', r.akun, r.akun_n || '', sumberNama(r.sumber), r.judul || '', r.judul2 || '', r.uraian, r.volume, r.satuan, r.harga, r.jumlah, r.anggaran_id == null ? 'Baru' : ubah[r.anggaran_id] ? 'Diubah' : '']); });
@@ -698,10 +700,14 @@ function renderHistori(){
   if (!HS.v || !U.list){ muatHistori(); return '<div class="loading">Memuat status histori…</div>'; }
   var v = HS.v, units = HS.units;
   if (!units.length) return '<div class="page-sec grid">' + card('us-hist', judulKartu, labelVersi(v), '<div class="empty">Tidak ada anggaran dalam cakupan Anda pada ' + esc(labelVersi(v)) + '.</div>', '') + '</div>' + ikat();
+  /* Super admin: pilihan "Semua" = satu usulan berisi seluruh DIPA satker (lintas unit) */
+  if (isSuperAdmin() && units[0].k !== '|') units.unshift({ k: '|', kat: '', unit: '', nama: 'Semua (seluruh satker)', pagu: units.reduce(function(a, x){ return a + x.pagu; }, 0) });
   if (!units.some(function(x){ return x.k === HS.unit; })) HS.unit = units[0].k;
   var un = units.filter(function(x){ return x.k === HS.unit; })[0], aktif = usulanAktif(v.tahun, un);
   var dipa = labelVersi(v) + ' — ' + tgl(v.posisi), noBaru = (v.revisi_ke || 0) + 1;
   var per = infoPeriode(v.tahun, un.kat, un.unit), tutup = !isSuperAdmin() && per && !per.buka;
+  var satkerAktif = un.k !== '|' && !aktif ? usulanAktif(v.tahun, { k: '|' }) : null;
+  var lainAktif = un.k === '|' && !aktif ? (U.list || []).filter(function(u){ return u.tahun === v.tahun && AKTIF.indexOf(u.status) >= 0; }) : [];
   var tujuan = aktif ? aktif.judul + ' (' + (ST[aktif.status] || [0, aktif.status])[1] + ')' : 'Usulan Revisi ke ' + noBaru;
   var info = '<dl class="us-hist-info"><dt>Revisi Terakhir</dt><dd>' + esc(aktif ? aktif.judul + ' · ' + (ST[aktif.status] || [0, aktif.status])[1] : dipa) + '</dd>' +
     '<dt>DIPA Terakhir</dt><dd>' + esc(dipa) + ' · TA ' + v.tahun + '</dd><dt>Pagu unit</dt><dd>Rp ' + rp(un.pagu) + '</dd></dl>';
@@ -709,9 +715,14 @@ function renderHistori(){
     (units.length > 1 ? '<label class="f" for="usHistUnit">Unit<select id="usHistUnit">' + units.map(function(x){ return '<option value="' + esc(x.k) + '"' + (x.k === HS.unit ? ' selected' : '') + '>' + esc(x.nama + (x.unit && x.kat ? ' (' + x.kat + ')' : '')) + '</option>'; }).join('') + '</select></label>' : '') +
     '<label class="f" for="usHistAwal">Histori Awal<select id="usHistAwal" disabled><option>' + esc(labelVersi(v)) + '</option></select></label>' +
     '<label class="f" for="usHistTujuan">Histori Tujuan<select id="usHistTujuan" disabled><option>' + esc(tujuan) + '</option></select></label>' +
-    (bolehBuat() ? '<div><button class="btn primary" type="button" data-us-histori' + (aktif ? ' disabled title="Unit ini masih memiliki usulan aktif"' : tutup ? ' disabled title="Periode revisi sedang ditutup"' : '') + '>Usulan Revisi</button></div>' : '') + '</div>';
+    (bolehBuat() ? '<div><button class="btn primary" type="button" data-us-histori' + (aktif ? ' disabled title="Unit ini masih memiliki usulan aktif"' : tutup ? ' disabled title="Periode revisi sedang ditutup"' : satkerAktif || lainAktif.length ? ' disabled title="Masih ada usulan aktif yang bertumpuk"' : '') + '>Usulan Revisi</button></div>' : '') + '</div>';
   var ket;
-  if (!aktif) ket = '<div class="status-box us-telaah">Klik <b>Usulan Revisi</b> untuk membentuk <b>Usulan Revisi ke ' + noBaru + '</b> dari ' + esc(labelVersi(v)) + '. Seluruh rincian anggaran ' + esc(un.nama) + ' disalin sebagai bahan revisi; DIPA aslinya tidak berubah. Satu unit hanya dapat memiliki satu usulan aktif.</div>';
+  if (!aktif && satkerAktif) ket = '<div class="status-box us-telaah"><div>Sedang ada <b>' + esc(satkerAktif.judul) + '</b> untuk seluruh satker (' + (ST[satkerAktif.status] || [0, satkerAktif.status])[1] + '). Usulan unit dapat dibentuk setelah usulan itu selesai atau dibatalkan.' +
+    '<div class="tools" style="margin-top:10px"><button class="btn" type="button" data-us-buka="' + satkerAktif.id + '">Buka usulan seluruh satker</button></div></div></div>';
+  else if (!aktif && lainAktif.length) ket = '<div class="status-box us-telaah"><div>Usulan seluruh satker hanya dapat dibentuk bila tidak ada usulan aktif lain. Masih aktif: ' +
+    lainAktif.map(function(u){ return esc(namaUnit(u) + ' — ' + u.judul + ' (' + (ST[u.status] || [0, u.status])[1] + ')'); }).join(', ') + '. Selesaikan atau batalkan lebih dulu.</div></div>';
+  else if (!aktif && un.k === '|') ket = '<div class="status-box us-telaah">Klik <b>Usulan Revisi</b> untuk membentuk <b>Usulan Revisi ke ' + noBaru + '</b> berisi <b>seluruh DIPA satker</b> (semua fakultas, unit, dan rektorat) dari ' + esc(labelVersi(v)) + '. Rincian semua unit dapat diubah lintas unit di Belanja Redesain; DIPA aslinya tidak berubah. Selama usulan ini aktif, fakultas/unit tidak dapat membentuk usulan.</div>';
+  else if (!aktif) ket = '<div class="status-box us-telaah">Klik <b>Usulan Revisi</b> untuk membentuk <b>Usulan Revisi ke ' + noBaru + '</b> dari ' + esc(labelVersi(v)) + '. Seluruh rincian anggaran ' + esc(un.nama) + ' disalin sebagai bahan revisi; DIPA aslinya tidak berubah. Satu unit hanya dapat memiliki satu usulan aktif.</div>';
   else if (aktif.status === 'draf' || aktif.status === 'dikembalikan') ket = '<div class="status-box s-ok"><div><b>' + esc(aktif.judul) + '</b> sedang disusun (' + (ST[aktif.status] || [0, aktif.status])[1] + '). Ubah rincian anggarannya di menu <b>Belanja Redesain</b>, lalu ajukan lewat tab <b>Pengajuan Revisi</b>. Riwayatnya tampil di menu Monitoring Submit &amp; Approve.' +
     '<div class="tools" style="margin-top:10px"><button class="btn primary" type="button" data-us-redesain="' + aktif.id + '">Edit di Belanja Redesain</button><button class="btn" type="button" data-us-buka="' + aktif.id + '">Buka usulan</button>' +
     (aktif.dibuat_email === sess().email || isSuperAdmin() ? '<button class="btn danger" type="button" data-us-batal="' + aktif.id + '" data-judul="' + esc(aktif.judul) + '">Batalkan usulan</button>' : '') + '</div></div></div>';
@@ -760,8 +771,9 @@ export function renderMonitor(){
   MO.data.pagu.forEach(function(p){ if (idTh.indexOf(p.versi_id) < 0) return; var k = kunciUnit(p.kategori, p.unit); if (!um[k]){ um[k] = { k: k, kat: p.kategori || '', unit: p.unit || '', nama: p.unit || p.kategori || '—' }; units.push(um[k]); } });
   units.sort(function(a, b){ return a.nama < b.nama ? -1 : 1; });
   if (!units.length) return '<div class="page-sec grid">' + card('mo', judul, '', '<div class="empty">Tidak ada anggaran dalam cakupan Anda pada TA ' + MO.tahun + '.</div>', '') + '</div>' + ikat();
+  if (isSuperAdmin()){ um['|'] = { k: '|', kat: '', unit: '', nama: 'Seluruh satker' }; units.unshift(um['|']); }
   if (!um[MO.unit]) MO.unit = units[0].k;
-  var paguV = {}; MO.data.pagu.forEach(function(p){ if (kunciUnit(p.kategori, p.unit) === MO.unit) paguV[p.versi_id] = p.pagu; });
+  var paguV = {}; MO.data.pagu.forEach(function(p){ if (MO.unit === '|' || kunciUnit(p.kategori, p.unit) === MO.unit) paguV[p.versi_id] = (paguV[p.versi_id] || 0) + p.pagu; });
   var baris = vTh.map(function(v){ return { t: v.posisi, h: labelVersi(v), asal: v.revisi_ke ? 'DIPA – Revisi ke ' + (v.revisi_ke - 1) : '', o: 'SAKTI', pagu: paguV[v.id] || 0, st: '<span class="pill st-good"><i></i>DIPA</span>', id: null }; });
   U.list.filter(function(u){ return u.tahun === MO.tahun && kunciUnit(u.kategori, u.unit) === MO.unit; }).forEach(function(u){
     baris.push({ t: String(u.diubah_pada || u.dibuat_pada || '').slice(0, 10), w: String(u.diubah_pada || '').slice(11, 16), h: u.judul, asal: u.revisi_ke ? 'DIPA – Revisi ke ' + (u.revisi_ke - 1) : '',
