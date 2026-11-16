@@ -930,3 +930,7 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .modal:has(.pr-form){width:min(760px,calc(100vw - 32px))}
 .rd-rinci{margin:-2px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 .rd-rinci .btn{padding:3px 10px;font-size:12.5px}
+/* kolom Selisih Belanja Redesain */
+.rd-grid td.rd-sel{font-variant-numeric:tabular-nums}
+.rd-grid td.rd-sel.pos{color:var(--good-ink)}
+.rd-grid td.rd-sel.neg{color:var(--crit-ink);font-weight:600}

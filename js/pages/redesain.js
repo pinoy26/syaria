@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161040';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611161040';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611161040';
-import { SB } from '../api.js?v=202611161040';
-import { refresh } from '../nav.js?v=202611161040';
-import { lupakanUsulan } from './usulan.js?v=202611161040';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161048';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611161048';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161048';
+import { SB } from '../api.js?v=202611161048';
+import { refresh } from '../nav.js?v=202611161048';
+import { lupakanUsulan } from './usulan.js?v=202611161048';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -182,17 +182,26 @@ export function renderRedesain(){
         '<p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
   }
   /* jumlah blokir per baris kepala */
+  /* kolom Selisih (mode usulan): per item = jumlah usulan − jumlah DIPA; baris kepala = total selisih di bawahnya,
+     termasuk detail yang dihapus (−jumlah DIPA di lokasi lamanya) dan item yang dipindah sub komponen/akun */
+  var selK = {}, tambahSel = function(ks, n){ if (n) ks.forEach(function(k){ selK[k] = (selK[k] || 0) + n; }); };
+  if (!dipa){
+    R.rows.forEach(function(r){ var b = R.basis[r.anggaran_id]; tambahSel(jalur(r), r.jumlah); if (b) tambahSel(jalur(b), -b.jumlah); });
+    dihapus().forEach(function(b){ tambahSel(jalur(b), -b.jumlah); });
+  }
+  var selItem = function(r){ var b = R.basis[r.anggaran_id]; return r.jumlah - (b ? b.jumlah : 0); };
+  var selTd = function(n){ return dipa ? '' : '<td class="n rd-sel' + (n > 0 ? ' pos' : n < 0 ? ' neg' : '') + '">' + (n ? tanda(n) : '') + '</td>'; };
   var blK = {}; R.rows.forEach(function(r){ var n = blk(r).blokir; if (n) jalur(r).forEach(function(k){ blK[k] = (blK[k] || 0) + n; }); });
   var IND = 7;
-  var grid = '<div class="tbl rd-grid"><table><colgroup><col class="c-kode"><col><col class="c-n"><col class="c-sat"><col class="c-rp"><col class="c-rp"><col class="c-rp"><col class="c-t"><col class="c-sd">' + (ubah ? '<col class="c-cek">' : '') + '</colgroup>' +
-    '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th><th class="n">Blokir</th><th title="Item terblokir">*</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
+  var grid = '<div class="tbl rd-grid"><table><colgroup><col class="c-kode"><col><col class="c-n"><col class="c-sat"><col class="c-rp"><col class="c-rp">' + (dipa ? '' : '<col class="c-rp">') + '<col class="c-rp"><col class="c-t"><col class="c-sd">' + (ubah ? '<col class="c-cek">' : '') + '</colgroup>' +
+    '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th>' + (dipa ? '' : '<th class="n" title="Jumlah usulan − jumlah DIPA">Selisih</th>') + '<th class="n">Blokir</th><th title="Item terblokir">*</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
     baris.map(function(b){
       var on = R.sel && R.sel.key === b.key ? ' sel' : '';
-      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code">' + esc(b.kode) + '</td><td style="padding-left:' + (6 + b.d * IND) + 'px">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' +
+      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code">' + esc(b.kode) + '</td><td style="padding-left:' + (6 + b.d * IND) + 'px">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td></td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
       var r = b.r, st = dipa ? '' : statusItem(r), i = blk(r);
       return '<tr class="rd-item' + (st ? ' rd-' + st : '') + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td style="padding-left:' + (6 + 9 * IND) + 'px">' + esc(r.uraian) + '</td>' +
-        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' +
+        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' + selTd(dipa ? 0 : selItem(r)) +
         '<td class="n rd-bl">' + (i.blokir ? rp(i.blokir) : '') + '</td><td class="rd-t" title="' + (i.blokir ? (i.manual ? 'Blokir manual Admin perencanaan' : 'Blokir dari RKK SAKTI') : '') + '">' + (i.blokir ? (i.manual ? 'M' : '*') : '') + '</td><td class="rd-sd">' + sd(r.sumber) + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
   var hapus = dipa ? [] : dihapus();
