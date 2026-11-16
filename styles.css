@@ -13,6 +13,7 @@
   --surface:#f9fbfb;
   --cat-1:#6250d6; --cat-2:#e87ba4; --cat-3:#008300;
   --lv-kro:#7b2fbe; --lv-ro:#c62828; --lv-komp:#856300; --lv-sub:#1565c0;
+  --rd-prog:#0a5c63; --rd-keg:#2747a3; --rd-kro:#7b2fbe; --rd-ro:#b3470d; --rd-komp:#7a5b00;
   --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
   color-scheme:light;
@@ -32,7 +33,7 @@
     --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
     --surface:#10272b;
     --cat-1:#9085e9; --cat-2:#d55181; --cat-3:#008300;
-    --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0;
+    --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a;
     color-scheme:dark;
   }
 }
@@ -50,7 +51,7 @@
   --grid-bg:#0f2528; --grid-head:#17363b; --grid-zebra:#132d31; --grid-line:#2a4b4f;
   --surface:#10272b;
   --cat-1:#9085e9; --cat-2:#d55181; --cat-3:#008300;
-  --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0;
+  --lv-kro:#c49bf0; --lv-ro:#f28b82; --lv-komp:#e0b84a; --lv-sub:#7fb2f0; --rd-prog:#5fd0cf; --rd-keg:#9fb6f5; --rd-kro:#c9a2f2; --rd-ro:#f3a26b; --rd-komp:#e3c05a;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -934,3 +935,19 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .rd-grid td.rd-sel{font-variant-numeric:tabular-nums}
 .rd-grid td.rd-sel.pos{color:var(--good-ink)}
 .rd-grid td.rd-sel.neg{color:var(--crit-ink);font-weight:600}
+
+/* Belanja Redesain: warna font per tingkat (Program, Kegiatan, KRO, RO, Komponen) + garis tepi kiri;
+   kolom Selisih tetap hijau/merah, kolom Blokir tetap warnanya sendiri */
+.rd-grid tr.rd-prog td:not(.rd-sel):not(.rd-bl){color:var(--rd-prog)}
+.rd-grid tr.rd-keg  td:not(.rd-sel):not(.rd-bl){color:var(--rd-keg)}
+.rd-grid tr.rd-kro  td:not(.rd-sel):not(.rd-bl){color:var(--rd-kro)}
+.rd-grid tr.rd-ro   td:not(.rd-sel):not(.rd-bl){color:var(--rd-ro);font-weight:700}
+.rd-grid tr.rd-komp td:not(.rd-sel):not(.rd-bl){color:var(--rd-komp);font-weight:700}
+.rd-grid tr.rd-prog td:first-child{box-shadow:inset 4px 0 0 var(--rd-prog)}
+.rd-grid tr.rd-keg  td:first-child{box-shadow:inset 4px 0 0 var(--rd-keg)}
+.rd-grid tr.rd-kro  td:first-child{box-shadow:inset 4px 0 0 var(--rd-kro)}
+.rd-grid tr.rd-ro   td:first-child{box-shadow:inset 4px 0 0 var(--rd-ro)}
+.rd-grid tr.rd-komp td:first-child{box-shadow:inset 4px 0 0 var(--rd-komp)}
+/* selisih pada baris detail yang berubah: tebal agar mudah terlihat */
+.rd-grid tr.rd-item td.rd-sel.pos,.rd-grid tr.rd-item td.rd-sel.neg{font-weight:700}
+.rd-grid tr.sel td:not(.rd-sel):not(.rd-bl),.rd-grid tr.sel td.rd-sel.pos,.rd-grid tr.sel td.rd-sel.neg{color:var(--accent-ink)}

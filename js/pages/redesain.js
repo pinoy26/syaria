@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161048';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611161048';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611161048';
-import { SB } from '../api.js?v=202611161048';
-import { refresh } from '../nav.js?v=202611161048';
-import { lupakanUsulan } from './usulan.js?v=202611161048';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611161055';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611161055';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611161055';
+import { SB } from '../api.js?v=202611161055';
+import { refresh } from '../nav.js?v=202611161055';
+import { lupakanUsulan } from './usulan.js?v=202611161055';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -201,7 +201,7 @@ export function renderRedesain(){
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td></td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
       var r = b.r, st = dipa ? '' : statusItem(r), i = blk(r);
       return '<tr class="rd-item' + (st ? ' rd-' + st : '') + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td style="padding-left:' + (6 + 9 * IND) + 'px">' + esc(r.uraian) + '</td>' +
-        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' + selTd(dipa ? 0 : selItem(r)) +
+        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n"' + (!dipa && R.basis[r.anggaran_id] && R.basis[r.anggaran_id].jumlah !== r.jumlah ? ' title="Jumlah DIPA Rp ' + rp(R.basis[r.anggaran_id].jumlah) + '"' : '') + '>' + rp(r.jumlah) + '</td>' + selTd(dipa ? 0 : selItem(r)) +
         '<td class="n rd-bl">' + (i.blokir ? rp(i.blokir) : '') + '</td><td class="rd-t" title="' + (i.blokir ? (i.manual ? 'Blokir manual Admin perencanaan' : 'Blokir dari RKK SAKTI') : '') + '">' + (i.blokir ? (i.manual ? 'M' : '*') : '') + '</td><td class="rd-sd">' + sd(r.sumber) + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
   var hapus = dipa ? [] : dihapus();
