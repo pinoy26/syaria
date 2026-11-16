@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611160425';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611160425';
+import { BOOT } from './state.js?v=202611160628';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611160628';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -336,6 +336,56 @@ var CACHE_BAS = null;
 SB.bagianAkun = function(){ return CACHE_BAS || (CACHE_BAS = SB.refAkun().then(function(l){ return l.filter(function(a){ return /^\d{6}$/.test(a.kode); }); }).catch(function(e){ CACHE_BAS = null; throw e; })); };
 SB.aturBlokirManual = function(anggaranId, nilai){ return rpc('atur_blokir_manual', { p_anggaran_id: anggaranId, p_nilai: nilai }); };
 SB.simpanSalinan = function(usulanId, rows){ return rpc('simpan_salinan', { p_id: usulanId, p_rows: rows }); };
+/* ---------- tahap 11: Pengajuan Revisi (isian surat, lampiran, Lanjut & Kirim) ---------- */
+var BKT = 'usulan';
+function tipeBerkas(nama){ var e = String(nama || '').toLowerCase().split('.').pop(); return { pdf: 'application/pdf', zip: 'application/zip', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }[e] || ''; }
+SB.tipeBerkas = tipeBerkas;
+SB.simpanPengajuan = function(id, data){ return rpc('simpan_pengajuan', { p_id: id, p_data: data }); };
+SB.jenisUsulan = function(id){ return rpc('jenis_usulan', { p_id: id }).then(function(r){ return r || []; }); };
+SB.kirimUsulan = function(id){ return rpc('kirim_usulan', { p_id: id }); };
+/* unggah ke Storage, catat di usulan (server memeriksa ukuran & tipe), lalu buang berkas lama */
+SB.unggahLampiran = function(id, jenis, file){
+  var tipe = tipeBerkas(file.name), ext = file.name.toLowerCase().split('.').pop(), path = id + '/' + jenis + '-' + Date.now() + '.' + ext;
+  return pastikanSesi().then(function(){ return SBC.storage.from(BKT).upload(path, file, { contentType: tipe, upsert: false }); }).then(function(u){
+    if (u.error) throw u.error;
+    return rpc('atur_lampiran', { p_id: id, p_jenis: jenis, p_path: path, p_nama: file.name }).catch(function(e){
+      return SBC.storage.from(BKT).remove([path]).then(function(){ throw e; });
+    });
+  }).then(function(r){ if (r && r.lama) SBC.storage.from(BKT).remove([r.lama]); return r; });
+};
+SB.hapusLampiran = function(id, jenis){
+  return rpc('atur_lampiran', { p_id: id, p_jenis: jenis, p_path: '', p_nama: '' }).then(function(r){ if (r && r.lama) return SBC.storage.from(BKT).remove([r.lama]).then(function(){ return r; }); return r; });
+};
+/* buang semua berkas usulan (sebelum usulan dibatalkan); gagal dihapus tidak menghalangi pembatalan */
+SB.bersihkanLampiran = function(id){
+  return SBC.storage.from(BKT).list(String(id), { limit: 100 }).then(function(r){
+    var p = (r.data || []).map(function(o){ return id + '/' + o.name; });
+    return p.length ? SBC.storage.from(BKT).remove(p) : null;
+  }).catch(function(){ return null; });
+};
+SB.urlBerkas = function(path, nama){
+  return SBC.storage.from(BKT).createSignedUrl(path, 600, nama ? { download: nama } : undefined).then(function(r){ if (r.error) throw r.error; return r.data.signedUrl; });
+};
+/* templat surat usulan: berkas di folder templat/, lokasinya dicatat di pengaturan */
+SB.templatSurat = function(){
+  return SBC.from('pengaturan').select('kunci,nilai').in('kunci', ['templat_surat_usulan', 'templat_surat_usulan_nama']).then(function(r){
+    if (r.error) throw r.error; var m = {}; (r.data || []).forEach(function(x){ m[x.kunci] = x.nilai; });
+    return m.templat_surat_usulan ? { path: m.templat_surat_usulan, nama: m.templat_surat_usulan_nama || 'Templat surat usulan' } : null;
+  });
+};
+SB.unggahTemplat = function(file, lama){
+  var ext = file.name.toLowerCase().split('.').pop(), path = 'templat/surat-usulan-' + Date.now() + '.' + ext;
+  return pastikanSesi().then(function(){ return SBC.storage.from(BKT).upload(path, file, { contentType: tipeBerkas(file.name), upsert: false }); }).then(function(u){
+    if (u.error) throw u.error;
+    return SBC.from('pengaturan').upsert([{ kunci: 'templat_surat_usulan', nilai: path, keterangan: 'Templat surat usulan revisi (Storage usulan)' },
+      { kunci: 'templat_surat_usulan_nama', nilai: file.name, keterangan: 'Nama berkas templat surat usulan revisi' }]);
+  }).then(function(r){ if (r.error) throw r.error; if (lama) SBC.storage.from(BKT).remove([lama]); return { path: path, nama: file.name }; });
+};
+SB.hapusTemplat = function(lama){
+  return SBC.from('pengaturan').delete().in('kunci', ['templat_surat_usulan', 'templat_surat_usulan_nama']).then(function(r){
+    if (r.error) throw r.error; return lama ? SBC.storage.from(BKT).remove([lama]) : null;
+  });
+};
 SB.hapusRKK = function(posisi){
   return SBC.rpc('hapus_rkk', { p_posisi: posisi }).then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'RKK posisi ' + posisi + ' dihapus.' }; });
 };

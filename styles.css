@@ -907,3 +907,16 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .dev-isi svg{flex:0 0 40px;width:40px;height:40px;padding:8px;border-radius:12px;background:var(--accent-soft);stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .dev-isi b{display:block;font-size:15px;margin-bottom:4px}
 .dev-isi .note{margin:0;max-width:62ch}
+
+/* tahap 11: Pengajuan Revisi */
+.pj-form{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.pj-form .pj-lebar{grid-column:1/-1}
+.pj-jenis{margin:12px 0 4px}
+.pj-jenis .us-list{margin:6px 0 0}
+.pj-lamp{display:flex;gap:12px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.pj-lamp:first-child{border-top:0;padding-top:4px}
+.pj-lamp-t{display:flex;flex-direction:column;gap:2px;min-width:220px;flex:1 1 260px}
+.pj-lamp-isi{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pj-lamp-isi label.btn{cursor:pointer;position:relative}
+.pj-lamp-isi label.btn.disabled{opacity:.6;pointer-events:none}
+.pj-lamp-isi label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}

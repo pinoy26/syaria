@@ -7,21 +7,23 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160425';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611160425';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611160425';
-import { SB } from '../api.js?v=202611160425';
-import { refresh } from '../nav.js?v=202611160425';
-import { lupakanUsulan } from './usulan.js?v=202611160425';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611160628';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611160628';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611160628';
+import { SB } from '../api.js?v=202611160628';
+import { refresh } from '../nav.js?v=202611160628';
+import { lupakanUsulan } from './usulan.js?v=202611160628';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
-var R = { cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
-var ST = { draf: 'Draf', diajukan: 'Diajukan', dikembalikan: 'Dikembalikan', disetujui: 'Disetujui' };
+var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
+var ST = { draf: 'Draf', diajukan: 'Diajukan', dikembalikan: 'Dikembalikan', disetujui: 'Disetujui', diinput_sakti: 'Diinput SAKTI', selesai: 'Selesai', ditolak: 'Ditolak' };
 var IC_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
 window.addEventListener('beforeunload', function(e){ if (R.kotor){ e.preventDefault(); e.returnValue = ''; } });
 /* dari detail usulan: buka langsung mode edit usulan itu */
-document.addEventListener('edit-redesain', function(e){ R.mode = e.detail; R.daftar = null; R.u = null; R.rows = null; S.page = 'anggaran-rkk'; S.open = {}; refresh(); window.scrollTo(0, 0); });
+/* dari Pengajuan Revisi / Kelola Usulan: lihat usulan apa pun yang boleh dibaca (hanya lihat bila statusnya tidak dapat diedit) */
+document.addEventListener('lihat-redesain', function(e){ R.lihat = e.detail; R.mode = e.detail; R.daftar = null; R.u = null; R.rows = null; S.page = 'anggaran-rkk'; S.open = {}; refresh(); window.scrollTo(0, 0); });
+document.addEventListener('edit-redesain', function(e){ R.lihat = null; R.mode = e.detail; R.daftar = null; R.u = null; R.rows = null; S.page = 'anggaran-rkk'; S.open = {}; refresh(); window.scrollTo(0, 0); });
 /* usulan dibentuk/diajukan/dibatalkan di menu lain: daftar usulan dimuat ulang saat Belanja Redesain dibuka lagi */
 document.addEventListener('usulan-berubah', function(){ if (!R.kotor){ R.daftar = null; R.u = null; R.rows = null; } });
 export function lupakanRedesain(){ if (!R.kotor){ R.daftar = null; R.u = null; R.rows = null; } }
@@ -49,7 +51,9 @@ function muatDaftar(){
   SB.usulanDaftar().then(function(l){
     R.daftar = l; R.memuat = false;
     var ada = usulanSaya();
-    if (!ada.some(function(u){ return u.id === R.mode; })) R.mode = ada.length ? ada[0].id : 'dipa';
+    var dilihat = R.lihat && R.lihat === R.mode && l.some(function(u){ return u.id === R.lihat; });
+    if (!dilihat) R.lihat = null;
+    if (!dilihat && !ada.some(function(u){ return u.id === R.mode; })) R.mode = ada.length ? ada[0].id : 'dipa';
     if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.daftar = []; R.mode = 'dipa'; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
@@ -165,7 +169,8 @@ export function renderRedesain(){
       '<div><span class="note">Selisih</span><b class="' + (selisih ? 'neg' : 'pos') + '">' + (selisih ? tanda(selisih) : 'Rp 0 · seimbang') + '</b></div>' +
       '<div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div>' +
       '<div><span class="note">Status</span><b>' + esc(ST[u.status] || u.status) + (R.kotor ? ' · <span class="neg">belum disimpan</span>' : '') + '</b></div></div>';
-    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat.</div>' :
+    if (R.lihat === u.id) act = '<div class="tools"><button class="btn" type="button" data-rd-kembali="' + u.id + '">‹ Kembali ke pengajuan</button><button class="btn" type="button" data-rd-tutup>Tutup</button></div>';
+    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru; detail yang dihapus tercantum di bawah lembar kerja.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
         tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button>' +
         '<span class="rd-sp"></span><button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
@@ -523,6 +528,8 @@ function bind(){
     if (g){ g.scrollTop = p.g; g.scrollLeft = p.x; }
     window.scrollTo(0, p.y);
   }
+  [].forEach.call(pg.querySelectorAll('[data-rd-kembali]'), function(el){ el.onclick = function(){ var id = +el.getAttribute('data-rd-kembali'); R.lihat = null; R.mode = null; R.daftar = null; document.dispatchEvent(new CustomEvent('buka-usulan', { detail: id })); }; });
+  [].forEach.call(pg.querySelectorAll('[data-rd-tutup]'), function(el){ el.onclick = function(){ R.lihat = null; R.mode = null; R.daftar = null; R.u = null; R.rows = null; refresh(); }; });
   if ($('rdVersi')) $('rdVersi').onchange = function(){ R.dv = +this.value; R.rows = null; R.u = null; R.sel = null; refresh(); };
   if ($('rdUsulan')) $('rdUsulan').onchange = function(){
     var sel = this, m = +sel.value;
