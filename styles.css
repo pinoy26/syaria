@@ -766,14 +766,14 @@ button.btn.lg-lupa{margin-top:12px}
 @media (max-width:560px){ .logo-deret-img{height:40px} }
 
 /* ================= kartu Total Pagu (Ringkasan): warna solid, bukan kaca ================= */
-:root{--hero-bg:#0b4a58}
-:root[data-theme="dark"]{--hero-bg:#0a3540}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--hero-bg:#0a3540} }
-.hero.hero2{background:var(--hero-bg);border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px -24px rgba(6,40,48,.75)}
+:root{--hero-bg:#194276}
+:root[data-theme="dark"]{--hero-bg:#16264d}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--hero-bg:#16264d} }
+.hero.hero2{background:var(--hero-bg);border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 18px 40px -24px rgba(10,20,42,.75)}
 /* warna terang hanya untuk isi kartu (tombol Filter & pemilih posisi di pojok tetap berwarna normal) */
-.hero2 .banner,.hero2 .gauge{--ink:#fff;--ink2:rgba(255,255,255,.84);--muted:rgba(255,255,255,.7);--line:rgba(255,255,255,.16);--track:rgba(255,255,255,.18);--accent:#f2b33d;--accent-soft:rgba(242,179,61,.2);--real:#6fdbe0}
+.hero2 .banner,.hero2 .gauge{--ink:#fff;--ink2:rgba(255,255,255,.84);--muted:rgba(255,255,255,.7);--line:rgba(255,255,255,.16);--track:rgba(255,255,255,.18);--accent:#f2b33d;--accent-soft:rgba(242,179,61,.2);--real:#8cc4ff}
 /* pakai ID agar mengalahkan aturan .banner mode gelap (:root[data-theme=dark] .banner) */
-#c-hero .banner{--bn-real:#14306a;--bn-real-ink:#fff;--bn-rest:#f2b33d;background:none;border:0;color:#fff}
+#c-hero .banner{--bn-real:#3d7fd6;--bn-real-ink:#fff;--bn-rest:#f2b33d;background:none;border:0;color:#fff}
 .hero2 .bn-sisa{color:#2a1d00}
 .hero2 .bn-box{box-shadow:0 14px 28px -16px rgba(0,0,0,.7)}
 .hero2 .bn-lock i{background:repeating-linear-gradient(45deg,#fff 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1.5px #fff}
@@ -1030,3 +1030,6 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 /* isi halaman menyesuaikan SatuDJA: kartu putih bersudut lebih kecil, judul kartu biru navy */
 .card.glass,.page-sec .glass.card{border-radius:12px}
 .card-h h2,.card>h2{color:var(--rd-prog)}
+/* logo LENTERA di navbar (ponsel): putih bulat berbingkai kuning, sama dengan logo sidebar */
+.topbar .brand>.mark{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--tb-bg);box-shadow:0 0 0 3px var(--sn-aksen)}
+.topbar .brand>.mark svg{width:19px;height:19px}
