@@ -3,7 +3,7 @@
       termasuk saat laptop tidur/dimatikan). Peringatan muncul PERINGATAN sebelum keluar.
    C. Login ulang setiap kali browser ditutup: tab baru yang dibuka tanpa tab LANTERA lain yang
       masih terbuka dianggap pembukaan baru browser, sesi lama diakhiri. */
-import { SBC } from './api.js?v=202611191033';
+import { SBC } from './api.js?v=202611191040';
 
 export var BATAS_MENIT = 60;
 var BATAS = BATAS_MENIT * 60 * 1000, PERINGATAN = 2 * 60 * 1000;

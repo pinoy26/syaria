@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191033';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611191033';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191040';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3, KODE_KL, KODE_IND } from './state.js?v=202611191040';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -149,15 +149,16 @@ export function tree(id,R,levels){
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
-      /* susunan seperti Belanja Redesain: kolom Kode (KRO/RO lengkap dengan kode kegiatan), kolom Uraian bertingkat
-         tanpa label tingkat; tombol buka/tutup kecil di depan uraian */
-      var kp=pisahLabel(c.label), kode=kp[0];
+      /* susunan ala SAKTI: kolom Kode menjorok per tingkat (Program 025.04.DK, KRO/RO lengkap dgn kode kegiatan),
+         kolom Uraian rata kiri; tingkat dibedakan gaya huruf & warna */
+      var kp=pisahLabel(c.label), kode=kp[0], kk=c.cls?c.cls.replace('lv-',''):'';
       if ((c.lvl==='KRO'||c.lvl==='RO') && kode && c.r && c.r.keg) kode=esc(c.r.keg)+'.'+kode;
-      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td class="tg-k"><span class="code">'+kode+'</span></td>'+
-        '<td class="tg-u"><span class="tw" style="padding-left:'+(c.depth*14)+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
+      if (c.lvl==='Program' && kode) kode=KODE_KL+'.'+kode;
+      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td class="tg-k"><span class="tg-kw" style="padding-left:'+(KODE_IND[kk]!=null?KODE_IND[kk]:c.depth*12)+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="code">'+kode+'</span></span></td>'+
+        '<td class="tg-u"><span class="tw"><span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="padding-left:'+(c.depth*14+26)+'px;display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
       }); else walk(c);
     });
   })(root);

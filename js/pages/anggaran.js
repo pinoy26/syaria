@@ -1,13 +1,13 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611191033';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611191033';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611191033';
-import { SB } from '../api.js?v=202611191033';
-import { refresh } from '../nav.js?v=202611191033';
-import { hitungBlokir } from '../blokir.js?v=202611191033';
-import { renderRedesain } from './redesain.js?v=202611191033';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611191040';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption, KODE_KL, KODE_IND } from '../state.js?v=202611191040';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611191040';
+import { SB } from '../api.js?v=202611191040';
+import { refresh } from '../nav.js?v=202611191040';
+import { hitungBlokir } from '../blokir.js?v=202611191040';
+import { renderRedesain } from './redesain.js?v=202611191040';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
@@ -77,13 +77,13 @@ function urutUnit(a, b){
 
 /* level tabel bertingkat anggaran (kunci dari kolom baris RKK, label dari nama di RKK) */
 var LA = {
-  prog: { lvl: 'Program', key: function(r){ return bersih(r.prog); }, label: function(k, r){ return kodeNama(r.prog, r.prog_n); } },
-  keg:  { lvl: 'Kegiatan', key: function(r){ return bersih(r.keg); }, label: function(k, r){ return kodeNama(r.keg, r.keg_n); } },
-  kro:  { lvl: 'KRO', key: function(r){ return bersih(r.kro); }, label: function(k, r){ return kodeNama(r.kro, r.kro_n); } },
-  ro:   { lvl: 'RO', key: function(r){ return bersih(r.ro); }, label: function(k, r){ return kodeNama(r.ro, r.ro_n); } },
-  komp: { lvl: 'Komponen', key: function(r){ return bersih(r.komp); }, label: function(k, r){ return kodeNama(r.komp, r.komp_n); } },
-  sub:  { lvl: 'Sub Komp', key: function(r){ return bersih(r.ro + '|' + r.sub); }, label: function(k, r){ var p = String(r.sub || '').split('.'); return kodeNama(p[p.length - 1], r.sub_n); } },
-  akun: { lvl: 'Akun', key: function(r){ return bersih(r.akun); }, label: function(k, r){ return kodeNama(r.akun, r.akun_n) + ' <span class="chip ag-sd">' + (r.sumber === 'PNP' ? 'PNBP' : esc(r.sumber || '?')) + '</span>'; } },
+  prog: { lvl: 'Program', cls: 'lv-prog', key: function(r){ return bersih(r.prog); }, label: function(k, r){ return kodeNama(r.prog, r.prog_n); } },
+  keg:  { lvl: 'Kegiatan', cls: 'lv-keg', key: function(r){ return bersih(r.keg); }, label: function(k, r){ return kodeNama(r.keg, r.keg_n); } },
+  kro:  { lvl: 'KRO', cls: 'lv-kro', key: function(r){ return bersih(r.kro); }, label: function(k, r){ return kodeNama(r.kro, r.kro_n); } },
+  ro:   { lvl: 'RO', cls: 'lv-ro', key: function(r){ return bersih(r.ro); }, label: function(k, r){ return kodeNama(r.ro, r.ro_n); } },
+  komp: { lvl: 'Komponen', cls: 'lv-komp', key: function(r){ return bersih(r.komp); }, label: function(k, r){ return kodeNama(r.komp, r.komp_n); } },
+  sub:  { lvl: 'Sub Komp', cls: 'lv-sub', key: function(r){ return bersih(r.ro + '|' + r.sub); }, label: function(k, r){ var p = String(r.sub || '').split('.'); return kodeNama(p[p.length - 1], r.sub_n); } },
+  akun: { lvl: 'Akun', cls: 'lv-akun', key: function(r){ return bersih(r.akun); }, label: function(k, r){ return kodeNama(r.akun, r.akun_n) + ' <span class="chip ag-sd">' + (r.sumber === 'PNP' ? 'PNBP' : esc(r.sumber || '?')) + '</span>'; } },
   judul:{ lvl: '>', key: function(r){ return bersih(r.judul || '(tanpa judul)'); }, label: function(k, r){ return esc(r.judul || '(tanpa judul)'); } },
   kat:  { lvl: 'Kategori', key: function(r){ return bersih(r.kategori || '?'); }, label: function(k){ return esc(k); }, sort: function(a, b){ return a === 'Fakultas' ? -1 : b === 'Fakultas' ? 1 : (a < b ? -1 : 1); } },
   unit: { lvl: 'Unit', key: function(r){ return bersih(r.unit || '?'); }, label: function(k){ return '<b>' + esc(k) + '</b>' + (FAK_FULL[k] ? ' <span class="note">' + esc(FAK_FULL[k]) + '</span>' : ''); }, sort: urutUnit }
@@ -104,11 +104,16 @@ function pohon(id, R, levels){
     if (L.sort) order.sort(L.sort);
     order.forEach(function(k){
       var nid = pid + '/' + k, open = !!S.open[nid], ind = depth * 18, rr = m[k];
-      out.push('<tr class="tree l' + Math.min(depth, 3) + '"><td><span class="tw" style="padding-left:' + ind + 'px"><button type="button" data-tog="' + esc(nid) + '" aria-expanded="' + open + '" aria-label="Buka atau tutup">' + IC.chev + '</button><span class="lvl">' + esc(L.lvl) + '</span><span class="tw-label">' + L.label(k, rr[0]) + '</span></span></td>' + kolomKel(rr) + '</tr>');
+      /* susunan ala SAKTI: Kode menjorok per tingkat, Uraian rata kiri (lihat KODE_IND) */
+      var lb = L.label(k, rr[0]), mk = lb.match(/^<b class="code">([\s\S]*?)<\/b>\s*([\s\S]*)$/), kode = mk ? mk[1] : '', uraian = mk ? mk[2] : lb, kk = L.cls ? L.cls.replace('lv-', '') : '';
+      if ((L.lvl === 'KRO' || L.lvl === 'RO') && kode && rr[0].keg) kode = esc(rr[0].keg) + '.' + kode;
+      if (L.lvl === 'Program' && kode) kode = KODE_KL + '.' + kode;
+      out.push('<tr class="tree l' + Math.min(depth, 3) + (L.cls ? ' ' + L.cls : '') + '"><td class="tg-k"><span class="tg-kw" style="padding-left:' + (KODE_IND[kk] != null ? KODE_IND[kk] : depth * 12) + 'px"><button type="button" data-tog="' + esc(nid) + '" aria-expanded="' + open + '" aria-label="Buka atau tutup">' + IC.chev + '</button><span class="code">' + kode + '</span></span></td>' +
+        '<td class="tg-u"><span class="tw">' + (kode ? '' : '<span class="lvl">' + esc(L.lvl) + '</span>') + '<span class="tw-label">' + uraian + '</span></span></td>' + kolomKel(rr) + '</tr>');
       if (!open) return;
       if (depth < levels.length - 1) walk(rr, depth + 1, nid);
       else rr.slice().sort(function(a, b){ return a.urutan - b.urutan; }).forEach(function(r){
-        out.push('<tr class="leaf' + (r.blokir ? ' ag-blokir' : '') + '"><td><span style="padding-left:' + (ind + 44) + 'px;display:inline-block">' + esc(r.uraian) +
+        out.push('<tr class="leaf' + (r.blokir ? ' ag-blokir' : '') + '"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">' + esc(r.uraian) +
           (r.judul2 ? ' <span class="note">· ' + esc(r.judul2) + '</span>' : '') + '</span></td>' +
           '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' +
           '<td class="n">' + (!r.blokir ? '' : HB && HB.item[r.urutan] != null ? rpBlokir(HB.item[r.urutan]) : '<span class="pill st-warn ag-bl" title="Item ini kena blokir (tanda * di RKK)"><i></i>Blokir</span>') + '</td></tr>');
@@ -119,8 +124,8 @@ function pohon(id, R, levels){
     '<button type="button" class="icon" data-search-prev="' + id + '" aria-label="Hasil sebelumnya">' + IC.up + '</button>' +
     '<button type="button" class="icon" data-search-next="' + id + '" aria-label="Hasil berikutnya">' + IC.down + '</button></span>';
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="' + id + '">Buka satu tingkat</button><button class="btn" type="button" data-expandall="' + id + '">Buka semua</button><button class="btn" type="button" data-closeall="' + id + '">Tutup semua</button>' + search + '</div>' +
-    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Volume</th><th>Satuan</th><th class="n">Harga satuan</th><th class="n">Jumlah</th><th class="n">Blokir</th></tr></thead><tbody>' + out.join('') +
-    '<tr class="tot"><td>Jumlah</td><td></td><td></td><td></td><td class="n">' + rp(jml(R)) + '</td><td class="n">' + (HB ? rp(R.reduce(function(a, r){ return a + (r.blokir ? (HB.item[r.urutan] || 0) : 0); }, 0)) : (R.filter(function(r){ return r.blokir; }).length || '')) + '</td></tr></tbody></table></div>' +
+    '<div class="tbl tbl-grid"><table><thead><tr><th class="tg-k">Kode</th><th class="tg-u">Uraian</th><th class="n">Volume</th><th>Satuan</th><th class="n">Harga satuan</th><th class="n">Jumlah</th><th class="n">Blokir</th></tr></thead><tbody>' + out.join('') +
+    '<tr class="tot"><td class="tg-k"></td><td class="tg-u">Jumlah</td><td></td><td></td><td></td><td class="n">' + rp(jml(R)) + '</td><td class="n">' + (HB ? rp(R.reduce(function(a, r){ return a + (r.blokir ? (HB.item[r.urutan] || 0) : 0); }, 0)) : (R.filter(function(r){ return r.blokir; }).length || '')) + '</td></tr></tbody></table></div>' +
     '<p class="note">' + (HB ? 'Nilai blokir = jumlah di RKK − pagu di FA Detail posisi ' + tgl(DB.periode) + ' (data realisasi yang sedang dibuka).' : 'Nilai blokir tampil bila data realisasi tahun anggaran yang sama sudah dimuat; sementara hanya ditandai.') + '</p>';
 }
 function keterangan(){

@@ -1147,3 +1147,31 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
   border-color:var(--rd-head-line)!important;font-weight:700;text-shadow:0 1px 0 rgba(0,0,0,.18)}
 .tbl-grid thead th:first-child{border-top-left-radius:8px}
 .tbl-grid thead th:last-child{border-top-right-radius:8px}
+/* =====================================================================
+   Kode & Uraian ala SAKTI (Belanja Redesain, Monev Anggaran, Monev Realisasi):
+   kolom Kode menjorok per tingkat & berlatar abu tipis untuk Program s.d. Sub komponen,
+   kolom Uraian rata kiri; Program/Kegiatan/Akun bergaris bawah, KRO/RO/Sub komponen miring, Komponen tebal
+   ===================================================================== */
+.rd-grid td.rd-u{padding-left:8px}
+.rd-grid tr.rd-h1 td.rd-u{padding-left:14px}
+.rd-grid tr.rd-h2 td.rd-u{padding-left:22px}
+.rd-grid tr.rd-item td.rd-u{padding-left:14px}
+.rd-grid tr.rd-prog td:nth-child(-n+2),.rd-grid tr.rd-keg td:nth-child(-n+2),.rd-grid tr.rd-akun td:nth-child(-n+2),
+.tbl-grid tr.lv-prog :is(.code,.tw-label),.tbl-grid tr.lv-keg :is(.code,.tw-label),.tbl-grid tr.lv-akun :is(.code,.tw-label){text-decoration:underline;text-underline-offset:3px}
+.rd-grid tr.rd-kro td:nth-child(-n+2),.rd-grid tr.rd-ro td:nth-child(-n+2),.rd-grid tr.rd-sub td:nth-child(-n+2),
+.tbl-grid tr.lv-kro :is(.code,.tw-label),.tbl-grid tr.lv-ro :is(.code,.tw-label),.tbl-grid tr.lv-sub :is(.code,.tw-label){font-style:italic}
+.rd-grid tr:is(.rd-prog,.rd-keg,.rd-kro,.rd-ro,.rd-komp,.rd-sub) td:first-child,
+.tbl-grid tr:is(.lv-prog,.lv-keg,.lv-kro,.lv-ro,.lv-komp,.lv-sub) td.tg-k{background-image:linear-gradient(rgba(10,20,42,.055),rgba(10,20,42,.055))}
+:root[data-theme="dark"] .rd-grid tr:is(.rd-prog,.rd-keg,.rd-kro,.rd-ro,.rd-komp,.rd-sub) td:first-child,
+:root[data-theme="dark"] .tbl-grid tr:is(.lv-prog,.lv-keg,.lv-kro,.lv-ro,.lv-komp,.lv-sub) td.tg-k{background-image:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05))}
+.tbl-grid td.tg-u .tw{padding-left:2px}
+.tbl-grid .tg-kw{white-space:nowrap}
+.tbl-grid th.tg-k,.tbl-grid td.tg-k{width:150px;min-width:150px!important;max-width:150px}
+.tbl-grid th.tg-u,.tbl-grid td.tg-u{left:150px}
+.rd-grid .c-kode{width:128px}
+/* tombol buka/tutup di kolom Kode */
+.tg-kw button{border:0;background:none;color:var(--muted);cursor:pointer;width:18px;height:18px;border-radius:5px;display:inline-grid;place-items:center;padding:0;flex:none}
+.tg-kw button:hover{background:var(--accent-soft);color:var(--ink)}
+.tg-kw button svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;transition:transform .15s}
+.tg-kw button[aria-expanded="true"] svg{transform:rotate(90deg)}
+@media print{ .tg-kw button{display:none} }

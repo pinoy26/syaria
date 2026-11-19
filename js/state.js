@@ -6,6 +6,10 @@ export var FAK_ORDER = ['FTIK','FEBI','FASYA','FUAD','Pascasarjana'];
 export var FAK_FULL = {FTIK:'Fakultas Tarbiyah dan Ilmu Keguruan',FEBI:'Fakultas Ekonomi dan Bisnis Islam',FASYA:'Fakultas Syariah',FUAD:'Fakultas Ushuluddin, Adab dan Dakwah',Pascasarjana:'Pascasarjana'};
 export var FLABEL = {prog:'Program',keg:'Kegiatan',kro:'KRO',ro:'RO',komp:'Komponen',sub:'Sub Komponen'};
 export var CHAIN=['prog','keg','kro','ro','komp','sub'];
+/* kode K/L.unit eselon I untuk kode program (seperti SAKTI: 025.04.DK) */
+export var KODE_KL='025.04';
+/* susunan kolom Kode ala SAKTI: kode menjorok per tingkat, uraian rata kiri */
+export var KODE_IND={prog:4,keg:16,kro:16,ro:16,komp:44,sub:58,akun:30};
 
 /* ================= state boot/data (diisi dari main.js) ================= */
 export var BOOT=null, DB=null, ALL=[], D=null, WAKTU=0, AK={};
