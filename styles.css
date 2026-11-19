@@ -1079,7 +1079,8 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .rd-ring.rd-foot>div{flex-direction:row;align-items:baseline;gap:6px;flex:none}
 .rd-ring.rd-foot .note{font-size:11.5px}
 .rd-ring.rd-foot b{font-size:12.5px}
-#page:has(.rd-foot){padding-bottom:30px}
+#page:has(.rd-foot){padding-bottom:0}
+#page:has(.rd-foot) .page-sec>:last-child{margin-bottom:34px}
 /* lembar kerja memakai tinggi layar yang tersisa */
 .rd-grid{max-height:calc(100vh - 245px);min-height:320px}
 @media (max-width:900px){ .rd-ring.rd-foot{left:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));justify-content:flex-start;padding:0 12px} }
@@ -1101,7 +1102,7 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .rd-kepala .rd-alat button.btn{padding:5px 12px;font-size:12.5px}
 .rd-kepala .rd-petunjuk{margin:4px 2px 0;font-size:11.5px}
 /* kartu Belanja Redesain pas satu layar: halaman tidak perlu digulir, yang digulir hanya isi tabel (judul kolom tetap terlihat) */
-.rd-grid{max-height:calc(100vh - 246px)}
+.rd-grid{max-height:calc(100vh - 246px)}  /* cadangan; tinggi sebenarnya diatur aturTinggi() */
 .app:has(.rd-foot){padding-bottom:0}
 .rd-card .rd-ket{margin:6px 2px 0}
 @media (max-width:380px){ .rd-kepala{margin:0 -14px 8px;padding:8px 14px} }

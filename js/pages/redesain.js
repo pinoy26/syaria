@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190700';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611190700';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611190700';
-import { SB } from '../api.js?v=202611190700';
-import { refresh } from '../nav.js?v=202611190700';
-import { lupakanUsulan } from './usulan.js?v=202611190700';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190705';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611190705';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611190705';
+import { SB } from '../api.js?v=202611190705';
+import { refresh } from '../nav.js?v=202611190705';
+import { lupakanUsulan } from './usulan.js?v=202611190705';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -577,8 +577,19 @@ function simpan(){
 }
 
 /* ---------- interaksi ---------- */
+/* tinggi lembar kerja diukur langsung: mengisi sisa layar sampai tepat di atas footer ringkasan,
+   sehingga halaman tidak perlu digulir (yang digulir hanya isi tabel) dan tidak ada ruang kosong */
+function aturTinggi(){
+  var g = document.querySelector('.rd-card .rd-grid'), f = document.querySelector('.rd-foot'); if (!g) return;
+  var kartu = g.closest('.rd-card'), ket = kartu && kartu.querySelector('.rd-ket');
+  var atas = g.getBoundingClientRect().top + window.scrollY;
+  var bawah = (ket ? ket.offsetHeight + 6 : 0) + (kartu ? parseFloat(getComputedStyle(kartu).paddingBottom) || 0 : 0) + (f ? f.offsetHeight : 0) + 6;
+  g.style.maxHeight = Math.max(260, Math.floor(window.innerHeight - atas - bawah) - 1) + 'px';
+}
+window.addEventListener('resize', function(){ if (S.page === 'anggaran-rkk') aturTinggi(); });
 function bind(){
   var pg = $('page'); if (!pg) return;
+  aturTinggi();
   if (R.posisi){
     var g = pg.querySelector('.rd-grid'), p = R.posisi; R.posisi = null;
     if (g){ g.scrollTop = p.g; g.scrollLeft = p.x; }
