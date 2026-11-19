@@ -773,8 +773,8 @@ button.btn.lg-lupa{margin-top:12px}
 /* warna terang hanya untuk isi kartu (tombol Filter & pemilih posisi di pojok tetap berwarna normal) */
 .hero2 .banner,.hero2 .gauge{--ink:#fff;--ink2:rgba(255,255,255,.84);--muted:rgba(255,255,255,.7);--line:rgba(255,255,255,.16);--track:rgba(255,255,255,.18);--accent:#f2b33d;--accent-soft:rgba(242,179,61,.2);--real:#8cc4ff}
 /* pakai ID agar mengalahkan aturan .banner mode gelap (:root[data-theme=dark] .banner) */
-#c-hero .banner{--bn-real:#3d7fd6;--bn-real-ink:#fff;--bn-rest:#f2b33d;background:none;border:0;color:#fff}
-.hero2 .bn-sisa{color:#2a1d00}
+#c-hero .banner{--bn-real:#f2b33d;--bn-real-ink:#2a1d00;--bn-rest:#3d7fd6;background:none;border:0;color:#fff}
+.hero2 .bn-sisa{color:#fff}
 .hero2 .bn-box{box-shadow:0 14px 28px -16px rgba(0,0,0,.7)}
 .hero2 .bn-lock i{background:repeating-linear-gradient(45deg,#fff 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1.5px #fff}
 .hero2 .gauge-legend .sw.tick{background:#fff}
