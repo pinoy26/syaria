@@ -1089,3 +1089,19 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 :root[data-theme="dark"]{--rd-pilih:rgba(240,120,150,.20);--rd-pilih-garis:#f08aa6}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--rd-pilih:rgba(240,120,150,.20);--rd-pilih-garis:#f08aa6} }
 .rd-grid tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--rd-pilih-garis)!important}
+/* Belanja Redesain: kepala ringkas & tetap (judul, Tampilan, tombol Rekam/Ubah/Hapus/Simpan) */
+.rd-card{padding-top:0}
+.rd-kepala{position:sticky;top:calc(var(--tb-h) + env(safe-area-inset-top,0px));z-index:6;margin:0 -22px 8px;padding:8px 22px 8px;
+  background:var(--glass-strong);border-bottom:1px solid var(--line);border-radius:12px 12px 0 0;box-shadow:0 6px 12px -10px rgba(10,20,42,.35)}
+.rd-kepala .card-h{margin:0 0 6px;align-items:center;gap:6px 12px}
+.rd-kepala .card-h>div:first-child{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;min-width:0}
+.rd-kepala .card-h h2{font-size:14.5px;white-space:nowrap}
+.rd-kepala .card-h p{margin:0;font-size:11.5px;max-width:none}
+.rd-kepala .rd-alat{padding:5px;gap:5px;border-radius:10px}
+.rd-kepala .rd-alat button.btn{padding:5px 12px;font-size:12.5px}
+.rd-kepala .rd-petunjuk{margin:4px 2px 0;font-size:11.5px}
+/* kartu Belanja Redesain pas satu layar: halaman tidak perlu digulir, yang digulir hanya isi tabel (judul kolom tetap terlihat) */
+.rd-grid{max-height:calc(100vh - 246px)}
+.app:has(.rd-foot){padding-bottom:0}
+.rd-card .rd-ket{margin:6px 2px 0}
+@media (max-width:380px){ .rd-kepala{margin:0 -14px 8px;padding:8px 14px} }
