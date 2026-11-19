@@ -1,10 +1,10 @@
 /* js/pages/berita.js — Kelola Berita & Pengumuman (admin keuangan & super admin) */
-import { $, esc, toast, tanya, errMsg } from '../utils.js?v=202611190636';
-import { S, FAK_ORDER } from '../state.js?v=202611190636';
-import { card } from '../ui-components.js?v=202611190636';
-import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js?v=202611190636';
-import { refresh } from '../nav.js?v=202611190636';
-import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js?v=202611190636';
+import { $, esc, toast, tanya, errMsg } from '../utils.js?v=202611190638';
+import { S, FAK_ORDER } from '../state.js?v=202611190638';
+import { card } from '../ui-components.js?v=202611190638';
+import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js?v=202611190638';
+import { refresh } from '../nav.js?v=202611190638';
+import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js?v=202611190638';
 
 /* list: semua berita; units: {kategori:[unit…]}; edit: berita yang sedang diubah (null = tulis baru); sasaran: [{kategori,unit}] */
 var K = { list: null, units: null, edit: null, sasaran: [], memuat: false };

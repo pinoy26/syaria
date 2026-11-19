@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190636';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611190636';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611190636';
-import { SB } from '../api.js?v=202611190636';
-import { refresh } from '../nav.js?v=202611190636';
-import { lupakanUsulan } from './usulan.js?v=202611190636';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190638';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611190638';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611190638';
+import { SB } from '../api.js?v=202611190638';
+import { refresh } from '../nav.js?v=202611190638';
+import { lupakanUsulan } from './usulan.js?v=202611190638';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -181,7 +181,7 @@ export function renderRedesain(){
         tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button>' +
         '<span class="rd-sp"></span><button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
         '<button class="btn primary" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
-        '<p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
+        '<p class="note rd-petunjuk"' + (sel.ket ? '' : ' hidden') + '>' + esc(sel.ket) + '</p>';
   }
   /* jumlah blokir per baris kepala */
   /* kolom Selisih (mode usulan): per item = jumlah usulan − jumlah DIPA; baris kepala = total selisih di bawahnya,
@@ -262,7 +262,7 @@ function anggota(b){ return R.rows.filter(function(r){ return jalur(r)[b.d] === 
 function pilihan(baris){
   var dipa = R.u && R.u.dipa;
   var o = { subbaru: false, akun: false, h1: false, h2: false, det: false, ubah: false, hapus: false, blokir: false,
-    ket: dipa ? 'Pilih detail untuk mengatur blokir manual.' : 'Urutan merekam: 1. Rekam Sub Komponen (pilih baris komponen) → 2. Rekam Akun (pilih sub komponen) → 3. Rekam Header → 4. Rekam Detail. Untuk menghapus: centang kotak di kolom Hapus, lalu klik Hapus.' };
+    ket: dipa ? 'Pilih detail untuk mengatur blokir manual.' : '' };
   var b = barisTerpilih(baris); if (!b) return o;
   if (dipa){
     if (b.jenis !== 'item') o.ket = 'Blokir diatur per detail: pilih baris detail.';
@@ -616,5 +616,5 @@ function bind(){
 function perbaruiAlat(){
   var o = pilihan(susun()), pg = $('page');
   ['subbaru', 'akun', 'h1', 'h2', 'det', 'ubah', 'hapus', 'blokir'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !(o[k] || (k === 'hapus' && dicentang().length)); });
-  var p = pg.querySelector('.rd-petunjuk'); if (p) p.textContent = o.ket;
+  var p = pg.querySelector('.rd-petunjuk'); if (p){ p.textContent = o.ket; p.hidden = !o.ket; }
 }
