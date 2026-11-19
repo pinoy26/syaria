@@ -1175,3 +1175,12 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .tg-kw button svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;transition:transform .15s}
 .tg-kw button[aria-expanded="true"] svg{transform:rotate(90deg)}
 @media print{ .tg-kw button{display:none} }
+/* Belanja Redesain: pemberitahuan baris baru, sorot sesaat, tombol Simpan mencolok bila ada perubahan */
+.rd-info{font-size:12px;font-weight:600;color:var(--good-ink);background:rgba(12,163,12,.10);border:1px solid rgba(12,163,12,.25);border-radius:999px;padding:4px 12px;
+  max-width:46ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes rdKilat{0%,60%{background-color:rgba(242,182,50,.55)}100%{background-color:transparent}}
+.rd-grid tbody tr.rd-kilat td{animation:rdKilat 2.4s ease-out}
+@keyframes rdDenyut{0%,100%{box-shadow:0 0 0 0 rgba(40,94,166,.55)}50%{box-shadow:0 0 0 6px rgba(40,94,166,0)}}
+button.btn.rd-perlu-simpan{animation:rdDenyut 1.6s ease-in-out infinite}
+button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;font-size:10px}
+@media (prefers-reduced-motion:reduce){ .rd-grid tbody tr.rd-kilat td,button.btn.rd-perlu-simpan{animation:none} }

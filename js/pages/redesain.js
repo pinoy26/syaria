@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191042';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191042';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611191042';
-import { SB } from '../api.js?v=202611191042';
-import { refresh } from '../nav.js?v=202611191042';
-import { lupakanUsulan } from './usulan.js?v=202611191042';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191057';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191057';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611191057';
+import { SB } from '../api.js?v=202611191057';
+import { refresh } from '../nav.js?v=202611191057';
+import { lupakanUsulan } from './usulan.js?v=202611191057';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -179,8 +179,8 @@ export function renderRedesain(){
     alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru; detail yang dihapus tercantum di bawah lembar kerja.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
         tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button>' +
-        '<span class="rd-sp"></span><button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
-        '<button class="btn primary" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
+        '<span class="rd-sp"></span>' + (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') + '<button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
+        '<button class="btn primary' + (R.kotor && !R.simpan ? ' rd-perlu-simpan' : '') + '" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
         '<p class="note rd-petunjuk"' + (sel.ket ? '' : ' hidden') + '>' + esc(sel.ket) + '</p>';
   }
   /* jumlah blokir per baris kepala */
@@ -380,7 +380,7 @@ function formHeader(judul, sub, nilai, onOk){
     '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div><div class="tools"><button type="submit" class="btn primary">Ok</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
   [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
   $('rdForm').onsubmit = function(e){ e.preventDefault(); var v = $('rdHeader').value.trim(); if (v.length < 2){ $('rdMsg').textContent = 'Uraian header wajib diisi (minimal 2 karakter).'; $('rdMsg').hidden = false; return; } closeModal(); onOk(v); };
-  setTimeout(function(){ $('rdHeader').focus(); }, 60);
+  setTimeout(function(){ var x = $('rdHeader'); if (x) x.focus(); }, 60);
 }
 
 /* Form R/U/H Sub Komponen (gambar 4): kode & uraian — hanya bila realisasinya Rp 0 */
@@ -404,7 +404,7 @@ function formSub(b, ang){
     ang.forEach(function(r){ r.sub = baru; r.sub_n = n; });
     R.sel = null; R.kotor = true; gambarUlang();
   };
-  setTimeout(function(){ $('rdSubKode').focus(); }, 60);
+  setTimeout(function(){ var x = $('rdSubKode'); if (x) x.focus(); }, 60);
 }
 /* Bagan Akun Standar (gambar 5): pilih akun per jenis belanja; mode rekam juga meminta detail pertama */
 var JENIS = { '51': 'Belanja Pegawai', '52': 'Belanja Barang', '53': 'Belanja Modal', '57': 'Belanja Bantuan Sosial' };
@@ -462,7 +462,7 @@ function formAkun(judul, sub, rekam, sumberList, onOk, subBaru){
     }
     closeModal(); onOk(h);
   };
-  setTimeout(function(){ ($('rdSubKode') || $('rdCariAkun')).focus(); }, 60);
+  setTimeout(function(){ var x = $('rdSubKode') || $('rdCariAkun'); if (x) x.focus(); }, 60);
 }
 /* ganti akun satu kelompok; bila akun tujuan sudah ada di sub komponen itu, detail dipindah ke ujung kelompok tujuan */
 function gantiAkun(ang, a){
@@ -512,7 +512,12 @@ function sisip(dasar, setelah, isi, judul, judul2, ganti){
   r.id = null; r.anggaran_id = null; r.blokir = false; r.judul = judul; r.judul2 = judul2;
   r.uraian = isi.uraian; r.volume = isi.volume; r.satuan = isi.satuan; r.harga = isi.harga; r.jumlah = Math.round(isi.volume * isi.harga);
   r.urutan = urutanSetelah(setelah); R.rows.push(r); urut();
-  R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; gambarUlang();
+  R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; R.fokus = true;
+  R.info = (ganti && ganti.sub && ganti.sub !== dasar.sub ? 'Sub komponen ' + ganti.sub.split('.').pop() + ' ditambahkan' :
+            ganti && ganti.akun && ganti.akun !== dasar.akun ? 'Akun ' + ganti.akun + ' ditambahkan' :
+            judul2 && judul2 !== dasar.judul2 ? 'Header 2 ditambahkan' : judul && judul !== dasar.judul ? 'Header 1 ditambahkan' : 'Detail ditambahkan') +
+           ': "' + r.uraian + '". Klik Simpan untuk menyimpan.';
+  gambarUlang();
 }
 function kosong(){ return { uraian: '', volume: null, satuan: '', harga: null, jumlah: 0, blokir: false }; }
 function aksi(nama){
@@ -561,7 +566,7 @@ function aksi(nama){
 function pulihkan(id){
   var b = R.basis[id]; if (!b) return;
   var r = {}; Object.keys(b).forEach(function(k){ r[k] = b[k]; }); r.anggaran_id = b.id; r.id = null;
-  R.rows.push(r); urut(); R.kotor = true; gambarUlang();
+  R.rows.push(r); urut(); R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; R.fokus = true; R.info = 'Detail "' + r.uraian + '" dikembalikan. Klik Simpan untuk menyimpan.'; gambarUlang();
 }
 function simpan(){
   if (!R.kotor || R.simpan) return;
@@ -569,7 +574,7 @@ function simpan(){
   var kirim = R.rows.map(function(r){ return { anggaran_id: r.anggaran_id, urutan: r.urutan, judul: r.judul || '', judul2: r.judul2 || '', uraian: r.uraian, volume: r.volume, satuan: r.satuan || '', harga: r.harga,
     prog: r.prog, kro: r.kro, ro: r.ro, komp: r.komp, sub: r.sub, sub_n: r.sub_n || '', akun: r.akun, sumber: r.sumber || '' }; });
   SB.simpanSalinan(R.u.id, kirim).then(function(x){
-    R.simpan = false; R.kotor = false; lupakanUsulan();
+    R.simpan = false; R.kotor = false; R.info = ''; lupakanUsulan();
     R.rows.forEach(function(r){ r.jumlah = jumlahDari(r, R.basis[r.anggaran_id]); });
     toast('Pagu usulan Rp ' + rp(x.pagu) + (x.selisih ? ' — selisih ' + tanda(x.selisih) + ' terhadap DIPA; usulan harus seimbang sebelum diajukan.' : ' — seimbang dengan DIPA.') + ' ' + x.perubahan + ' baris perubahan tercatat.', x.selisih ? 'warn' : 'ok', 'Usulan disimpan');
     gambarUlang();
@@ -595,6 +600,16 @@ function bind(){
     if (g){ g.scrollTop = p.g; g.scrollLeft = p.x; }
     window.scrollTo(0, p.y);
   }
+  if (R.fokus){
+    R.fokus = false;
+    var gr = pg.querySelector('.rd-grid'), tr = gr && gr.querySelector('tr.sel');
+    if (gr && tr){
+      var th = gr.querySelector('thead'), atas = tr.offsetTop - (th ? th.offsetHeight : 0);
+      if (atas < gr.scrollTop || tr.offsetTop + tr.offsetHeight > gr.scrollTop + gr.clientHeight) gr.scrollTop = Math.max(0, atas - gr.clientHeight / 3);
+      tr.classList.add('rd-kilat'); setTimeout(function(){ tr.classList.remove('rd-kilat'); }, 2400);
+    }
+  }
+  if (R.info){ var inf = R.info; setTimeout(function(){ if (R.info === inf){ R.info = ''; var el = document.querySelector('.rd-info'); if (el) el.remove(); } }, 8000); }
   [].forEach.call(pg.querySelectorAll('[data-rd-kembali]'), function(el){ el.onclick = function(){ var id = +el.getAttribute('data-rd-kembali'); R.lihat = null; R.mode = null; R.daftar = null; document.dispatchEvent(new CustomEvent('buka-usulan', { detail: id })); }; });
   [].forEach.call(pg.querySelectorAll('[data-rd-tutup]'), function(el){ el.onclick = function(){ R.lihat = null; R.mode = null; R.daftar = null; R.u = null; R.rows = null; refresh(); }; });
   if ($('rdVersi')) $('rdVersi').onchange = function(){ R.dv = +this.value; R.rows = null; R.u = null; R.sel = null; refresh(); };
