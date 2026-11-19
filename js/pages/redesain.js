@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191134';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191134';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611191134';
-import { SB } from '../api.js?v=202611191134';
-import { refresh } from '../nav.js?v=202611191134';
-import { lupakanUsulan } from './usulan.js?v=202611191134';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191303';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191303';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611191303';
+import { SB } from '../api.js?v=202611191303';
+import { refresh } from '../nav.js?v=202611191303';
+import { lupakanUsulan } from './usulan.js?v=202611191303';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -179,6 +179,7 @@ export function renderRedesain(){
     alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru; detail yang dihapus tercantum di bawah lembar kerja.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
         tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button>' +
+        (function(){ var n = dihapus().length; return n ? '<button class="btn rd-btn-dihapus" type="button" data-rd="dihapus" title="Lihat & kembalikan detail DIPA yang dihapus">Dihapus (' + n + ')</button>' : ''; })() +
         '<span class="rd-sp"></span>' + (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') + '<button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
         '<button class="btn primary' + (R.kotor && !R.simpan ? ' rd-perlu-simpan' : '') + '" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
         '<p class="note rd-petunjuk"' + (sel.ket ? '' : ' hidden') + '>' + esc(sel.ket) + '</p>';
@@ -207,7 +208,9 @@ export function renderRedesain(){
         '<td class="n rd-bl"' + (i.blokir ? ' title="' + (i.manual ? 'Blokir manual Admin perencanaan' : 'Blokir dari RKK SAKTI') + '"' : '') + '>' + (i.blokir ? rp(i.blokir) + '<span class="rd-t">' + (i.manual ? 'M' : '*') + '</span>' : '') + '</td><td class="rd-sd">' + sd(r.sumber) + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
   var hapus = dipa ? [] : dihapus();
-  var daftarHapus = !hapus.length ? '' : card('rd-hapus', 'Detail yang dihapus (' + hapus.length + ')', 'Detail DIPA yang tidak ada lagi di usulan ini.',
+  /* tabel "Detail yang dihapus" tidak lagi ditampilkan di bawah lembar kerja (detail terhapus tetap tercatat di
+     baris perubahan, Matriks & selisih); kode kartunya disimpan bila kelak diperlukan lagi */
+  var daftarHapus = true ? '' : card('rd-hapus', 'Detail yang dihapus (' + hapus.length + ')', 'Detail DIPA yang tidak ada lagi di usulan ini.',
     '<div class="tbl"><table><thead><tr><th>Akun</th><th>Uraian</th><th class="n">Jumlah DIPA</th><th></th></tr></thead><tbody>' +
     hapus.map(function(b){ return '<tr><td class="code">' + esc(b.akun) + '</td><td>' + esc(b.uraian) + '</td><td class="n">' + rp(b.jumlah) + '</td><td>' + (ubah ? '<button class="btn" type="button" data-rd-pulih="' + b.id + '">Kembalikan</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>', '');
   /* ringkasan pagu jadi footer tetap di bawah lembar kerja; pilihan Tampilan kecil di pojok kanan */
@@ -565,6 +568,20 @@ function aksi(nama){
     });
   }
 }
+/* jendela "Detail yang dihapus": daftar detail DIPA yang tidak ada lagi di usulan + tombol Kembalikan */
+function bukaDihapus(){
+  var hp = dihapus(), u = R.u, bisa = u && !u.dipa && bolehUbah(u);
+  if (!hp.length){ closeModal(); return; }
+  var tot = hp.reduce(function(a, b){ return a + b.jumlah; }, 0);
+  openModal('<div class="modal-hd"><div><span class="note">' + esc(u.judul || '') + '</span><h3>Detail yang dihapus (' + hp.length + ')</h3></div><button type="button" class="icon" data-modal-close aria-label="Tutup">' + IC_X + '</button></div>' +
+    '<div class="rd-form"><p class="note" style="margin:0">Detail DIPA yang tidak ada lagi di usulan ini, total Rp ' + rp(tot) + '. Klik <b>Kembalikan</b> untuk memulihkannya ke lembar kerja (lalu Simpan).</p>' +
+    '<div class="tbl"><table><thead><tr><th>Kode</th><th>Uraian</th><th class="n">Jumlah DIPA</th><th></th></tr></thead><tbody>' +
+    hp.map(function(b){ var p = String(b.sub || '').split('.'); return '<tr><td class="code">' + esc(p[p.length - 1] + ' · ' + b.akun) + '</td><td>' + esc(b.uraian) + (b.judul ? '<br><span class="note">' + esc(b.judul) + '</span>' : '') + '</td><td class="n">' + rp(b.jumlah) + '</td><td>' +
+      (bisa ? '<button class="btn" type="button" data-rd-kembali-item="' + b.id + '">Kembalikan</button>' : '') + '</td></tr>'; }).join('') +
+    '</tbody></table></div><div class="tools"><button type="button" class="btn" data-modal-close>Tutup</button></div></div>');
+  [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
+  [].forEach.call(document.querySelectorAll('#modal [data-rd-kembali-item]'), function(x){ x.onclick = function(){ closeModal(); pulihkan(+x.getAttribute('data-rd-kembali-item')); }; });
+}
 function pulihkan(id){
   var b = R.basis[id]; if (!b) return;
   var r = {}; Object.keys(b).forEach(function(k){ r[k] = b[k]; }); r.anggaran_id = b.id; r.id = null;
@@ -630,6 +647,7 @@ function bind(){
   [].forEach.call(pg.querySelectorAll('[data-rd]'), function(el){ el.onclick = function(){
     var a = el.getAttribute('data-rd');
     if (a === 'simpan') simpan();
+    else if (a === 'dihapus') bukaDihapus();
     else if (a === 'hapus' && dicentang().length) hapusTanda();
     else if (a === 'batal') tanya({ judul: 'Batalkan semua perubahan?', pesan: 'Belanja Redesain kembali ke kondisi terakhir yang disimpan.', ya: 'Batalkan perubahan', bahaya: true }).then(function(ya){ if (ya){ R.kotor = false; R.rows = null; R.u = null; R.posisi = null; refresh(); } });
     else aksi(a);
