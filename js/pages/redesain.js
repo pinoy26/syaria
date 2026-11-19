@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191016';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611191016';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611191016';
-import { SB } from '../api.js?v=202611191016';
-import { refresh } from '../nav.js?v=202611191016';
-import { lupakanUsulan } from './usulan.js?v=202611191016';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191027';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611191027';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611191027';
+import { SB } from '../api.js?v=202611191027';
+import { refresh } from '../nav.js?v=202611191027';
+import { lupakanUsulan } from './usulan.js?v=202611191027';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -485,7 +485,7 @@ function formBlokir(r){
     '<div class="rd-blokir"><label class="chk"><input type="checkbox" id="rdBlOn"' + (i.blokir ? ' checked' : '') + '><span>Blokir</span></label>' +
     '<input type="text" id="rdBlNilai" class="rd-blnilai" inputmode="decimal" value="' + (i.blokir ? rp(i.blokir) : '') + '" placeholder="nilai blokir"' + (i.blokir ? '' : ' disabled') + ' aria-label="Nilai blokir">' +
     '<button type="button" class="btn" id="rdBlPenuh">Blokir penuh</button></div>' +
-    '<p class="note" style="margin:0">Blokir manual berlaku di LENTERA untuk TA ini: fakultas/unit melihat nilainya terkunci dan tidak dapat menggeser bagian yang diblokir. Hilangkan centang untuk melepas blokir manual.</p>' +
+    '<p class="note" style="margin:0">Blokir manual berlaku di LANTERA untuk TA ini: fakultas/unit melihat nilainya terkunci dan tidak dapat menggeser bagian yang diblokir. Hilangkan centang untuk melepas blokir manual.</p>' +
     '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div><div class="tools"><button type="submit" class="btn primary">Simpan blokir</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
   [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
   $('rdBlOn').onchange = function(){ $('rdBlNilai').disabled = !this.checked; if (this.checked && !$('rdBlNilai').value) $('rdBlNilai').value = rp(r.jumlah); };

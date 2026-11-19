@@ -1,14 +1,14 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611191016';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611191016';
-import { SB, SBC, sbInit } from './api.js?v=202611191016';
-import { closeModal } from './ui-components.js?v=202611191016';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611191016';
-import { tampilMasuk } from './auth.js?v=202611191016';
-import { bukaUbahSandi } from './akun.js?v=202611191016';
-import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611191016';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611191016';
-import { periksaAwal, pantauAktivitas, pesanKeluar } from './sesi.js?v=202611191016';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611191027';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611191027';
+import { SB, SBC, sbInit } from './api.js?v=202611191027';
+import { closeModal } from './ui-components.js?v=202611191027';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611191027';
+import { tampilMasuk } from './auth.js?v=202611191027';
+import { bukaUbahSandi } from './akun.js?v=202611191027';
+import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611191027';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611191027';
+import { periksaAwal, pantauAktivitas, pesanKeluar } from './sesi.js?v=202611191027';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -111,7 +111,7 @@ export function mulai(){
     }
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
-    $('brandSub').textContent = (b.satker || '') + (b.kode ? ' · Satker ' + b.kode : '');
+    $('brandSub').textContent = 'Layanan Perencanaan Anggaran Terintegrasi';
     muatBeritaDasbor().then(bukaDariUrl);
     var ps = b.periods;
     fillPeriods(ps.length ? ps[ps.length - 1].periode : null);

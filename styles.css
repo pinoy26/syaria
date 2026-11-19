@@ -755,7 +755,7 @@ button.btn.lg-lupa{margin-top:12px}
   .lg-ilus{width:min(100%,300px)}
 }
 
-/* ================= identitas LENTERA & logo instansi ================= */
+/* ================= identitas LANTERA & logo instansi ================= */
 .lentera .mark{background:linear-gradient(150deg,#f6c453,#e4782c);color:#fff;box-shadow:0 6px 16px -8px #e4782c}
 .lentera b{font-weight:800;letter-spacing:.08em}
 .lp-mitra{background:var(--surface);border-top:1px solid var(--line)}
@@ -1030,7 +1030,7 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 /* isi halaman menyesuaikan SatuDJA: kartu putih bersudut lebih kecil, judul kartu biru navy */
 .card.glass,.page-sec .glass.card{border-radius:12px}
 .card-h h2,.card>h2{color:var(--rd-prog)}
-/* logo LENTERA di navbar (ponsel): putih bulat berbingkai kuning, sama dengan logo sidebar */
+/* logo LANTERA di navbar (ponsel): putih bulat berbingkai kuning, sama dengan logo sidebar */
 .topbar .brand>.mark{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--tb-bg);box-shadow:0 0 0 3px var(--sn-aksen)}
 .topbar .brand>.mark svg{width:19px;height:19px}
 /* akun di bagian bawah sidebar */

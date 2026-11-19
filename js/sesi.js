@@ -1,9 +1,9 @@
 /* js/sesi.js — pengaman sesi login
    B. Keluar otomatis bila tidak ada aktivitas selama BATAS (dihitung bersama untuk semua tab,
       termasuk saat laptop tidur/dimatikan). Peringatan muncul PERINGATAN sebelum keluar.
-   C. Login ulang setiap kali browser ditutup: tab baru yang dibuka tanpa tab LENTERA lain yang
+   C. Login ulang setiap kali browser ditutup: tab baru yang dibuka tanpa tab LANTERA lain yang
       masih terbuka dianggap pembukaan baru browser, sesi lama diakhiri. */
-import { SBC } from './api.js?v=202611191016';
+import { SBC } from './api.js?v=202611191027';
 
 export var BATAS_MENIT = 60;
 var BATAS = BATAS_MENIT * 60 * 1000, PERINGATAN = 2 * 60 * 1000;
@@ -19,7 +19,7 @@ export function pesanKeluar(){
   return a === 'diam' ? 'Anda keluar otomatis karena tidak ada aktivitas selama ' + (BATAS_MENIT % 60 ? BATAS_MENIT + ' menit' : (BATAS_MENIT / 60) + ' jam') + '. Silakan masuk kembali.' : '';
 }
 
-/* tab LENTERA lain yang masih terbuka menjawab pertanyaan lewat BroadcastChannel */
+/* tab LANTERA lain yang masih terbuka menjawab pertanyaan lewat BroadcastChannel */
 var kanal = null;
 try { kanal = new BroadcastChannel('lentera-sesi'); kanal.onmessage = function(e){ if (e.data === 'tanya') kanal.postMessage('ada'); }; } catch (e) {}
 function adaTabLain(){
