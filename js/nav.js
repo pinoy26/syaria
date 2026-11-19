@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611190551';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611190551';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611190551';
-import { THEME_BTN } from './theme.js?v=202611190551';
-import { renderFilters } from './filters.js?v=202611190551';
-import { pdfCard, printCard, printAll } from './export.js?v=202611190551';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611190551';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611190551';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611190551';
-import { renderPerhatian } from './pages/perhatian.js?v=202611190551';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611190551';
-import { renderLaporan } from './pages/laporan.js?v=202611190551';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611190551';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611190551';
-import { renderKelolaBerita } from './pages/berita.js?v=202611190551';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611190551';
+import { $, esc } from './utils.js?v=202611190610';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611190610';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611190610';
+import { THEME_BTN } from './theme.js?v=202611190610';
+import { renderFilters } from './filters.js?v=202611190610';
+import { pdfCard, printCard, printAll } from './export.js?v=202611190610';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611190610';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611190610';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611190610';
+import { renderPerhatian } from './pages/perhatian.js?v=202611190610';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611190610';
+import { renderLaporan } from './pages/laporan.js?v=202611190610';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611190610';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611190610';
+import { renderKelolaBerita } from './pages/berita.js?v=202611190610';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611190610';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -53,7 +53,7 @@ function tutupSn(kecuali){ [].forEach.call(document.querySelectorAll('.sn-grp.bu
 document.addEventListener('click',function(e){
   var t=e.target.closest('.sidenav [data-sn]');
   if (t){ var g=t.parentNode, buka=!g.classList.contains('buka'); tutupSn(g); g.classList.toggle('buka',buka); t.setAttribute('aria-expanded',buka?'true':'false'); return; }
-  if (e.target.closest('.sidenav [data-page]') || !e.target.closest('.sidenav')) tutupSn();
+  if (e.target.closest('.sidenav [data-page],.sidenav [data-pw],.sidenav [data-out]') || !e.target.closest('.sidenav')) tutupSn();
   if (e.target.closest('#btnSide')){ var l=!document.body.classList.contains('sn-lebar'); document.body.classList.toggle('sn-lebar',l); e.target.closest('#btnSide').setAttribute('aria-pressed',l?'true':'false'); try{ localStorage.setItem('lentera-sidebar',l?'lebar':''); }catch(x){} }
 });
 document.addEventListener('keydown',function(e){ if (e.key==='Escape') tutupSn(); });
@@ -101,13 +101,17 @@ export function renderNav(){
   $('tbTa').innerHTML=(ta?'<b>T.A. '+esc(ta)+'</b>':'')+(BOOT && BOOT.kode ? '<span class="tb-satker"><img src="assets/logo-kemenag.png" alt="" onerror="this.hidden=true">'+esc(BOOT.kode)+'</span>' : '');
   var s=sess(), role=ROLE_NAME[s.role]||'';
   var scopeNote=s.all?'Melihat seluruh data satker.':'Cakupan: '+esc(s.scopes.map(scopeLabel).join(', '))+'.';
-  /* menu pengguna di kanan atas */
-  $('who').innerHTML='<button type="button" class="tb-ubtn" data-hn="user" aria-expanded="false" aria-haspopup="true" aria-label="Menu akun '+esc(s.email)+'">'+
-      '<span class="who-av" aria-hidden="true">'+esc((s.email||'?').charAt(0).toUpperCase())+'</span>'+
-      '<span class="tb-uname"><b>'+esc(role)+'</b><small>'+esc(s.email)+'</small></span>'+IC_CHEV+'</button>'+
-    '<div class="hn-menu tb-umenu glass" hidden><div class="tb-uinfo"><b>'+esc(role)+'</b>'+esc(s.email)+'<span class="note">'+scopeNote+'</span></div>'+
-      '<button type="button" data-pw><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></svg>Ubah sandi</button>'+
-      '<button type="button" data-out><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>Keluar</button></div>';
+  /* menu akun di bagian bawah sidebar (kursor diarahkan → panel: peran, email, cakupan, Ubah sandi, Keluar) */
+  $('who').innerHTML='';
+  $('snUser').innerHTML='<div class="sn-grp sn-akun">'+
+      '<button type="button" class="sn-ic" data-sn="akun" aria-haspopup="true" aria-expanded="false" aria-label="Akun '+esc(s.email)+'">'+
+        '<span class="sn-av" aria-hidden="true">'+esc((s.email||'?').charAt(0).toUpperCase())+'</span><span class="sn-lbl">'+esc(role)+'</span></button>'+
+      '<div class="sn-fly"><div class="sn-fly-t">'+esc(role)+'</div>'+
+        '<div class="sn-uinfo">'+esc(s.email)+'<span>'+scopeNote+'</span></div>'+
+        '<div class="sn-fly-l">'+
+          '<button type="button" data-pw><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></svg><span>Ubah sandi</span></button>'+
+          '<button type="button" data-out><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg><span>Keluar</span></button>'+
+        '</div></div></div>';
 
   /* navigasi bawah ala aplikasi native (mobile) */
   var mainPages=BOTTOM_MAIN.map(function(id){ return visible.filter(function(p){return p.id===id;})[0]; }).filter(Boolean);
