@@ -1124,3 +1124,21 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
   .tbl-grid th.tg-u,.tbl-grid td.tg-u{position:static;min-width:0;box-shadow:none}
   .tbl-grid .tg-no{padding-left:0}
 }
+/* tabel bertingkat Monev Realisasi: warna & gaya tingkat seperti Belanja Redesain */
+.tbl-grid tr.lv-prog td,.tbl-grid tr.lv-prog .code{color:var(--rd-prog)!important;font-weight:700}
+.tbl-grid tr.lv-keg td,.tbl-grid tr.lv-keg .code{color:var(--rd-keg)!important;font-weight:700}
+.tbl-grid tr.lv-kro td,.tbl-grid tr.lv-kro .code{color:var(--rd-kro)!important;font-weight:700}
+.tbl-grid tr.lv-ro td,.tbl-grid tr.lv-ro .code{color:var(--rd-ro)!important;font-weight:700}
+.tbl-grid tr.lv-komp td,.tbl-grid tr.lv-komp .code{color:var(--rd-komp)!important;font-weight:700}
+.tbl-grid tr.lv-prog td:first-child{box-shadow:inset 4px 0 0 var(--rd-prog)}
+.tbl-grid tr.lv-keg td:first-child{box-shadow:inset 4px 0 0 var(--rd-keg)}
+.tbl-grid tr.lv-kro td:first-child{box-shadow:inset 4px 0 0 var(--rd-kro)}
+.tbl-grid tr.lv-ro td:first-child{box-shadow:inset 4px 0 0 var(--rd-ro)}
+.tbl-grid tr.lv-komp td:first-child{box-shadow:inset 4px 0 0 var(--rd-komp)}
+.tbl-grid tr.lv-sub td,.tbl-grid tr.lv-sub .code{color:var(--ink)!important;font-weight:700}
+.tbl-grid tr.lv-sub td{background:rgba(40,94,166,.075)!important}
+.tbl-grid tr.lv-sub td:first-child{box-shadow:inset 3px 0 0 rgba(40,94,166,.35)}
+:root[data-theme="dark"] .tbl-grid tr.lv-sub td{background:rgba(127,176,240,.10)!important}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tbl-grid tr.lv-sub td{background:rgba(127,176,240,.10)!important} }
+.tbl-grid tr.lv-akun .tw-label,.tbl-grid tr.lv-akun .code{text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.tbl-grid td.tg-u .tw button{flex:none}

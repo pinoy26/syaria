@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191011';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611191011';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191016';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611191016';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -139,7 +139,7 @@ export function tree(id,R,levels){
     var L=levels[depth], m={}, order=[];
     node.rows.forEach(function(r){ var k=L.key(r); if(!m[k]){m[k]=[];order.push(k);} m[k].push(r); });
     if (L.sort) order.sort(L.sort); else order.sort();
-    node.children=order.map(function(k){ var n={id:node.id+'/'+k,key:k,rows:m[k],depth:depth,lvl:L.lvl,cls:L.cls,label:L.label(k,m[k][0])}; n.t=sum(m[k]); return n; });
+    node.children=order.map(function(k){ var n={id:node.id+'/'+k,key:k,rows:m[k],r:m[k][0],depth:depth,lvl:L.lvl,cls:L.cls,label:L.label(k,m[k][0])}; n.t=sum(m[k]); return n; });
     node.children.forEach(function(c){ build(c,depth+1); });
   })(root,0);
   var out=[];
@@ -149,13 +149,15 @@ export function tree(id,R,levels){
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
-      /* kolom Kode & Uraian terpisah (seperti Belanja Redesain): kode + tombol buka/tutup di kiri, uraian bertingkat di kanan */
-      var kp=pisahLabel(c.label);
-      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td class="tg-k"><span class="tg-kw"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="code">'+kp[0]+'</span></span></td>'+
-        '<td class="tg-u"><span class="tw" style="padding-left:'+ind+'px">'+(c.cls==='lv-sub'||c.cls==='lv-akun'?'':'<span class="lvl">'+c.lvl+'</span>')+'<span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
+      /* susunan seperti Belanja Redesain: kolom Kode (KRO/RO lengkap dengan kode kegiatan), kolom Uraian bertingkat
+         tanpa label tingkat; tombol buka/tutup kecil di depan uraian */
+      var kp=pisahLabel(c.label), kode=kp[0];
+      if ((c.lvl==='KRO'||c.lvl==='RO') && kode && c.r && c.r.keg) kode=esc(c.r.keg)+'.'+kode;
+      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td class="tg-k"><span class="code">'+kode+'</span></td>'+
+        '<td class="tg-u"><span class="tw" style="padding-left:'+(c.depth*14)+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"><span class="code tg-no">'+esc(r.no)+'</span></td><td class="tg-u"><span style="padding-left:'+(ind+22)+'px;display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="padding-left:'+(c.depth*14+26)+'px;display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
       }); else walk(c);
     });
   })(root);
@@ -184,8 +186,8 @@ export function openAll(id){
   T.rows.forEach(function(r){ var p=id; T.levels.forEach(function(L){ p+='/'+L.key(r); S.open[p]=true; }); });
 }
 export var LV={
-  prog:{lvl:'Program',key:function(r){return r.prog;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.program[k]);}},
-  keg:{lvl:'Kegiatan',key:function(r){return r.keg;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kegiatan[k]);}},
+  prog:{lvl:'Program',cls:'lv-prog',key:function(r){return r.prog;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.program[k]);}},
+  keg:{lvl:'Kegiatan',cls:'lv-keg',key:function(r){return r.keg;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kegiatan[k]);}},
   kro:{lvl:'KRO',cls:'lv-kro',key:function(r){return r.kro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.kro[k]);}},
   ro:{lvl:'RO',cls:'lv-ro',key:function(r){return r.ro;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.ro[k]);}},
   komp:{lvl:'Komponen',cls:'lv-komp',key:function(r){return r.komp;},label:function(k){return '<b class="code">'+esc(k)+'</b> '+esc(D.komp[k]);}},

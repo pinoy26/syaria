@@ -7,7 +7,7 @@
      - blokir per ITEM = jumlah item RKK − pagu item FA pasangannya (rincian tampilan).
    Item RKK tidak bernomor dan uraiannya berbeda tipis dari FA ("[7 KALI x 3 HARI]", spasi ganda),
    jadi item dipasangkan per kelompok menurut uraian yang dinormalkan, urut kemunculan. */
-import { SB } from './api.js?v=202611191011';
+import { SB } from './api.js?v=202611191016';
 
 export function kunciKelompok(r){ return [r.prog, r.kro, r.ro, r.sub, r.akun].join('|'); }
 function normal(s){ return String(s || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
