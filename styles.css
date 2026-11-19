@@ -1066,3 +1066,11 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .rd-ring.rd-foot b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13.5px}
 .rd-grid+.rd-foot{margin-top:-1px}
 .rd-grid{border-radius:10px 10px 0 0}
+/* baris terpilih di lembar kerja: biru muda (bukan biru pekat), teks tetap gelap & warna selisih/blokir dipertahankan */
+:root{--rd-pilih:#d7e6fa}
+:root[data-theme="dark"]{--rd-pilih:rgba(127,176,240,.22)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){--rd-pilih:rgba(127,176,240,.22)} }
+.rd-grid tbody tr.sel td{background:var(--rd-pilih)!important;color:var(--ink)!important}
+.rd-grid tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)!important}
+.rd-grid tbody tr.sel td.rd-sel.pos{color:var(--good-ink)!important}
+.rd-grid tbody tr.sel td.rd-sel.neg,.rd-grid tbody tr.sel td.rd-bl,.rd-grid tbody tr.sel .rd-t{color:var(--crit-ink)!important}
