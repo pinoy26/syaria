@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611190705';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611190705';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611190958';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611190958';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -145,7 +145,7 @@ export function tree(id,R,levels){
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
-      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="lvl">'+c.lvl+'</span><span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
+      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button>'+(c.cls==='lv-sub'||c.cls==='lv-akun'?'':'<span class="lvl">'+c.lvl+'</span>')+'<span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
         out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td><span style="padding-left:'+(ind+44)+'px;display:inline-block"><span class="code">'+esc(r.no)+'</span> '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');

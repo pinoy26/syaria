@@ -1,13 +1,13 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611190705';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611190705';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611190705';
-import { SB } from '../api.js?v=202611190705';
-import { refresh } from '../nav.js?v=202611190705';
-import { hitungBlokir } from '../blokir.js?v=202611190705';
-import { renderRedesain } from './redesain.js?v=202611190705';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611190958';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption } from '../state.js?v=202611190958';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611190958';
+import { SB } from '../api.js?v=202611190958';
+import { refresh } from '../nav.js?v=202611190958';
+import { hitungBlokir } from '../blokir.js?v=202611190958';
+import { renderRedesain } from './redesain.js?v=202611190958';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
