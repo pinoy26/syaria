@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191040';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3, KODE_KL, KODE_IND } from './state.js?v=202611191040';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191042';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3, KODE_KL, KODE_IND } from './state.js?v=202611191042';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -158,7 +158,7 @@ export function tree(id,R,levels){
         '<td class="tg-u"><span class="tw"><span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">- '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
       }); else walk(c);
     });
   })(root);

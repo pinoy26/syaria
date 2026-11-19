@@ -1,13 +1,13 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611191040';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption, KODE_KL, KODE_IND } from '../state.js?v=202611191040';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611191040';
-import { SB } from '../api.js?v=202611191040';
-import { refresh } from '../nav.js?v=202611191040';
-import { hitungBlokir } from '../blokir.js?v=202611191040';
-import { renderRedesain } from './redesain.js?v=202611191040';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611191042';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption, KODE_KL, KODE_IND } from '../state.js?v=202611191042';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611191042';
+import { SB } from '../api.js?v=202611191042';
+import { refresh } from '../nav.js?v=202611191042';
+import { hitungBlokir } from '../blokir.js?v=202611191042';
+import { renderRedesain } from './redesain.js?v=202611191042';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
@@ -113,7 +113,7 @@ function pohon(id, R, levels){
       if (!open) return;
       if (depth < levels.length - 1) walk(rr, depth + 1, nid);
       else rr.slice().sort(function(a, b){ return a.urutan - b.urutan; }).forEach(function(r){
-        out.push('<tr class="leaf' + (r.blokir ? ' ag-blokir' : '') + '"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">' + esc(r.uraian) +
+        out.push('<tr class="leaf' + (r.blokir ? ' ag-blokir' : '') + '"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">- ' + esc(r.uraian) +
           (r.judul2 ? ' <span class="note">· ' + esc(r.judul2) + '</span>' : '') + '</span></td>' +
           '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n">' + rp(r.jumlah) + '</td>' +
           '<td class="n">' + (!r.blokir ? '' : HB && HB.item[r.urutan] != null ? rpBlokir(HB.item[r.urutan]) : '<span class="pill st-warn ag-bl" title="Item ini kena blokir (tanda * di RKK)"><i></i>Blokir</span>') + '</td></tr>');
