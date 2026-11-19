@@ -1054,3 +1054,15 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 /* kolom Blokir: nilai blokir + penanda (* RKK SAKTI / M manual) dalam satu sel */
 .rd-grid .c-bl{width:132px}
 .rd-grid .rd-bl .rd-t{display:inline-block;width:12px;margin-left:3px;text-align:left}
+/* Belanja Redesain: pilihan Tampilan kecil di pojok kanan; ringkasan pagu sebagai footer lembar kerja */
+.rd-act{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.rd-tampil{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);margin:0}
+.rd-tampil select{font-size:12px;font-weight:600;color:var(--ink2);padding:5px 26px 5px 10px;border-radius:999px;border:1px solid var(--line);background-color:var(--glass-strong);max-width:300px;min-width:0}
+.rd-act .ag-versi select{font-size:12px;padding:5px 10px}
+.rd-ring.rd-foot{margin:0;padding:10px 16px;gap:8px 32px;justify-content:flex-end;border:1px solid var(--grid-line);border-top:2px solid var(--rd-head2);border-radius:0 0 10px 10px;
+  background:var(--grid-head);font-size:13px}
+.rd-ring.rd-foot>div{flex-direction:row;align-items:baseline;gap:8px}
+.rd-ring.rd-foot .note{font-size:12px;font-weight:600}
+.rd-ring.rd-foot b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13.5px}
+.rd-grid+.rd-foot{margin-top:-1px}
+.rd-grid{border-radius:10px 10px 0 0}
