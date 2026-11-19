@@ -1142,3 +1142,8 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .tbl-grid tr.lv-sub td{background:rgba(127,176,240,.10)!important} }
 .tbl-grid tr.lv-akun .tw-label,.tbl-grid tr.lv-akun .code{text-decoration:underline;text-underline-offset:3px;font-weight:600}
 .tbl-grid td.tg-u .tw button{flex:none}
+/* baris judul kolom tabel bertingkat (Kode, Uraian, Pagu, Realisasi, …): biru seperti Belanja Redesain */
+.tbl-grid thead th,.tbl-grid thead th.tg-k,.tbl-grid thead th.tg-u{background:linear-gradient(180deg,var(--rd-head2),var(--rd-head1))!important;color:var(--rd-head-ink)!important;
+  border-color:var(--rd-head-line)!important;font-weight:700;text-shadow:0 1px 0 rgba(0,0,0,.18)}
+.tbl-grid thead th:first-child{border-top-left-radius:8px}
+.tbl-grid thead th:last-child{border-top-right-radius:8px}
