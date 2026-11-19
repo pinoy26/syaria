@@ -1051,3 +1051,6 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .tb-satker img{height:30px}
 .topbar .tb-user{display:none}
 @media (max-width:1100px){ .tb-ta b{font-size:17px} }
+/* kolom Blokir: nilai blokir + penanda (* RKK SAKTI / M manual) dalam satu sel */
+.rd-grid .c-bl{width:132px}
+.rd-grid .rd-bl .rd-t{display:inline-block;width:12px;margin-left:3px;text-align:left}
