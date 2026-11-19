@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190642';
-import { S, sess, isSuperAdmin } from '../state.js?v=202611190642';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611190642';
-import { SB } from '../api.js?v=202611190642';
-import { refresh } from '../nav.js?v=202611190642';
-import { lupakanUsulan } from './usulan.js?v=202611190642';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611190654';
+import { S, sess, isSuperAdmin } from '../state.js?v=202611190654';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611190654';
+import { SB } from '../api.js?v=202611190654';
+import { refresh } from '../nav.js?v=202611190654';
+import { lupakanUsulan } from './usulan.js?v=202611190654';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -212,8 +212,9 @@ export function renderRedesain(){
     hapus.map(function(b){ return '<tr><td class="code">' + esc(b.akun) + '</td><td>' + esc(b.uraian) + '</td><td class="n">' + rp(b.jumlah) + '</td><td>' + (ubah ? '<button class="btn" type="button" data-rd-pulih="' + b.id + '">Kembalikan</button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>', '');
   /* ringkasan pagu jadi footer tetap di bawah lembar kerja; pilihan Tampilan kecil di pojok kanan */
   ring = ring.replace('class="rd-ring"', 'class="rd-ring rd-foot"');
-  return '<div class="page-sec grid">' + card('rd', judul, sub, alat + grid + ring +
-    '<p class="note rd-ket">* = blokir dari RKK SAKTI (nilai = RKK − FA Detail posisi terakhir) · M = blokir manual Admin perencanaan · SD = sumber dana (RM / PNBP).</p>', '<div class="rd-act">' + act + barMode() + '</div>') + daftarHapus + '</div>' + ikat();
+  /* footer ringkasan: bilah tipis menempel di bawah layar (di luar kartu agar position:fixed tidak terkurung) */
+  return '<div class="page-sec grid">' + card('rd', judul, sub, alat + grid +
+    '<p class="note rd-ket">* = blokir dari RKK SAKTI (nilai = RKK − FA Detail posisi terakhir) · M = blokir manual Admin perencanaan · SD = sumber dana (RM / PNBP).</p>', '<div class="rd-act">' + act + barMode() + '</div>') + daftarHapus + '</div>' + ring + ikat();
 }
 /* gambar ulang tanpa kehilangan posisi: gulir halaman & gulir tabel dicatat lalu dikembalikan di bind() */
 function gambarUlang(){
