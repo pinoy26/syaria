@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191057';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191057';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611191057';
-import { SB } from '../api.js?v=202611191057';
-import { refresh } from '../nav.js?v=202611191057';
-import { lupakanUsulan } from './usulan.js?v=202611191057';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611191134';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611191134';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611191134';
+import { SB } from '../api.js?v=202611191134';
+import { refresh } from '../nav.js?v=202611191134';
+import { lupakanUsulan } from './usulan.js?v=202611191134';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -305,6 +305,7 @@ function pilihan(baris){
 /* ---------- jendela isian (Form R/U/H Item & Form Rekam Header) ---------- */
 /* rincian volume di uraian detail, seperti SAKTI: "Biaya Kebutuhan Tamu [95 Org x 4 Kali x 12 Bulan]"
    → volume = 95 × 4 × 12 = 4.560. Diambil dari kurung siku terakhir; pemisah x / × / *. */
+function namaInti(t){ return String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
 function rincianVolume(uraian){
   var m = String(uraian || '').match(/\[([^\[\]]*)\][^\[\]]*$/); if (!m) return null;
   var bagian = m[1].split(/\s*[x×*]\s*(?=\d)/i), angkaL = [], hasil = 1;
@@ -341,7 +342,7 @@ function formItem(judul, sub, r, header, onOk){
         fld('rdHarga', 'Harga satuan', r.harga == null ? '' : rp(r.harga), '0', 'decimal') + '<span class="rd-op">=</span><div class="f rd-f-jml">Jumlah<output id="rdJml" class="rd-jml">' + rp(r.jumlah || 0) + '</output></div>' +
         (function(){ var i = blk(r); return '<div class="f rd-f-bl">Blokir<span class="rd-blokir"><input type="checkbox" disabled' + (i.blokir ? ' checked' : '') + ' aria-label="Blokir">' +
           '<input type="text" class="rd-blnilai" value="' + rp(i.blokir) + '" disabled aria-label="Nilai blokir"></span></div>'; })() + '</div>' +
-        (function(){ var i = blk(r); return !i.blokir && i.realisasi ? '<p class="note rd-blket">Detail ini sudah terealisasi Rp ' + rp(i.realisasi) + ' → jumlah minimal <b>Rp ' + rp(i.realisasi) + '</b>; tidak dapat dihapus.</p>' : i.blokir ? '<p class="note rd-blket">Blokir dikunci' + (i.manual ? ' (blokir manual Admin perencanaan)' : ' (RKK SAKTI)') + '. Realisasi Rp ' + rp(i.realisasi) + ' → jumlah minimal <b>Rp ' + rp(i.blokir + i.realisasi) + '</b>.</p>' : ''; })() : '') +
+        (function(){ var i = blk(r); return !i.blokir && i.realisasi ? '<p class="note rd-blket">Detail ini sudah terealisasi Rp ' + rp(i.realisasi) + ' → jumlah minimal <b>Rp ' + rp(i.realisasi) + '</b>; tidak dapat dihapus.</p>' : i.blokir ? '<p class="note rd-blket">Blokir dikunci' + (i.manual ? ' (blokir manual Admin perencanaan)' : ' (RKK SAKTI)') + '. Realisasi Rp ' + rp(i.realisasi) + ' → jumlah minimal <b>Rp ' + rp(i.blokir + i.realisasi) + '</b>. Nama detail dikunci; rincian volume dalam [ ] boleh diubah.</p>' : ''; })() : '') +
       (r ? '<p class="note rd-rinci" id="rdRinci" hidden></p>' : '') +
       '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div>' +
       '<div class="tools"><button type="submit" class="btn primary">Ok</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
@@ -361,6 +362,8 @@ function formItem(judul, sub, r, header, onOk){
       if (hasil.harga == null || isNaN(hasil.harga) || hasil.harga < 0) return salah('Isi harga satuan dengan angka, mis. 1.398.101.000.');
       var bi = blk(r);
       if (bi.blokir){
+        /* item berblokir: nama detail dikunci, yang boleh diubah hanya rincian volume dalam [ ] (sama dengan fn_norm di server) */
+        if (namaInti(hasil.uraian) !== namaInti(r.uraian)) return salah('Item berblokir: nama detail "' + r.uraian.replace(/\s*\[[^\]]*\]/g, '') + '" tidak dapat diubah. Yang boleh diubah hanya rincian volume di dalam tanda kurung [ ].');
         var baru = jumlahDari({ volume: hasil.volume, harga: hasil.harga }, R.basis[r.anggaran_id]);
         if (baru < bi.blokir + bi.realisasi) return salah('Ditolak: jumlah menjadi Rp ' + rp(baru) + ', di bawah batas minimal Rp ' + rp(bi.blokir + bi.realisasi) + ' (blokir Rp ' + rp(bi.blokir) + ' + realisasi Rp ' + rp(bi.realisasi) + '). Bagian yang diblokir tidak dapat digeser.');
       }
@@ -371,7 +374,6 @@ function formItem(judul, sub, r, header, onOk){
     }
     closeModal(); onOk(hasil);
   };
-  if (r && blk(r).blokir) $('rdUraian').disabled = true;
   setTimeout(function(){ var x = f.querySelector('input:not([disabled])'); if (x) x.focus(); }, 60);
 }
 function formHeader(judul, sub, nilai, onOk){
