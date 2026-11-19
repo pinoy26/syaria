@@ -536,7 +536,7 @@ button.btn.danger{background:var(--crit);color:#fff;border-color:var(--crit);box
   .tbl-grid .chip{display:none}
   .tbl-grid td:first-child,.tbl-grid th:first-child{min-width:0!important}
   .tbl-grid .tw{padding-left:0!important}
-  .tbl-grid tr.leaf td:first-child>span{padding-left:96px!important}
+  .tbl-grid tr.leaf td.tg-u>span{padding-left:96px!important}
   .tbl-grid tr.lv-sub .tw{padding-left:32px!important}
   .tbl-grid tr.lv-akun .tw{padding-left:64px!important}
   .tbl-grid .code{display:inline-block;min-width:28px;color:#000!important}
@@ -1106,3 +1106,21 @@ input.us-in{font:500 13px var(--sans);color:var(--ink);background:var(--field);b
 .app:has(.rd-foot){padding-bottom:0}
 .rd-card .rd-ket{margin:6px 2px 0}
 @media (max-width:380px){ .rd-kepala{margin:0 -14px 8px;padding:8px 14px} }
+/* tabel bertingkat Monev Realisasi: kolom Kode & Uraian terpisah (seperti Belanja Redesain) */
+.tbl-grid th.tg-k,.tbl-grid td.tg-k{position:sticky;left:0;z-index:1;width:132px;min-width:132px!important;max-width:132px;white-space:nowrap;box-shadow:none}
+.tbl-grid th.tg-u,.tbl-grid td.tg-u{position:sticky;left:132px;z-index:1;min-width:280px;max-width:560px;background:inherit;box-shadow:1px 0 0 0 var(--grid-line)}
+.tbl-grid th.tg-k,.tbl-grid th.tg-u{z-index:3;background:var(--grid-head)}
+.tbl-grid td.tg-k{background:inherit}
+.tg-kw{display:flex;align-items:center;gap:4px}
+.tg-kw .code,.tbl-grid .tg-no{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.tbl-grid .tg-no{padding-left:22px;color:var(--muted)}
+.tbl-grid td.tg-u .tw{align-items:center}
+@media (max-width:640px){
+  .tbl-grid th.tg-k,.tbl-grid td.tg-k{width:104px;min-width:104px!important;max-width:104px}
+  .tbl-grid th.tg-u,.tbl-grid td.tg-u{position:static;min-width:200px}
+}
+@media print{
+  .tbl-grid th.tg-k,.tbl-grid td.tg-k{width:auto;min-width:0!important;max-width:none;position:static}
+  .tbl-grid th.tg-u,.tbl-grid td.tg-u{position:static;min-width:0;box-shadow:none}
+  .tbl-grid .tg-no{padding-left:0}
+}

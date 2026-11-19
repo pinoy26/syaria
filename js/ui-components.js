@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611190958';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611190958';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611191011';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3 } from './state.js?v=202611191011';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -107,8 +107,10 @@ export function bindTreeSearch(root){
       clear(); matches=[]; idx=-1;
       var q=inp.value.trim().toLowerCase();
       if (q&&table){
-        [].forEach.call(table.querySelectorAll('td:first-child'),function(td){
-          if (td.textContent.toLowerCase().indexOf(q)>=0){ matches.push(td); td.classList.add('search-hit'); }
+        [].forEach.call(table.querySelectorAll('tbody tr'),function(tr){
+          var td=tr.querySelector('td.tg-u')||tr.cells[0]; if (!td) return;
+          var k=tr.querySelector('td.tg-k'), teks=((k&&k!==td?k.textContent+' ':'')+td.textContent).toLowerCase();
+          if (teks.indexOf(q)>=0){ matches.push(td); td.classList.add('search-hit'); }
         });
       }
       updateCount();
@@ -128,6 +130,8 @@ export function closeModal(){ tutupJendela(); }
 /* ================= TABEL BERTINGKAT ================= */
 var TREES={};
 export function clearPageState(){ TIPS.length=0; TREES={}; }
+/* label tingkat '<b class="code">KODE</b> nama' → [kode, nama] */
+function pisahLabel(l){ var m=String(l||'').match(/^\s*<b class="code">([\s\S]*?)<\/b>\s*([\s\S]*)$/); return m?[m[1],m[2]]:['',l]; }
 export function tree(id,R,levels){
   var root={id:id,children:[],rows:R};
   (function build(node,depth){
@@ -145,10 +149,13 @@ export function tree(id,R,levels){
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
-      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td><span class="tw" style="padding-left:'+ind+'px"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button>'+(c.cls==='lv-sub'||c.cls==='lv-akun'?'':'<span class="lvl">'+c.lvl+'</span>')+'<span class="tw-label">'+c.label+'</span></span></td>'+cols(c.t)+'</tr>');
+      /* kolom Kode & Uraian terpisah (seperti Belanja Redesain): kode + tombol buka/tutup di kiri, uraian bertingkat di kanan */
+      var kp=pisahLabel(c.label);
+      out.push('<tr class="tree l'+c.depth+(c.cls?' '+c.cls:'')+'"><td class="tg-k"><span class="tg-kw"><button type="button" data-tog="'+esc(c.id)+'" aria-expanded="'+open+'" aria-label="Buka atau tutup">'+IC.chev+'</button><span class="code">'+kp[0]+'</span></span></td>'+
+        '<td class="tg-u"><span class="tw" style="padding-left:'+ind+'px">'+(c.cls==='lv-sub'||c.cls==='lv-akun'?'':'<span class="lvl">'+c.lvl+'</span>')+'<span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td><span style="padding-left:'+(ind+44)+'px;display:inline-block"><span class="code">'+esc(r.no)+'</span> '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"><span class="code tg-no">'+esc(r.no)+'</span></td><td class="tg-u"><span style="padding-left:'+(ind+22)+'px;display:inline-block">'+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
       }); else walk(c);
     });
   })(root);
@@ -157,8 +164,8 @@ export function tree(id,R,levels){
     '<button type="button" class="icon" data-search-prev="'+id+'" aria-label="Hasil sebelumnya">'+IC.up+'</button>'+
     '<button type="button" class="icon" data-search-next="'+id+'" aria-label="Hasil berikutnya">'+IC.down+'</button></span>';
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-expandall="'+id+'">Buka semua</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+search+legend+'</div>'+
-    '<div class="tbl tbl-grid"><table><thead><tr><th>Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
-    '<tr class="tot"><td>Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
+    '<div class="tbl tbl-grid"><table><thead><tr><th class="tg-k">Kode</th><th class="tg-u">Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
+    '<tr class="tot"><td class="tg-k"></td><td class="tg-u">Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
 /* pre: isi tambahan di atas tabel (mis. tombol pilihan urutan) */
 /* daftarkan tabel bertingkat buatan halaman lain agar tombol Buka satu tingkat / Buka semua ikut bekerja */
