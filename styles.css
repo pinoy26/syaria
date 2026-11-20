@@ -1228,3 +1228,6 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 /* persentase sisa pagu di dalam batang (bagian biru), seperti persentase realisasi */
 .bn-sisa-lbl{position:absolute;top:0;bottom:0;right:0;z-index:2;display:flex;align-items:center;min-width:0;overflow:hidden;color:#fff;pointer-events:none}
 .bn-sisa-lbl em{font-style:normal;font-family:var(--mono);font-weight:700;font-size:12.5px;padding:0 10px;white-space:nowrap}
+/* jarak antara Total Pagu/kotak dan batang indikator */
+#c-hero .bn-bar{margin-top:18px}
+@media (max-width:640px){ #c-hero .bn-bar{margin-top:10px} }
