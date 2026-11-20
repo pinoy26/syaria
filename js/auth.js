@@ -1,11 +1,11 @@
 /* js/auth.js — halaman depan publik (beranda) & halaman masuk.
    Alur: beranda → tombol "Masuk" → halaman masuk (#masuk). Tombol kembali browser/HP kembali ke beranda. */
-import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611200742';
-import { THEME_BTN } from './theme.js?v=202611200742';
-import { SBC } from './api.js?v=202611200742';
-import { mulai } from './main.js?v=202611200742';
-import { muatBeritaBeranda } from './berita.js?v=202611200742';
-import { tandaiAktif } from './sesi.js?v=202611200742';
+import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611200744';
+import { THEME_BTN } from './theme.js?v=202611200744';
+import { SBC } from './api.js?v=202611200744';
+import { mulai } from './main.js?v=202611200744';
+import { muatBeritaBeranda } from './berita.js?v=202611200744';
+import { tandaiAktif } from './sesi.js?v=202611200744';
 
 var HASH_MASUK = '#masuk';
 var VIEW = '';
@@ -77,14 +77,6 @@ var HERO_ART = '<svg viewBox="0 0 1440 640" preserveAspectRatio="xMidYMid slice"
     '<path d="M980 0 L1440 470" stroke-width="1.2" opacity=".45"/>' +
     '<path d="M700 120 L1080 560" stroke-width="1" opacity=".35"/>' +
     '<path d="M1180 -20 L1440 250" stroke-width="2.5" opacity=".6"/>' +
-  '</g>' +
-  /* bintik kilau */
-  '<g fill="#fff" class="lp-kilau">' +
-    '<path d="M1050 92 l5 15 15 5 -15 5 -5 15 -5 -15 -15 -5 15 -5z" opacity=".95"/>' +
-    '<path d="M1262 300 l3 10 10 3 -10 3 -3 10 -3 -10 -10 -3 10 -3z" opacity=".8"/>' +
-    '<path d="M912 268 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3z" opacity=".7"/>' +
-    '<path d="M1338 128 l2 7 7 2 -7 2 -2 7 -2 -7 -7 -2 7 -2z" opacity=".85"/>' +
-    '<circle cx="1180" cy="210" r="2.5" opacity=".9"/><circle cx="980" cy="420" r="2" opacity=".6"/><circle cx="1390" cy="420" r="2" opacity=".6"/>' +
   '</g>' +
 '</svg>';
 
