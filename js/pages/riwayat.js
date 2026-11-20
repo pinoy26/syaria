@@ -1,10 +1,10 @@
 /* js/pages/riwayat.js — Riwayat & Revisi */
-import { $, esc, rp, pc, poin, tgl, group, sum, errMsg } from '../utils.js?v=202611191303';
-import { S, BOOT, DB, rows } from '../state.js?v=202611191303';
-import { card, printHead } from '../ui-components.js?v=202611191303';
-import { unitSort } from './analisis.js?v=202611191303';
-import { trendKey } from './ringkasan.js?v=202611191303';
-import { SB } from '../api.js?v=202611191303';
+import { $, esc, rp, pc, poin, tgl, group, sum, errMsg } from '../utils.js?v=202611200742';
+import { S, BOOT, DB, rows } from '../state.js?v=202611200742';
+import { card, printHead } from '../ui-components.js?v=202611200742';
+import { unitSort } from './analisis.js?v=202611200742';
+import { trendKey } from './ringkasan.js?v=202611200742';
+import { SB } from '../api.js?v=202611200742';
 
 /* ================= riwayat & revisi ================= */
 export function renderRiwayat(){
