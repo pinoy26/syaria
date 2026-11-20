@@ -1217,3 +1217,7 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .ag-u-bar .track{display:block;height:10px;border-radius:99px;background:var(--track);overflow:hidden}
 .ag-u-bar .fill{display:block;height:100%;border-radius:99px;background:var(--pnbp)}
 @media (max-width:760px){ .ag-u-tbl{overflow-x:auto} .ag-u-tbl table{min-width:640px} }
+.ag-u-tbl tr.ag-u-sub td{font-weight:700;background:rgba(40,94,166,.05)}
+.ag-u-tbl tr.ag-u-sub td:first-child{padding-left:16px}
+.ag-u-tbl tr.ag-u-sd td:first-child{padding-left:34px}
+.ag-u-tbl .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
