@@ -1200,3 +1200,20 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 @keyframes lpBintik{0%,100%{opacity:.55}50%{opacity:1}}
 .lp-hero h1{text-shadow:0 2px 24px rgba(4,20,40,.45)}
 @media (prefers-reduced-motion:reduce){ .lp-art::before,.lp-art .lp-suar,.lp-art .lp-kilau{animation:none} .lp-art::before{display:none} }
+/* Ringkasan Anggaran: tabel anggaran per unit kerja (pagu, blokir, efektif, % PNBP, batang di ujung) */
+.ag-u-tbl table{width:100%;table-layout:fixed;font-size:13px}
+.ag-u-tbl col.ag-u-c{width:15%} .ag-u-tbl col.ag-u-p{width:9%} .ag-u-tbl col.ag-u-b{width:17%}
+.ag-u-tbl th{background:linear-gradient(180deg,var(--rd-head2),var(--rd-head1));color:var(--rd-head-ink);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.ag-u-tbl th:first-child{border-top-left-radius:8px} .ag-u-tbl th:last-child{border-top-right-radius:8px}
+.ag-u-tbl td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ag-u-tbl td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ag-u-tbl td:first-child{padding-left:22px}
+.ag-u-tbl tr.ag-u-sec td{background:var(--grid-head);font-weight:700;color:var(--rd-prog)}
+.ag-u-tbl tr.ag-u-sec td:first-child{padding-left:10px}
+.ag-u-tbl tr.tot td{font-weight:700;border-top:2px solid var(--rd-head2);background:var(--grid-head)}
+.ag-u-tbl tr.tot td:first-child{padding-left:10px}
+.ag-u-tbl td.ag-u-bl{color:var(--crit-ink)}
+.ag-u-tbl td.ag-u-pct{font-weight:700;color:var(--pnbp)}
+.ag-u-bar .track{display:block;height:10px;border-radius:99px;background:var(--track);overflow:hidden}
+.ag-u-bar .fill{display:block;height:100%;border-radius:99px;background:var(--pnbp)}
+@media (max-width:760px){ .ag-u-tbl{overflow-x:auto} .ag-u-tbl table{min-width:640px} }
