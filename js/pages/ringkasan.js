@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201710';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201710';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201710';
-import { SB } from '../api.js?v=202611201710';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201716';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201716';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201716';
+import { SB } from '../api.js?v=202611201716';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){
@@ -35,8 +35,8 @@ export function renderRingkasan(){
           '<div class="bn-box bn-sisa"><span>Sisa Pagu</span><b><small>Rp</small>'+(t.sisa<0?'−':'')+rp(Math.abs(t.sisa))+'</b>'+
             (t.bl?'<small class="bn-ef">dapat digunakan Rp '+rp(t.sisa-t.bl)+'</small>':'')+'</div>'+
         '</div></div>'+
-      '<div class="bn-pct"><span>Total Realisasi Belanja <b>'+pc(t.p)+'</b></span><span>Sisa Pagu <b>'+pc(pSisa)+'</b></span></div>'+
       '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"><em>'+pc(t.p)+'</em></span>'+
+        (pSisa>0?'<span class="bn-sisa-lbl" style="left:'+wBar+'%"><em>'+pc(pSisa)+'</em></span>':'')+
         (t.bl&&t.pagu?'<span class="bn-blk" style="width:'+Math.min(100,t.bl/t.pagu*100).toFixed(2)+'%" title="Pagu diblokir Rp '+rp(t.bl)+'"></span>':'')+'</div>'+
       '<div class="bn-foot">'+
         '<span class="bn-leg"><i></i><span>Realisasi periode ini<br><b><small>Rp</small> '+rp(t.ini)+'</b> <span class="bn-sub">'+poin(t.pagu?t.ini/t.pagu:0)+'</span></span></span>'+
