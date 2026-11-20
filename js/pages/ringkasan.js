@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201652';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201652';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201652';
-import { SB } from '../api.js?v=202611201652';
+import { $, esc, rp, rpk, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201707';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201707';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201707';
+import { SB } from '../api.js?v=202611201707';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){
@@ -24,22 +24,34 @@ export function renderRingkasan(){
   /* header: banner Total Pagu / Realisasi / Sisa + batang komposisi, gauge realisasi vs waktu di samping */
   var pSisa=t.pagu?t.sisa/t.pagu:0, wBar=Math.min(100,Math.max(0,t.p*100));
   var tglPanjang=(+DB.periode.split('-')[2])+' '+blnTahun(DB.periode);
+  /* angka ringkas (M / jt) untuk kartu utama; nilai lengkap tampil saat kursor diarahkan */
+  var ringkas=function(v){ var a=Math.abs(v||0), sg=v<0?'−':'', n, u;
+    if (a>=1e9){ n=(a/1e9).toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2}); u=' M'; }
+    else if (a>=1e6){ n=(a/1e6).toLocaleString('id-ID',{maximumFractionDigits:1}); u=' jt'; } else { n=rp(a); u=''; }
+    return '<span class="bn-n" title="Rp '+sg+rp(a)+'"><small>Rp</small>'+sg+n+'<small class="bn-u">'+u+'</small></span>'; };
+  /* A: wawasan — selisih terhadap waktu berjalan, sisa hari, kebutuhan realisasi per hari */
+  var thn=+DB.periode.slice(0,4), pd=DB.periode.split('-').map(Number);
+  var sisaHari=Math.max(0,Math.round((Date.UTC(thn,11,31)-Date.UTC(pd[0],pd[1]-1,pd[2]))/864e5));
+  var selWaktu=t.p-WAKTU, dapatPakai=Math.max(0,t.sisa-t.bl);
+  var wawasan='<div class="bn-wawasan '+(selWaktu<-0.05?'bn-w-krit':selWaktu<0?'bn-w-warn':'bn-w-baik')+'">'+
+    '<b>'+(selWaktu<0?'Tertinggal '+Math.abs(selWaktu*100).toLocaleString('id-ID',{maximumFractionDigits:1})+' poin':'Lebih cepat '+(selWaktu*100).toLocaleString('id-ID',{maximumFractionDigits:1})+' poin')+'</b> dari waktu berjalan ('+pc(WAKTU)+')'+
+    (sisaHari?' · sisa <b>'+sisaHari+' hari</b> hingga 31 Desember · perlu <b>±'+rpk(dapatPakai/sisaHari)+'/hari</b> untuk menyerap seluruh sisa pagu yang dapat digunakan':'')+'</div>';
   var info='<span class="bn-i" tabindex="0" role="img" aria-label="Pagu revisi yang berlaku per '+esc(tglPanjang)+'" title="Pagu revisi yang berlaku per '+esc(tglPanjang)+'"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>';
   h+='<section class="glass hero hero2" id="c-hero"><div class="card-h hero-hd"></div>'+
     '<div class="banner">'+
       '<div class="bn-top">'+
         '<div class="bn-pagu"><div class="bn-lbl">Total Pagu '+info+'<span class="bn-cap">'+esc(unitCaption())+'</span></div>'+
-          '<div class="bn-amt"><small>Rp</small>'+rp(t.pagu)+'</div></div>'+
+          '<div class="bn-amt">'+ringkas(t.pagu)+'</div></div>'+
         '<div class="bn-boxes">'+
-          '<div class="bn-box bn-real"><span>Realisasi Belanja</span><b><small>Rp</small>'+rp(t.sd)+'</b></div>'+
-          '<div class="bn-box bn-sisa"><span>Sisa Pagu</span><b><small>Rp</small>'+(t.sisa<0?'−':'')+rp(Math.abs(t.sisa))+'</b>'+
-            (t.bl?'<small class="bn-ef">dapat digunakan Rp '+rp(t.sisa-t.bl)+'</small>':'')+'</div>'+
+          '<div class="bn-box bn-real"><span>Realisasi Belanja · <b class="bn-bp">'+pc(t.p)+'</b></span><b>'+ringkas(t.sd)+'</b></div>'+
+          '<div class="bn-box bn-sisa"><span>Sisa Pagu · <b class="bn-bp">'+pc(pSisa)+'</b></span><b>'+ringkas(t.sisa)+'</b>'+
+            (t.bl?'<small class="bn-ef">dapat digunakan '+rpk(t.sisa-t.bl)+'</small>':'')+'</div>'+
         '</div></div>'+
-      '<div class="bn-pct"><span>Total Realisasi Belanja <b>'+pc(t.p)+'</b></span><span>Sisa Pagu <b>'+pc(pSisa)+'</b></span></div>'+
-      '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"><em>'+pc(t.p)+'</em></span>'+
+      wawasan+
+      '<div class="bn-bar" role="img" aria-label="Realisasi '+pc(t.p)+' dari pagu, sisa '+pc(pSisa)+'"><span class="bn-fill" style="width:'+wBar+'%"></span>'+
         (t.bl&&t.pagu?'<span class="bn-blk" style="width:'+Math.min(100,t.bl/t.pagu*100).toFixed(2)+'%" title="Pagu diblokir Rp '+rp(t.bl)+'"></span>':'')+'</div>'+
       '<div class="bn-foot">'+
-        '<span class="bn-leg"><i></i><span>Realisasi periode ini<br><b><small>Rp</small> '+rp(t.ini)+'</b> <span class="bn-sub">'+poin(t.pagu?t.ini/t.pagu:0)+'</span></span></span>'+
+        '<span class="bn-leg"><i></i><span>Realisasi periode ini ('+esc(blnTahun(DB.periode))+')<br><b>'+rpk(t.ini)+'</b> <span class="bn-sub">naik '+poin(t.pagu?t.ini/t.pagu:0).replace('+','')+' sejak '+esc(tglPendek(endPrevMonth(DB.periode)))+'</span></span></span>'+
         (t.lock?'<span class="bn-leg bn-lock"><i></i><span>Lock pagu (proses revisi)<br><b><small>Rp</small> '+rp(t.lock)+'</b></span></span>':'')+
         (t.bl?'<span class="bn-leg bn-blok"><i></i><span>Pagu diblokir (tidak dapat direalisasikan)<br><b><small>Rp</small> '+rp(t.bl)+'</b> <span class="bn-sub">'+pc(t.bl/t.pagu)+' pagu · dari RKK '+tgl(DB.blokir.versi.posisi)+'</span></span></span>':'')+
         '<span class="bn-date">Data per '+esc(tglPanjang)+'</span>'+
@@ -59,7 +71,7 @@ export function renderRingkasan(){
     tag=tag||'div';
     var v=function(lbl,val,cls){ return '<span class="rz-v"><span class="rz-lbl">'+lbl+' <small>(Rp)</small></span><b'+(cls?' class="'+cls+'"':'')+'>'+rp(val)+'</b></span>'; };
     return '<'+tag+' class="rz-row"'+(attrs||'')+'>'+
-      '<span class="rz-hd"><span class="nm">'+nm+'</span><span class="rz-pct">'+pc(g.p)+' <small>terealisasi</small></span></span>'+
+      '<span class="rz-hd"><span class="nm">'+nm+'</span><span class="rz-pct">'+pill(g.p).replace('class="pill ','class="pill rz-st ')+pc(g.p)+' <small>terealisasi</small></span></span>'+
       track(g.p,col)+
       '<span class="rz-vals">'+v('Pagu',g.pagu)+v('Realisasi',g.sd)+v('Sisa anggaran',g.sisa,g.sisa<0?'neg':'')+'</span>'+
     '</'+tag+'>';
