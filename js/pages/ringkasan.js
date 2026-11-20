@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201648';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201648';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201648';
-import { SB } from '../api.js?v=202611201648';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611201652';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611201652';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611201652';
+import { SB } from '../api.js?v=202611201652';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){
@@ -99,16 +99,35 @@ export function renderRingkasan(){
     var gu=group(R,function(r){return r.kat+'|'+r.unit;});
     var fak=gu.filter(function(g){return g.key.indexOf('Fakultas|')===0;}).sort(function(a,b){return FAK_ORDER.indexOf(a.key.split('|')[1])-FAK_ORDER.indexOf(b.key.split('|')[1]);});
     var rek=gu.filter(function(g){return g.key.indexOf('Fakultas|')!==0;}).sort(function(a,b){return b.pagu-a.pagu;});
-    var ub=function(g){ var n=g.key.split('|')[1]; return '<div class="ubar"><span class="n"><span class="un">'+esc(n)+'</span><span class="note num">Rp '+rp(g.pagu)+'</span></span>'+track(g.p,'var(--real)')+'<span class="pct">'+pc(g.p)+'</span></div>'; };
-    var fs=sum([].concat.apply([],fak.map(function(g){return g.rows;}))), rs=sum([].concat.apply([],rek.map(function(g){return g.rows;})));
-    unitBody=legend+'<div class="ubars">'+(fak.length?'<div class="sec">Fakultas · Rp '+rp(fs.pagu)+' · '+pc(fs.p)+'</div>'+fak.map(ub).join(''):'')+
-      (rek.length?'<div class="sec">Rektorat · Rp '+rp(rs.pagu)+' · '+pc(rs.p)+'</div>'+rek.map(ub).join(''):'')+'</div>';
+    /* tabel seperti Ringkasan Anggaran: Fakultas, Rektorat (subtotal), Rektorat · PNBP & Rektorat · RM (per sumber dana) */
+    var gaya=function(sd){ return sd==='RM'?'var(--rm)':sd==='PNP'?'var(--pnbp)':'var(--real)'; };
+    var baris=function(nama,t,cls,sd){
+      return '<tr'+(cls?' class="'+cls+'"':'')+'><td>'+nama+'</td><td class="n">'+rp(t.pagu)+'</td><td class="n'+(t.bl?' ag-u-bl':'')+'">'+(t.bl?rp(t.bl):'–')+'</td>'+
+        '<td class="n">'+rp(t.sd)+'</td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="n ag-u-pct" style="color:'+gaya(sd)+'">'+pc(t.p)+'</td>'+
+        '<td class="ag-u-bar">'+track(t.p,gaya(sd))+'</td></tr>';
+    };
+    var isiKel=function(gs,sd){ return gs.map(function(g){ var rs=sd?g.rows.filter(function(r){return r.sumber===sd;}):g.rows; return baris(esc(g.key.split('|')[1]),sum(rs),sd?'ag-u-sd':'',sd); }).join(''); };
+    var out='';
+    if (fak.length){ out+=baris('<b>Fakultas</b>',sum([].concat.apply([],fak.map(function(g){return g.rows;}))),'ag-u-sec')+isiKel(fak); }
+    if (rek.length){
+      out+=baris('<b>Rektorat</b>',sum([].concat.apply([],rek.map(function(g){return g.rows;}))),'ag-u-sec');
+      [['PNP','PNBP'],['RM','RM']].forEach(function(x){
+        var gs=rek.filter(function(g){ return g.rows.some(function(r){return r.sumber===x[0];}); }); if (!gs.length) return;
+        var rs=[].concat.apply([],gs.map(function(g){return g.rows.filter(function(r){return r.sumber===x[0];});}));
+        out+=baris('<i class="dot" style="background:'+gaya(x[0])+'"></i>Rektorat · '+x[1],sum(rs),'ag-u-sub',x[0])+isiKel(gs,x[0]);
+      });
+    }
+    var tot=sum(R);
+    unitBody=legend+'<div class="tbl ag-u-tbl rk-u-tbl"><table><colgroup><col><col class="ag-u-c"><col class="ag-u-c"><col class="ag-u-c"><col class="ag-u-c"><col class="ag-u-p"><col class="ag-u-b"></colgroup>'+
+      '<thead><tr><th>Unit kerja</th><th class="n">Pagu</th><th class="n">Diblokir</th><th class="n">Realisasi</th><th class="n">Sisa</th><th class="n">%</th><th>Realisasi</th></tr></thead><tbody>'+
+      out+baris('<b>Jumlah</b>',tot,'tot')+'</tbody></table></div>';
   } else {
     var gk=group(R,function(r){return r.komp;}).sort(function(a,b){return a.key<b.key?-1:1;});
     unitBody=legend+'<div class="ubars">'+gk.map(function(g){ return '<div class="ubar"><span class="n">'+g.key+' '+esc(D.komp[g.key])+'</span>'+track(g.p,'var(--real)')+'<span class="pct">'+pc(g.p)+'</span></div>'; }).join('')+'</div>';
   }
-  h+='<div class="two">'+card('c-unit',multiUnit?'Capaian per unit kerja':'Capaian per komponen',multiUnit?'Fakultas dan sub-unit Rektorat. Gaji & operasional kantor termasuk Rektorat — centang filter untuk mengecualikannya.':'Komponen anggaran dalam cakupan '+esc(unitCaption())+'.',unitBody)+
-    card('c-tren','Tren penyerapan','Realisasi kumulatif setiap posisi data dibanding garis ideal penyerapan merata sepanjang tahun.','<div id="trendBox" class="trend"><div class="loading" style="padding:30px 0">Memuat tren…</div></div>')+'</div>';
+  /* tabel per unit kerja memakai lebar penuh; tren penyerapan di bawahnya */
+  h+=(multiUnit?'':'<div class="two">')+card('c-unit',multiUnit?'Capaian per unit kerja':'Capaian per komponen',multiUnit?'Fakultas, Rektorat, serta alokasi Rektorat menurut sumber dana (PNBP / RM). Gaji & operasional kantor termasuk Rektorat — centang filter untuk mengecualikannya.':'Komponen anggaran dalam cakupan '+esc(unitCaption())+'.',unitBody)+
+    card('c-tren','Tren penyerapan','Realisasi kumulatif setiap posisi data dibanding garis ideal penyerapan merata sepanjang tahun.','<div id="trendBox" class="trend"><div class="loading" style="padding:30px 0">Memuat tren…</div></div>')+(multiUnit?'':'</div>');
 
   var minus=R.filter(function(r){return r.sisa<0;}), ms=sum(minus);
   var gs=group(R.filter(function(r){return !r.blokir;}),function(r){return r.ro+'|'+r.sub;}), s0=gs.filter(function(g){return g.sd===0&&g.pagu>0;});

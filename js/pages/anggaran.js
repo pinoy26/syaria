@@ -1,13 +1,13 @@
 /* js/pages/anggaran.js — Monev Anggaran: Ringkasan Anggaran, Anggaran per Unit, Rincian Anggaran (RKK)
    Sumber data: versi RKK yang diunggah di Kelola Data (tabel anggaran_versi & anggaran).
    Fakultas/unit otomatis hanya menerima item di cakupannya (RLS di database). */
-import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611201648';
-import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption, KODE_KL, KODE_IND } from '../state.js?v=202611201648';
-import { card, IC, daftarPohon } from '../ui-components.js?v=202611201648';
-import { SB } from '../api.js?v=202611201648';
-import { refresh } from '../nav.js?v=202611201648';
-import { hitungBlokir } from '../blokir.js?v=202611201648';
-import { renderRedesain } from './redesain.js?v=202611201648';
+import { $, esc, rp, pc, tgl, labelVersi, errMsg } from '../utils.js?v=202611201652';
+import { S, DB, ALL, SRC, A2, FAK_ORDER, FAK_FULL, isUnitUser, unitCaption, KODE_KL, KODE_IND } from '../state.js?v=202611201652';
+import { card, IC, daftarPohon } from '../ui-components.js?v=202611201652';
+import { SB } from '../api.js?v=202611201652';
+import { refresh } from '../nav.js?v=202611201652';
+import { hitungBlokir } from '../blokir.js?v=202611201652';
+import { renderRedesain } from './redesain.js?v=202611201652';
 
 export var HAL_ANGGARAN = ['anggaran', 'anggaran-unit', 'anggaran-rkk', 'anggaran-revisi', 'anggaran-usulan', 'anggaran-monitor', 'kelola-usulan'];
 var AG = { versi: null, id: null, rows: null, rowsId: null, memuat: false, err: null };
@@ -153,6 +153,14 @@ export function renderAnggaran(){
   var fak = un.filter(function(g){ return g.key.indexOf('Fakultas|') === 0; }).sort(function(a, b){ return urutUnit(a.key.split('|')[1], b.key.split('|')[1]); });
   var rek = un.filter(function(g){ return g.key.indexOf('Fakultas|') !== 0; }).sort(function(a, b){ return b.jumlah - a.jumlah; });
   var srcCol = function(k){ return k === 'RM' ? 'var(--rm)' : k === 'PNP' ? 'var(--pnbp)' : 'var(--muted)'; };
+  var tile = function(lbl, nilai, ket){ return '<div class="ag-tile"><span>' + lbl + '</span><b>' + nilai + '</b>' + (ket ? '<small>' + ket + '</small>' : '') + '</div>'; };
+  var ringkas = '<div class="ag-tiles">' +
+    tile('Pagu anggaran (RKK)', '<small>Rp</small> ' + rp(total), 'Termasuk pagu yang diblokir') +
+    tile('Item detail', rp(R.length), 'Dalam ' + rp(grup(function(r){ return r.ro + '|' + r.sub; }).length) + ' sub komponen') +
+    (HB ? tile('Pagu diblokir', '<small>Rp</small> ' + rp(HB.total), bl.length + ' item bertanda * · dibandingkan FA Detail ' + tgl(DB.periode)) +
+          tile('Pagu efektif', '<small>Rp</small> ' + rp(total - HB.total), 'Pagu yang dapat direalisasikan')
+        : tile('Item bertanda blokir (*)', rp(bl.length), bl.length ? 'Nilai blokir tampil setelah data realisasi tahun yang sama dimuat' : 'Tidak ada item yang diblokir')) +
+  '</div>';
   /* tabel per unit: Unit · Pagu · Pagu blokir · Pagu efektif · % sumber dana · batang indikator.
      Fakultas: % = porsi pagu PNBP unit terhadap total PNBP satker.
      Rektorat dipecah dua alokasi: Rektorat · PNBP dan Rektorat · RM (masing-masing % terhadap total sumber itu). */
@@ -193,54 +201,11 @@ export function renderAnggaran(){
       out + barisU('<b>Jumlah</b>', semua, 'tot', '', true) + '</tbody></table></div>' +
       '<p class="note">% Sumber: Fakultas dan Rektorat · PNBP terhadap total PNBP satker (Rp ' + rp(totSd.PNP) + '); Rektorat · RM terhadap total RM satker (Rp ' + rp(totSd.RM) + ').' + (HB ? '' : ' Pagu blokir tampil setelah data realisasi tahun anggaran yang sama dimuat.') + '</p>';
   };
-  /* ===== tampilan seperti Ringkasan utama: kartu navy Total Pagu + kartu per sumber dana & jenis belanja ===== */
-  var RPv = function(v){ return '<small>Rp</small>' + rp(v); };
-  var nRM = jml(R.filter(function(r){ return r.sumber === 'RM'; })), nPN = jml(R.filter(function(r){ return r.sumber === 'PNP'; }));
-  var pRM = total ? nRM / total : 0, pPN = total ? nPN / total : 0, totBl = HB ? HB.total : 0;
-  var blKey = function(fn){ var m = {}; if (HB) Object.keys(HB.kelompok).forEach(function(k){ var c = HB.kelompok[k].contoh, kk = fn(c); m[kk] = (m[kk] || 0) + HB.kelompok[k].nilai; }); return m; };
-  var blSrc = blKey(function(c){ return c.sumber || '?'; }), blA2 = blKey(function(c){ return String(c.akun || '').slice(0, 2); });
-  var nSub = grup(function(r){ return r.ro + '|' + r.sub; }).length;
-  /* donat komposisi jenis belanja (51/52/53) */
-  var catCol = function(k){ return 'var(--cat-' + (k === '51' ? 1 : k === '52' ? 2 : 3) + ')'; };
-  var donat = (function(){
-    var Rr = 70, C = 2 * Math.PI * Rr, acc = 0;
-    var seg = jb.map(function(g){ var f = total ? g.jumlah / total : 0, d = '<circle cx="90" cy="90" r="' + Rr + '" fill="none" stroke="' + catCol(g.key) + '" stroke-width="22" stroke-dasharray="' + (C * f).toFixed(1) + ' ' + C.toFixed(1) + '" stroke-dashoffset="' + (-C * acc).toFixed(1) + '" transform="rotate(-90 90 90)"/>'; acc += f; return d; }).join('');
-    return '<svg viewBox="0 0 180 180" role="img" aria-label="Komposisi pagu per jenis belanja"><circle cx="90" cy="90" r="' + Rr + '" fill="none" stroke="var(--track)" stroke-width="22"/>' + seg +
-      '<text x="90" y="86" text-anchor="middle" font-size="13" fill="var(--muted)">Jenis belanja</text><text x="90" y="108" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)" style="font-family:var(--mono)">' + jb.length + ' jenis</text></svg>';
-  })();
-  var hero = '<section class="glass hero hero2 ag-hero" id="ag-hero"><div class="card-h hero-hd"><div></div>' + pilihVersi() + '</div>' +
-    '<div class="banner">' +
-      '<div class="bn-top">' +
-        '<div class="bn-pagu"><div class="bn-lbl">Total Pagu (RKK) <span class="bn-cap">' + esc(isUnitUser() ? unitCaption() : 'seluruh satker') + '</span></div><div class="bn-amt">' + RPv(total) + '</div></div>' +
-        '<div class="bn-boxes">' +
-          '<div class="bn-box bn-real"><span>Pagu Rupiah Murni</span><b>' + RPv(nRM) + '</b></div>' +
-          '<div class="bn-box bn-sisa"><span>Pagu PNBP</span><b>' + RPv(nPN) + '</b>' + (HB ? '<small class="bn-ef">pagu efektif satker Rp ' + rp(total - totBl) + '</small>' : '') + '</div>' +
-        '</div></div>' +
-      '<div class="bn-pct"><span>Rupiah Murni <b>' + pc(pRM) + '</b></span><span>PNBP <b>' + pc(pPN) + '</b></span></div>' +
-      '<div class="bn-bar" role="img" aria-label="Rupiah Murni ' + pc(pRM) + ', PNBP ' + pc(pPN) + '"><span class="bn-fill" style="width:' + (pRM * 100).toFixed(2) + '%"><em>' + pc(pRM) + '</em></span>' +
-        (totBl && total ? '<span class="bn-blk" style="width:' + Math.min(100, totBl / total * 100).toFixed(2) + '%" title="Pagu diblokir Rp ' + rp(totBl) + '"></span>' : '') + '</div>' +
-      '<div class="bn-foot">' +
-        '<span class="bn-leg"><i></i><span>Item detail<br><b>' + rp(R.length) + '</b> <span class="bn-sub">dalam ' + rp(nSub) + ' sub komponen</span></span></span>' +
-        (HB ? '<span class="bn-leg bn-blok"><i></i><span>Pagu diblokir (tidak dapat direalisasikan)<br><b><small>Rp</small> ' + rp(totBl) + '</b> <span class="bn-sub">' + pc(total ? totBl / total : 0) + ' pagu · ' + bl.length + ' item bertanda * · dibanding FA Detail ' + tgl(DB.periode) + '</span></span></span>'
-            : '<span class="bn-leg bn-blok"><i></i><span>Item bertanda blokir (*)<br><b>' + rp(bl.length) + '</b> <span class="bn-sub">nilai blokir tampil setelah data realisasi tahun yang sama dimuat</span></span></span>') +
-        '<span class="bn-date">' + keterangan() + '</span>' +
-      '</div>' +
-    '</div>' +
-    '<div class="gauge ag-donat">' + donat +
-      '<div class="gauge-legend">' + jb.map(function(g){ return '<span><i class="sw" style="background:' + catCol(g.key) + '"></i>' + esc(g.key) + ' · ' + pc(total ? g.jumlah / total : 0) + '</span>'; }).join('') + '</div>' +
-    '</div></section>';
-  /* kartu per sumber dana & per jenis belanja (gaya kartu Ringkasan utama): Pagu · Diblokir · Pagu efektif */
-  var trackA = function(p, col){ return '<span class="track"><span class="fill" style="width:' + Math.min(100, Math.max(0, p * 100)).toFixed(2) + '%;background:linear-gradient(90deg, color-mix(in srgb, ' + col + ' 35%, transparent), ' + col + ')"></span></span>'; };
-  var agRow = function(nm, g, col, b){
-    var v = function(lbl, val, cls){ return '<span class="rz-v"><span class="rz-lbl">' + lbl + ' <small>(Rp)</small></span><b' + (cls ? ' class="' + cls + '"' : '') + '>' + (HB || lbl === 'Pagu' ? rp(val) : '–') + '</b></span>'; };
-    var p = total ? g.jumlah / total : 0;
-    return '<div class="rz-row"><span class="rz-hd"><span class="nm">' + nm + '</span><span class="rz-pct">' + pc(p) + ' <small>dari total pagu</small></span></span>' + trackA(p, col) +
-      '<span class="rz-vals">' + v('Pagu', g.jumlah) + v('Diblokir', b || 0, b ? 'neg' : '') + v('Pagu efektif', g.jumlah - (b || 0)) + '</span></div>';
-  };
-  var h = '<div class="page-sec grid">' + hero +
+  var h = '<div class="page-sec grid">' +
+    card('ag-ring', 'Ringkasan anggaran', keterangan(), ringkas, pilihVersi()) +
     '<div class="two eq">' +
-      card('ag-src', 'Anggaran per sumber dana', 'Pagu, pagu diblokir, dan pagu efektif masing-masing sumber dana.', '<div class="rz-list">' + src.map(function(g){ return agRow('<i class="dot" style="background:' + srcCol(g.key) + '"></i>' + esc(SRC[g.key] || g.key), g, srcCol(g.key), blSrc[g.key]); }).join('') + '</div>', '') +
-      card('ag-jb', 'Anggaran per jenis belanja', 'Akun 51, 52, 53.', '<div class="rz-list">' + jb.map(function(g){ return agRow('<span class="cat-sw" style="background:' + catCol(g.key) + '" aria-hidden="true"></span><span><span class="code">Akun ' + esc(g.key) + '</span> ' + esc(A2(g.key)) + '</span>', g, catCol(g.key), blA2[g.key]); }).join('') + '</div>', '') +
+      card('ag-src', 'Anggaran per sumber dana', 'Porsi pagu tiap sumber dana.', '<div class="ubars">' + src.map(function(g){ return baris('<i class="dot" style="background:' + srcCol(g.key) + '"></i>' + esc(SRC[g.key] || g.key), g, srcCol(g.key)); }).join('') + '</div>', '') +
+      card('ag-jb', 'Anggaran per jenis belanja', 'Akun 51, 52, 53.', '<div class="ubars">' + jb.map(function(g){ return baris('<span class="code">' + esc(g.key) + '</span> ' + esc(A2(g.key)), g, 'var(--real)'); }).join('') + '</div>', '') +
     '</div>' +
     card('ag-unit', 'Anggaran per unit kerja', 'Pagu, blokir, dan pagu efektif per fakultas/unit; % = porsi pagu PNBP unit terhadap total pagu PNBP satker. Rincian item ada di menu Anggaran per Unit.', tabelUnit(), '') +
   '</div>';

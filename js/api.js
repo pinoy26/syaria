@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611201648';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611201648';
+import { BOOT } from './state.js?v=202611201652';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611201652';
 
 export var SBC = null; // klien supabase
 export var SB = {};
