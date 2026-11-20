@@ -1225,23 +1225,3 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .rk-u-tbl col.ag-u-c{width:13%}
 .rk-u-tbl .ag-u-bar .track{position:relative;height:10px}
 .rk-u-tbl .ag-u-bar .track .mark{top:-3px;bottom:-3px}
-/* ===== Ringkasan utama — penyempurnaan (usulan A–E) ===== */
-/* C: pemilih TA / posisi / Filter menempel di pojok kanan atas kartu, tidak memakan satu baris sendiri */
-#c-hero{position:relative}
-#c-hero .hero-hd{position:absolute;top:14px;right:16px;z-index:3;grid-column:auto}
-#c-hero .hero-hd #pageTools{width:auto;gap:6px}
-#c-hero .hero-hd #pageTools select,#c-hero .hero-hd #pageTools .btn{padding-block:6px;font-size:12.5px}
-#c-hero .banner{padding-top:20px}
-#c-hero .gauge{padding-top:46px}
-/* B: satuan ringkas M / jt */
-.bn-u{font-size:.55em!important;margin-left:4px!important;letter-spacing:0;opacity:.85}
-.bn-box>span .bn-bp{font-family:var(--mono);font-size:1em}
-/* A: baris wawasan menggantikan persentase ganda */
-.bn-wawasan{position:relative;z-index:1;font-size:13.5px;line-height:1.5;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.08);border-left:4px solid #8fd18f}
-.bn-wawasan b{font-weight:800}
-.bn-wawasan.bn-w-warn{border-left-color:#f2b33d}
-.bn-wawasan.bn-w-krit{border-left-color:#f07b7b}
-/* D: status kecil di kartu sumber dana & jenis belanja */
-.rz-pct .pill.rz-st{font-size:11px;padding:2px 8px;margin-right:8px;vertical-align:middle;font-family:var(--sans);letter-spacing:0}
-@media (max-width:1100px){ #c-hero .hero-hd{position:static} #c-hero .gauge{padding-top:0} }
-.bn-box b .bn-n,.bn-amt .bn-n{font-size:inherit!important;font-weight:inherit!important;color:inherit}
