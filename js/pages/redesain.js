@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611201719';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611201719';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611201719';
-import { SB } from '../api.js?v=202611201719';
-import { refresh } from '../nav.js?v=202611201719';
-import { lupakanUsulan } from './usulan.js?v=202611201719';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250212';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250212';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250212';
+import { SB } from '../api.js?v=202611250212';
+import { refresh } from '../nav.js?v=202611250212';
+import { lupakanUsulan } from './usulan.js?v=202611250212';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -62,7 +62,7 @@ function muatDaftar(){
 function muatSalinan(u){
   if (R.memuat) return; R.memuat = true; R.err = null;
   Promise.all([SB.salinan(u.id), SB.anggaranItem(u.versi_id), SB.blokirItem(u.versi_id), SB.realisasiKelompok(u.versi_id), SB.bagianAkun()]).then(function(r){
-    R.u = u; R.rows = r[0]; R.cekKey = {}; R.bl = r[2]; R.rk = r[3]; R.bas = r[4]; R.sel = null; R.kotor = false;
+    R.u = u; R.rows = r[0]; R.cekKey = {}; R.clip = null; R.bl = r[2]; R.rk = r[3]; R.bas = r[4]; R.sel = null; R.kotor = false;
     /* usulan seluruh satker (kategori kosong): basis = seluruh DIPA */
     R.basis = {}; r[1].forEach(function(b){ if (u.kategori == null || (b.kategori === u.kategori && (b.unit || '') === (u.unit || ''))) R.basis[b.id] = b; });
     R.memuat = false; if (S.page === 'anggaran-rkk') refresh();
@@ -178,11 +178,18 @@ export function renderRedesain(){
     if (R.lihat === u.id) act = '<div class="tools"><button class="btn" type="button" data-rd-kembali="' + u.id + '">‹ Kembali ke pengajuan</button><button class="btn" type="button" data-rd-tutup>Tutup</button></div>';
     alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru; detail yang dihapus tercantum di bawah lembar kerja.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
-        tb('subbaru', 'Rekam Sub Komponen', sel.subbaru) + tb('akun', 'Rekam Akun', sel.akun) + tb('h1', 'Rekam Header 1', sel.h1) + tb('h2', 'Rekam Header 2', sel.h2) + tb('det', 'Rekam Detail', sel.det) + tb('ubah', 'Ubah', sel.ubah) + '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button>' +
+        '<span class="rd-kiri" id="rdKiri">' + htmlKiri(sel) + '</span><span class="rd-sp"></span>' +
+        (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') +
+        '<span class="rd-kanan">' + tb('ubah', 'Ubah', sel.ubah) +
+          '<button class="btn" type="button" data-rd="copy" title="Copy sub komponen / akun / header beserta isinya"' + (sel.copy ? '' : ' disabled') + '>Copy</button>' +
+          '<button class="btn" type="button" data-rd="paste" title="' + esc(R.clip ? 'Tempel: ' + R.clip.label : 'Belum ada yang dicopy') + '"' + (sel.paste ? '' : ' disabled') + '>Paste</button>' +
+          '<button class="btn" type="button" data-rd="hapus"' + (sel.hapus || dicentang().length ? '' : ' disabled') + '>' + labelHapus() + '</button></span>' +
+        '<span class="rd-pisah" aria-hidden="true"></span>' +
         (function(){ var n = dihapus().length; return n ? '<button class="btn rd-btn-dihapus" type="button" data-rd="dihapus" title="Lihat & kembalikan detail DIPA yang dihapus">Dihapus (' + n + ')</button>' : ''; })() +
-        '<span class="rd-sp"></span>' + (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') + '<button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
+        '<button class="btn" type="button" data-rd="batal"' + (R.kotor ? '' : ' disabled') + '>Batalkan perubahan</button>' +
         '<button class="btn primary' + (R.kotor && !R.simpan ? ' rd-perlu-simpan' : '') + '" type="button" data-rd="simpan"' + (R.kotor && !R.simpan ? '' : ' disabled') + '>' + (R.simpan ? 'Menyimpan…' : 'Simpan') + '</button></div>' +
-        '<p class="note rd-petunjuk"' + (sel.ket ? '' : ' hidden') + '>' + esc(sel.ket) + '</p>';
+        (R.clip ? '<p class="note rd-clip">Dicopy: <b>' + esc(R.clip.label) + '</b> · pilih baris tujuan lalu klik <b>Paste</b>. <button type="button" class="rd-clip-x" data-rd="lepascopy" aria-label="Batalkan copy">✕</button></p>' : '') +
+        '<p class="note rd-petunjuk"' + (sel.ket || sel.ketPaste ? '' : ' hidden') + '>' + esc([sel.ket, sel.ketPaste].filter(Boolean).join(' · ')) + '</p>';
   }
   /* jumlah blokir per baris kepala */
   /* kolom Selisih (mode usulan): per item = jumlah usulan − jumlah DIPA; baris kepala = total selisih di bawahnya,
@@ -200,7 +207,7 @@ export function renderRedesain(){
     '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th>' + (dipa ? '' : '<th class="n" title="Jumlah usulan − jumlah DIPA">Selisih</th>') + '<th class="n" title="Nilai blokir · * = blokir dari RKK SAKTI · M = blokir manual Admin perencanaan">Blokir</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
     baris.map(function(b){
       var on = R.sel && R.sel.key === b.key ? ' sel' : '';
-      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
+      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
       var r = b.r, st = dipa ? '' : statusItem(r), i = blk(r);
       return '<tr class="rd-item' + (st ? ' rd-' + st : '') + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td class="rd-u">- ' + esc(r.uraian) + '</td>' +
@@ -268,9 +275,14 @@ function barisTerpilih(baris){ return R.sel ? baris.filter(function(b){ return b
 function anggota(b){ return R.rows.filter(function(r){ return jalur(r)[b.d] === b.key; }); }
 function pilihan(baris){
   var dipa = R.u && R.u.dipa;
-  var o = { subbaru: false, akun: false, h1: false, h2: false, det: false, ubah: false, hapus: false, blokir: false,
+  var o = { copy: false, paste: false, subbaru: false, akun: false, h1: false, h2: false, det: false, ubah: false, hapus: false, blokir: false,
     ket: dipa ? 'Pilih detail untuk mengatur blokir manual.' : '' };
   var b = barisTerpilih(baris); if (!b) return o;
+  if (!dipa){
+    o.copy = ['sub', 'akun', 'h1', 'h2'].indexOf(b.jenis) >= 0 && !(b.jenis === 'akun' && kunci51(b.r));
+    o.paste = !!(R.clip && tujuanPaste(b));
+    if (R.clip && !o.paste) o.ketPaste = ketPaste();
+  }
   if (dipa){
     if (b.jenis !== 'item') o.ket = 'Blokir diatur per detail: pilih baris detail.';
     else if (b.r.blokir) o.ket = 'Blokir "' + b.r.uraian + '" berasal dari RKK SAKTI (Rp ' + rp(blk(b.r).blokir) + ') dan dikunci.';
@@ -582,6 +594,128 @@ function bukaDihapus(){
   [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
   [].forEach.call(document.querySelectorAll('#modal [data-rd-kembali-item]'), function(x){ x.onclick = function(){ closeModal(); pulihkan(+x.getAttribute('data-rd-kembali-item')); }; });
 }
+/* ===== Salin Sub Komponen / Akun / Header beserta isinya (detail salinan = detail baru) ===== */
+/* saran kode sub komponen yang belum dipakai di RO + komponen itu: lanjutan kode dua huruf tertinggi, mis. AE → AF */
+function saranKode(ro, komp){
+  var pakai = {}, cek = function(r){ if (r.ro === ro && r.komp === komp) pakai[String(r.sub || '').split('.').pop()] = 1; };
+  R.rows.forEach(cek); Object.keys(R.basis).forEach(function(id){ cek(R.basis[id]); });
+  var H = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', semua = [];
+  for (var i = 0; i < 26; i++) for (var j = 0; j < 26; j++) semua.push(H[i] + H[j]);
+  var maks = -1; semua.forEach(function(k, x){ if (pakai[k]) maks = x; });
+  for (var n = maks + 1; n < semua.length; n++) if (!pakai[semua[n]]) return semua[n];
+  for (n = 0; n < semua.length; n++) if (!pakai[semua[n]]) return semua[n];
+  return '';
+}
+/* tombol Rekam di kiri bilah: hanya yang relevan dengan baris yang dipilih */
+function htmlKiri(o){
+  var t = [['subbaru', 'Rekam Sub Komponen'], ['akun', 'Rekam Akun'], ['h1', 'Rekam Header 1'], ['h2', 'Rekam Header 2'], ['det', 'Rekam Detail']]
+    .filter(function(x){ return o[x[0]]; }).map(function(x){ return '<button class="btn" type="button" data-rd="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  return t || '<span class="rd-kiri-kosong">Pilih baris di lembar kerja untuk merekam</span>';
+}
+var NAMA_JENIS = { sub: 'Sub komponen', akun: 'Akun', h1: 'Header 1', h2: 'Header 2' };
+/* Copy: simpan sumber (sub komponen / akun / header) beserta isinya; bisa di-Paste berkali-kali */
+function salinKeClip(){
+  var b = barisTerpilih(susun()); if (!b || ['sub', 'akun', 'h1', 'h2'].indexOf(b.jenis) < 0) return;
+  var ang = anggota(b), src = ang.filter(function(r){ return !kunci51(r); });
+  if (!src.length) return toast('Isi baris ini hanya akun 51 (Belanja Pegawai) yang dikunci untuk fakultas/unit.', 'err', 'Tidak dapat dicopy');
+  R.clip = { jenis: b.jenis, key: b.key, rows: src, lewat: ang.length - src.length, ro: b.r.ro, komp: b.r.komp, sub: b.r.sub, akun: b.r.akun, judul: b.r.judul, judul2: b.r.judul2,
+    label: NAMA_JENIS[b.jenis] + ' ' + (b.jenis === 'sub' ? String(b.r.sub).split('.').pop() + ' ' + (b.r.sub_n || '') : b.jenis === 'akun' ? b.r.akun + ' ' + (b.r.akun_n || '') : (b.n || '')) +
+      ' · ' + src.length + ' detail · Rp ' + rp(src.reduce(function(t, r){ return t + r.jumlah; }, 0)) };
+  R.info = ''; gambarUlang();
+}
+/* baris tujuan yang sah untuk Paste, atau null */
+function tujuanPaste(b){
+  var c = R.clip; if (!c || !b) return null;
+  if (c.jenis === 'sub') return (b.jenis === 'komp' || b.jenis === 'sub') && b.r.ro === c.ro && b.r.komp === c.komp ? b : null;
+  if (c.jenis === 'akun') return b.jenis === 'sub' && b.r.ro === c.ro && b.r.komp === c.komp ? b : null;
+  if (c.jenis === 'h1') return b.jenis === 'akun' && !kunci51(b.r) ? b : null;
+  if (c.jenis === 'h2') return b.jenis === 'h1' && !kunci51(b.r) ? b : null;
+  return null;
+}
+function ketPaste(){
+  var c = R.clip; if (!c) return '';
+  return c.jenis === 'sub' ? 'Untuk menempel sub komponen: pilih baris komponen atau sub komponen di komponen ' + c.komp + '.' :
+         c.jenis === 'akun' ? 'Untuk menempel akun: pilih baris sub komponen di komponen ' + c.komp + '.' :
+         c.jenis === 'h1' ? 'Untuk menempel Header 1: pilih baris akun tujuan.' : 'Untuk menempel Header 2: pilih baris Header 1 tujuan.';
+}
+/* salin baris src (urutan dipertahankan) dan sisipkan setelah baris 'setelah' */
+function tempelSalinan(src, ganti, denganNilai, setelah){
+  urut();
+  var i = R.rows.indexOf(setelah), nx = R.rows[i + 1], a = setelah.urutan, z = nx ? nx.urutan : a + src.length + 1, step = (z - a) / (src.length + 1);
+  var baru = src.map(function(r, k){
+    var x = {}; Object.keys(r).forEach(function(f){ if (f.charAt(0) !== '_') x[f] = r[f]; });
+    Object.keys(ganti).forEach(function(f){ x[f] = ganti[f]; });
+    x.id = null; x.anggaran_id = null; x.blokir = false;
+    if (!denganNilai) x.volume = 0;
+    x.jumlah = Math.round((x.volume || 0) * (x.harga || 0)); x.urutan = a + step * (k + 1);
+    return x;
+  });
+  R.rows = R.rows.concat(baru); urut();
+  return baru;
+}
+/* Paste: tempel isi Copy ke baris tujuan yang dipilih */
+function bukaPaste(){
+  var c = R.clip, b = tujuanPaste(barisTerpilih(susun())); if (!c || !b) return;
+  var src = c.rows, tot = src.reduce(function(t, r){ return t + r.jumlah; }, 0);
+  var inp = function(id, lbl, v, ph, extra){ return '<label class="f" for="' + id + '"' + (extra && extra.lebar ? ' style="flex:0 0 ' + extra.lebar + '"' : '') + '>' + lbl + '<input type="text" id="' + id + '" value="' + esc(v) + '" placeholder="' + (ph || '') + '" autocomplete="off"' + (extra && extra.attr || '') + '></label>'; };
+  var isian = '', tuju = '';
+  if (c.jenis === 'sub'){
+    isian = '<div class="rd-hitung">' + inp('slKode', 'Kode sub komponen baru', saranKode(c.ro, c.komp), 'mis. AZ', { lebar: '160px', attr: ' maxlength="4" style="text-transform:uppercase"' }) +
+      inp('slUraian', 'Uraian sub komponen', (src[0] && src[0].sub_n) || '', 'uraian sub komponen') + '</div>';
+    tuju = 'di ujung komponen ' + c.komp;
+  } else if (c.jenis === 'akun'){
+    var bas = R.bas.filter(function(a){ return !(sess().role === 'UNIT' && /^51/.test(a.kode)); });
+    isian = '<label class="f" for="slAkun">Akun tujuan<select id="slAkun">' + bas.map(function(a){ return '<option value="' + a.kode + '"' + (a.kode === c.akun ? ' selected' : '') + '>' + esc(a.kode + ' · ' + a.nama) + '</option>'; }).join('') + '</select></label>';
+    tuju = 'ke sub komponen ' + String(b.r.sub).split('.').pop() + ' ' + (b.r.sub_n || '');
+  } else {
+    isian = inp('slHeader', c.jenis === 'h1' ? 'Uraian Header 1' : 'Uraian Header 2', (c.jenis === 'h1' ? c.judul : c.judul2) || '', 'uraian header');
+    tuju = c.jenis === 'h1' ? 'ke akun ' + b.r.akun + ' ' + (b.r.akun_n || '') : 'ke Header 1 "' + (b.r.judul || '') + '"';
+  }
+  openModal('<div class="modal-hd"><div><span class="note">' + esc(c.label) + '</span><h3>Paste ' + NAMA_JENIS[c.jenis] + '</h3></div><button type="button" class="icon" data-modal-close aria-label="Tutup">' + IC_X + '</button></div>' +
+    '<form id="rdForm" class="rd-form" novalidate><p class="note" style="margin:0">Ditempel <b>' + esc(tuju) + '</b>: ' + src.length + ' detail · Rp ' + rp(tot) + (c.lewat ? ' · ' + c.lewat + ' detail akun 51 dilewati' : '') + '.</p>' + isian +
+    '<div class="pr-cak"><label class="chk"><input type="radio" name="slNilai" value="1" checked><span>Dengan volume &amp; harga (jumlah sama)</span></label>' +
+      '<label class="chk"><input type="radio" name="slNilai" value="0"><span>Tanpa nilai (volume 0, jumlah Rp 0)</span></label></div>' +
+    '<p class="note" style="margin:0">Hasil tempel menjadi detail <b>baru</b> (tanpa blokir/realisasi) dan menambah pagu usulan bila dengan nilai — seimbangkan dengan pengurangan di tempat lain.</p>' +
+    '<div id="rdMsg" class="status-box s-err" role="alert" hidden></div>' +
+    '<div class="tools"><button type="submit" class="btn primary">Paste</button><button type="button" class="btn" data-modal-close>Batal</button></div></form>');
+  [].forEach.call(document.querySelectorAll('#modal [data-modal-close]'), function(x){ x.onclick = closeModal; });
+  setTimeout(function(){ var x = $('slKode') || $('slHeader') || $('slAkun'); if (x) x.focus(); }, 60);
+  $('rdForm').onsubmit = function(e){
+    e.preventDefault();
+    var salah = function(m){ $('rdMsg').textContent = m; $('rdMsg').hidden = false; };
+    var nilai = document.querySelector('#modal [name=slNilai]:checked').value === '1', ganti = {}, setelah, info;
+    if (c.jenis === 'sub'){
+      var kode = $('slKode').value.trim().toUpperCase(), ur = $('slUraian').value.trim(), subBaru = c.komp + '.' + kode;
+      if (!/^[A-Z0-9]{1,4}$/.test(kode)) return salah('Kode sub komponen 1–4 huruf kapital/angka, mis. AZ.');
+      if (ur.length < 3) return salah('Uraian sub komponen wajib diisi (minimal 3 karakter).');
+      var dipakai = R.rows.some(function(r){ return r.ro === c.ro && r.sub === subBaru; }) || Object.keys(R.basis).some(function(id){ var x = R.basis[id]; return x.ro === c.ro && x.sub === subBaru; });
+      if (dipakai) return salah('Kode ' + kode + ' sudah dipakai sub komponen lain di komponen ini. Pilih kode lain.');
+      ganti = { sub: subBaru, sub_n: ur };
+      var kompRows = R.rows.filter(function(r){ return r.prog === b.r.prog && r.kro === b.r.kro && r.ro === c.ro && r.komp === c.komp; });
+      setelah = kompRows[kompRows.length - 1]; info = 'Sub komponen ' + kode + ' ditempel';
+    } else if (c.jenis === 'akun'){
+      var aT = $('slAkun').value, ak = R.bas.filter(function(a){ return a.kode === aT; })[0];
+      if (!ak) return salah('Pilih akun tujuan.');
+      var subRows = R.rows.filter(function(r){ return r.ro === b.r.ro && r.sub === b.r.sub; }), ada = subRows.filter(function(r){ return r.akun === aT; });
+      ganti = { sub: b.r.sub, sub_n: b.r.sub_n, akun: aT, akun_n: ak.nama };
+      setelah = ada.length ? ada[ada.length - 1] : subRows[subRows.length - 1]; info = 'Akun ' + aT + ' ditempel ke sub komponen ' + String(b.r.sub).split('.').pop();
+    } else {
+      var hb = $('slHeader').value.trim();
+      if (hb.length < 2) return salah('Uraian header wajib diisi (minimal 2 karakter).');
+      var tAng = anggota(b);
+      var kembar = c.jenis === 'h1' ? tAng.some(function(r){ return r.judul === hb; }) : tAng.some(function(r){ return r.judul2 === hb; });
+      if (kembar) return salah('Header "' + hb + '" sudah ada di tempat tujuan. Gunakan uraian lain.');
+      ganti = { sub: b.r.sub, sub_n: b.r.sub_n, akun: b.r.akun, akun_n: b.r.akun_n, sumber: b.r.sumber };
+      if (c.jenis === 'h1') ganti.judul = hb; else { ganti.judul = b.r.judul; ganti.judul2 = hb; }
+      setelah = tAng[tAng.length - 1]; info = 'Header "' + hb + '" ditempel';
+    }
+    closeModal();
+    var baru = tempelSalinan(src, ganti, nilai, setelah);
+    R.sel = { key: 'i' + R.rows.indexOf(baru[0]) }; R.kotor = true; R.fokus = true;
+    R.info = info + ': ' + baru.length + ' detail' + (nilai ? ', Rp ' + rp(baru.reduce(function(t, r){ return t + r.jumlah; }, 0)) : ' tanpa nilai') + '. Klik Simpan untuk menyimpan.';
+    gambarUlang();
+  };
+}
 function pulihkan(id){
   var b = R.basis[id]; if (!b) return;
   var r = {}; Object.keys(b).forEach(function(k){ r[k] = b[k]; }); r.anggaran_id = b.id; r.id = null;
@@ -644,14 +778,21 @@ function bind(){
     el.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pilih(); } };
     el.ondblclick = function(){ pilih(); var t = pg.querySelector('[data-rd="ubah"]'); if (t && !t.disabled) aksi('ubah'); };
   });
-  [].forEach.call(pg.querySelectorAll('[data-rd]'), function(el){ el.onclick = function(){
+  [].forEach.call(pg.querySelectorAll('[data-rd]'), pasangAlat);
+  bindLanjutan(pg);
+}
+function pasangAlat(el){ el.onclick = function(){
     var a = el.getAttribute('data-rd');
     if (a === 'simpan') simpan();
     else if (a === 'dihapus') bukaDihapus();
+    else if (a === 'copy') salinKeClip();
+    else if (a === 'paste') bukaPaste();
+    else if (a === 'lepascopy'){ R.clip = null; gambarUlang(); }
     else if (a === 'hapus' && dicentang().length) hapusTanda();
     else if (a === 'batal') tanya({ judul: 'Batalkan semua perubahan?', pesan: 'Belanja Redesain kembali ke kondisi terakhir yang disimpan.', ya: 'Batalkan perubahan', bahaya: true }).then(function(ya){ if (ya){ R.kotor = false; R.rows = null; R.u = null; R.posisi = null; refresh(); } });
     else aksi(a);
-  }; });
+  }; }
+function bindLanjutan(pg){
   [].forEach.call(pg.querySelectorAll('[data-rd-cek]'), function(el){
     if (el.getAttribute('data-ind')) el.indeterminate = true;
     el.onclick = function(e){ e.stopPropagation(); };
@@ -665,6 +806,8 @@ function bind(){
 /* tombol bilah alat diperbarui tanpa menggambar ulang tabel (tabel bisa ratusan baris) */
 function perbaruiAlat(){
   var o = pilihan(susun()), pg = $('page');
-  ['subbaru', 'akun', 'h1', 'h2', 'det', 'ubah', 'hapus', 'blokir'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !(o[k] || (k === 'hapus' && dicentang().length)); });
-  var p = pg.querySelector('.rd-petunjuk'); if (p){ p.textContent = o.ket; p.hidden = !o.ket; }
+  ['ubah', 'hapus', 'blokir'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !(o[k] || (k === 'hapus' && dicentang().length)); });
+  var kiri = $('rdKiri'); if (kiri){ kiri.innerHTML = htmlKiri(o); [].forEach.call(kiri.querySelectorAll('[data-rd]'), pasangAlat); }
+  ['copy', 'paste'].forEach(function(k){ var t = pg.querySelector('[data-rd="' + k + '"]'); if (t) t.disabled = !o[k]; });
+  var p = pg.querySelector('.rd-petunjuk'), kt = [o.ket, o.ketPaste].filter(Boolean).join(' · '); if (p){ p.textContent = kt; p.hidden = !kt; }
 }
