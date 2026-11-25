@@ -1,14 +1,14 @@
 /* js/main.js — titik masuk: memuat data, mengikat event top-level, boot aplikasi */
-import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611250858';
-import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611250858';
-import { SB, SBC, sbInit } from './api.js?v=202611250858';
-import { closeModal } from './ui-components.js?v=202611250858';
-import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611250858';
-import { tampilMasuk } from './auth.js?v=202611250858';
-import { bukaUbahSandi } from './akun.js?v=202611250858';
-import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611250858';
-import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611250858';
-import { periksaAwal, pantauAktivitas, pesanKeluar } from './sesi.js?v=202611250858';
+import { $, tgl, blnTahun, esc, errMsg, toast, yearFrac } from './utils.js?v=202611250906';
+import { S, setDB, setD, setWAKTU, setALL, setBoot, setAK, BOOT, ALL, EMPTY_F } from './state.js?v=202611250906';
+import { SB, SBC, sbInit } from './api.js?v=202611250906';
+import { closeModal } from './ui-components.js?v=202611250906';
+import { refresh, openSheet, closeSheet, sheetOpen, openFilterDrawer, closeFilterDrawer, filterDrawerOpen } from './nav.js?v=202611250906';
+import { tampilMasuk } from './auth.js?v=202611250906';
+import { bukaUbahSandi } from './akun.js?v=202611250906';
+import { rkkUntuk, hitungBlokir, barisBlokir } from './blokir.js?v=202611250906';
+import { muatBeritaDasbor, bukaBeritaDasbor, bukaDariUrl } from './berita.js?v=202611250906';
+import { periksaAwal, pantauAktivitas, pesanKeluar } from './sesi.js?v=202611250906';
 
 export function setData(d){
   setDB(d); setD(d.dims); setWAKTU(yearFrac(d.periode));
@@ -97,6 +97,10 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){ if (e.key==='Escape' && !$('modal').hidden) closeModal(); });
 
 /* ---------- mulai ---------- */
+/* id pengguna yang datanya sedang dimuat di halaman ini. Data & cache modul (RKK, usulan, lembar kerja)
+   milik pengguna sebelumnya tidak boleh terbawa ke akun lain, jadi ganti akun selalu memuat ulang halaman. */
+var DIMUAT_UNTUK = null;
+export function perluMuatUlang(){ return DIMUAT_UNTUK !== null; }
 export function mulai(){
   SB.boot().then(function(b){
     $('boot').hidden = true;
@@ -109,6 +113,7 @@ export function mulai(){
       SBC.auth.signOut();
       return;
     }
+    DIMUAT_UNTUK = b.session.uid;
     setAK(b.akunNames || {});
     $('gate').hidden = true; $('app').hidden = false;
     $('brandSub').textContent = 'Layanan Perencanaan Anggaran Terintegrasi';
@@ -126,8 +131,10 @@ export function mulai(){
 if (sbInit()){
   /* sesi berakhir/gagal diperpanjang saat dasbor terbuka: kembali ke halaman login alih-alih
      diam-diam mengirim permintaan sebagai pengunjung anonim */
-  SBC.auth.onAuthStateChange(function(ev){
-    if (ev === 'SIGNED_OUT' && !$('app').hidden){ closeModal(); tampilMasuk(pesanKeluar() || 'Sesi Anda sudah berakhir. Silakan masuk kembali.'); }
+  SBC.auth.onAuthStateChange(function(ev, sesi){
+    if (ev === 'SIGNED_OUT' && !$('app').hidden){ closeModal(); $('page').innerHTML = ''; tampilMasuk(pesanKeluar() || 'Sesi Anda sudah berakhir. Silakan masuk kembali.'); }
+    /* akun lain masuk di tab lain (sesi dipakai bersama semua tab): jangan tampilkan data akun lama dengan sesi akun baru */
+    if (ev === 'SIGNED_IN' && DIMUAT_UNTUK && sesi && sesi.user && sesi.user.id !== DIMUAT_UNTUK) location.reload();
   });
   /* B+C: keluar otomatis bila lama tidak aktif / browser sudah ditutup, baru dasbor dimuat */
   pantauAktivitas();

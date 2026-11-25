@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611250858';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611250858';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611250858';
-import { THEME_BTN } from './theme.js?v=202611250858';
-import { renderFilters } from './filters.js?v=202611250858';
-import { pdfCard, printCard, printAll } from './export.js?v=202611250858';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611250858';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611250858';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611250858';
-import { renderPerhatian } from './pages/perhatian.js?v=202611250858';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611250858';
-import { renderLaporan } from './pages/laporan.js?v=202611250858';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611250858';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611250858';
-import { renderKelolaBerita } from './pages/berita.js?v=202611250858';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611250858';
+import { $, esc } from './utils.js?v=202611250906';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611250906';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611250906';
+import { THEME_BTN } from './theme.js?v=202611250906';
+import { renderFilters } from './filters.js?v=202611250906';
+import { pdfCard, printCard, printAll } from './export.js?v=202611250906';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611250906';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611250906';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611250906';
+import { renderPerhatian } from './pages/perhatian.js?v=202611250906';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611250906';
+import { renderLaporan } from './pages/laporan.js?v=202611250906';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611250906';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611250906';
+import { renderKelolaBerita } from './pages/berita.js?v=202611250906';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611250906';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -25,11 +25,11 @@ export var PAGES=[
   {id:'anggaran-monitor',t:'Monitoring Submit & Approve',g:'Monev Anggaran',ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',r:renderMonitor,noData:true},
   {id:'anggaran-unit',t:'Anggaran per Unit',g:'Monev Anggaran',ic:'<path d="M3 21h18M5 21V9l7-4 7 4v12"/><path d="M9 13h6M9 17h6"/>',r:renderAnggaranUnit,noData:true,notUnit:true},
   {id:'anggaran-revisi',t:'Riwayat Revisi Anggaran',g:'Monev Anggaran',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 8v4l3 2"/>',r:renderAnggaranRevisi,noData:true,notUnit:true},
-  {id:'unit',t:'Unit Kerja',g:'Monev Realisasi',ic:'<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/>',r:renderUnit},
+  {id:'unit',t:'Unit Kerja',g:'Monev Realisasi',notUnit:true,ic:'<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/>',r:renderUnit},
   {id:'unit-rincian',t:'Rincian Unit Kerja',g:'Monev Realisasi',ic:'<path d="M4 5h16v14H4zM4 10h16M10 10v9"/>',r:renderUnitRincian},
   {id:'sumber',t:'Sumber Dana',g:'Monev Realisasi',ic:'<circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h8"/>',r:renderSumber},
   {id:'jenis',t:'Jenis Belanja',g:'Monev Realisasi',ic:'<path d="M4 6h16M4 12h10M4 18h6"/>',r:renderJenis},
-  {id:'dipa',t:'Struktur DIPA',g:'Monev Realisasi',ic:'<path d="M5 4h5v5H5zM14 15h5v5h-5zM7.5 9v4.5h9V15"/>',r:renderDipa},
+  {id:'dipa',t:'Struktur DIPA',g:'Monev Realisasi',notUnit:true,ic:'<path d="M5 4h5v5H5zM14 15h5v5h-5zM7.5 9v4.5h9V15"/>',r:renderDipa},
   {id:'riwayat',t:'Riwayat & Revisi',g:'Monev Realisasi',ic:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',r:renderRiwayat,after:loadCompare},
   {id:'perhatian',t:'Perlu Perhatian',g:'Monev Realisasi',ic:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',r:renderPerhatian},
   {id:'laporan',t:'Laporan',g:'Laporan',ic:'<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',r:renderLaporan},

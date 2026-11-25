@@ -7,16 +7,18 @@
      - blokir per ITEM = jumlah item RKK − pagu item FA pasangannya (rincian tampilan).
    Item RKK tidak bernomor dan uraiannya berbeda tipis dari FA ("[7 KALI x 3 HARI]", spasi ganda),
    jadi item dipasangkan per kelompok menurut uraian yang dinormalkan, urut kemunculan. */
-import { SB } from './api.js?v=202611250858';
+import { SB } from './api.js?v=202611250906';
 
 export function kunciKelompok(r){ return [r.prog, r.kro, r.ro, r.sub, r.akun].join('|'); }
 function normal(s){ return String(s || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
 
 /* rkk: baris tabel anggaran; fa: baris realisasi (tanpa baris blokir buatan) */
 export function hitungBlokir(rkk, fa){
-  var faK = {}, rkK = {};
-  fa.forEach(function(r){ if (r.blokir) return; var k = kunciKelompok(r); (faK[k] = faK[k] || []).push(r); });
-  rkk.forEach(function(r){ var k = kunciKelompok(r); (rkK[k] = rkK[k] || []).push(r); });
+  var faK = {}, rkK = {}, unitFa = {};
+  fa.forEach(function(r){ if (r.blokir) return; unitFa[(r.kat || '') + '|' + (r.unit || '')] = 1; var k = kunciKelompok(r); (faK[k] = faK[k] || []).push(r); });
+  /* hanya RKK milik unit yang ada di data realisasi pengguna: RKK unit lain (mis. tersisa dari sesi akun lain)
+     tidak boleh menjadi baris "Pagu diblokir" di dasbor unit ini */
+  rkk.forEach(function(r){ if (!unitFa[(r.kategori || '') + '|' + (r.unit || '')]) return; var k = kunciKelompok(r); (rkK[k] = rkK[k] || []).push(r); });
   var kelompok = {}, item = {}, total = 0;
   Object.keys(rkK).forEach(function(k){
     var rs = rkK[k];

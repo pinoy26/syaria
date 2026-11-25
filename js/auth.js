@@ -1,11 +1,11 @@
 /* js/auth.js — halaman depan publik (beranda) & halaman masuk.
    Alur: beranda → tombol "Masuk" → halaman masuk (#masuk). Tombol kembali browser/HP kembali ke beranda. */
-import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611250858';
-import { THEME_BTN } from './theme.js?v=202611250858';
-import { SBC } from './api.js?v=202611250858';
-import { mulai } from './main.js?v=202611250858';
-import { muatBeritaBeranda } from './berita.js?v=202611250858';
-import { tandaiAktif } from './sesi.js?v=202611250858';
+import { $, esc, errMsg, perluKonfirmasi } from './utils.js?v=202611250906';
+import { THEME_BTN } from './theme.js?v=202611250906';
+import { SBC } from './api.js?v=202611250906';
+import { mulai, perluMuatUlang } from './main.js?v=202611250906';
+import { muatBeritaBeranda } from './berita.js?v=202611250906';
+import { tandaiAktif } from './sesi.js?v=202611250906';
 
 var HASH_MASUK = '#masuk';
 var VIEW = '';
@@ -197,7 +197,8 @@ function halamanMasuk(catatan){
       history.replaceState(null, '', location.pathname + location.search);
       VIEW = '';
       $('gate').hidden = true; $('gate').innerHTML = ''; $('boot').hidden = false; $('boot').textContent = 'Memuat dasbor…';
-      mulai();
+      /* halaman ini pernah memuat data akun lain (keluar otomatis / sesi berakhir): muat ulang agar cache bersih */
+      if (perluMuatUlang()) location.reload(); else mulai();
     }).catch(function(x){
       b.disabled = false;
       $('lgMsg').textContent = errMsg(x);
