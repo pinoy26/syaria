@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250234';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250234';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250234';
-import { SB } from '../api.js?v=202611250234';
-import { refresh } from '../nav.js?v=202611250234';
-import { lupakanUsulan } from './usulan.js?v=202611250234';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250247';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250247';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250247';
+import { SB } from '../api.js?v=202611250247';
+import { refresh } from '../nav.js?v=202611250247';
+import { lupakanUsulan } from './usulan.js?v=202611250247';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -745,8 +745,37 @@ function pulihkan(id){
   var r = {}; Object.keys(b).forEach(function(k){ r[k] = b[k]; }); r.anggaran_id = b.id; r.id = null;
   R.rows.push(r); urut(); R.sel = { key: 'i' + R.rows.indexOf(r) }; R.kotor = true; R.fokus = true; R.info = 'Detail "' + r.uraian + '" dikembalikan. Klik Simpan untuk menyimpan.'; gambarUlang();
 }
+/* sub komponen baru (belum ada di DIPA) dipindah ke posisi menurut kodenya di dalam komponen:
+   mis. BD diletakkan tepat setelah BC, BE setelah BD; isi tiap sub komponen tetap berurutan */
+function urutkanSubBaru(){
+  urut();
+  var diDipa = {}; Object.keys(R.basis).forEach(function(id){ var b = R.basis[id]; diDipa[b.ro + '|' + b.sub] = 1; });
+  var baru = {}; R.rows.forEach(function(r){ var k = r.ro + '|' + r.sub; if (!diDipa[k]) (baru[k] = baru[k] || []).push(r); });
+  var kodeDari = function(sub){ return String(sub || '').split('.').pop(); };
+  Object.keys(baru).sort(function(a, b){ return kodeDari(a) < kodeDari(b) ? -1 : 1; }).forEach(function(k){
+    var grup = baru[k], g = grup[0], kode = kodeDari(g.sub);
+    var sisa = R.rows.filter(function(r){ return grup.indexOf(r) < 0; });
+    var komp = sisa.filter(function(r){ return r.prog === g.prog && r.kro === g.kro && r.ro === g.ro && r.komp === g.komp; });
+    if (!komp.length) return;
+    /* sub komponen lain di komponen ini yang kodenya lebih kecil → tempel setelah baris terakhir sub yang kodenya terbesar di antaranya */
+    var lebihKecil = komp.filter(function(r){ return kodeDari(r.sub) < kode; }), acuan;
+    if (lebihKecil.length){
+      var maks = lebihKecil.reduce(function(m, r){ return kodeDari(r.sub) > m ? kodeDari(r.sub) : m; }, '');
+      var grupMaks = komp.filter(function(r){ return kodeDari(r.sub) === maks; }); acuan = grupMaks[grupMaks.length - 1];
+    }
+    var i = acuan ? sisa.indexOf(acuan) : sisa.indexOf(komp[0]) - 1;
+    var a = i >= 0 ? sisa[i].urutan : komp[0].urutan - 1, z = sisa[i + 1] ? sisa[i + 1].urutan : a + grup.length + 1;
+    var step = (z - a) / (grup.length + 1);
+    grup.forEach(function(r, n){ r.urutan = a + step * (n + 1); });
+    urut();
+  });
+}
 function simpan(){
   if (!R.kotor || R.simpan) return;
+  /* sel terpilih ditandai dengan objek baris agar tetap menunjuk baris yang sama setelah diurutkan */
+  var selBaris = (function(){ var b = barisTerpilih(susun()); return b && b.jenis === 'item' ? b.r : null; })();
+  urutkanSubBaru();
+  if (selBaris) R.sel = { key: 'i' + R.rows.indexOf(selBaris) };
   R.simpan = true; gambarUlang();
   var kirim = R.rows.map(function(r){ return { anggaran_id: r.anggaran_id, urutan: r.urutan, judul: r.judul || '', judul2: r.judul2 || '', uraian: r.uraian, volume: r.volume, satuan: r.satuan || '', harga: r.harga,
     prog: r.prog, kro: r.kro, ro: r.ro, komp: r.komp, sub: r.sub, sub_n: r.sub_n || '', akun: r.akun, sumber: r.sumber || '' }; });
