@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250212';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250212';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250212';
-import { SB } from '../api.js?v=202611250212';
-import { refresh } from '../nav.js?v=202611250212';
-import { lupakanUsulan } from './usulan.js?v=202611250212';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250234';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250234';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250234';
+import { SB } from '../api.js?v=202611250234';
+import { refresh } from '../nav.js?v=202611250234';
+import { lupakanUsulan } from './usulan.js?v=202611250234';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -619,8 +619,8 @@ function salinKeClip(){
   var ang = anggota(b), src = ang.filter(function(r){ return !kunci51(r); });
   if (!src.length) return toast('Isi baris ini hanya akun 51 (Belanja Pegawai) yang dikunci untuk fakultas/unit.', 'err', 'Tidak dapat dicopy');
   R.clip = { jenis: b.jenis, key: b.key, rows: src, lewat: ang.length - src.length, ro: b.r.ro, komp: b.r.komp, sub: b.r.sub, akun: b.r.akun, judul: b.r.judul, judul2: b.r.judul2,
-    label: NAMA_JENIS[b.jenis] + ' ' + (b.jenis === 'sub' ? String(b.r.sub).split('.').pop() + ' ' + (b.r.sub_n || '') : b.jenis === 'akun' ? b.r.akun + ' ' + (b.r.akun_n || '') : (b.n || '')) +
-      ' · ' + src.length + ' detail · Rp ' + rp(src.reduce(function(t, r){ return t + r.jumlah; }, 0)) };
+    label: NAMA_JENIS[b.jenis] + ' ' + (b.jenis === 'sub' ? b.r.sub + ' ' + (b.r.sub_n || '') + ' (RO ' + b.r.keg + '.' + b.r.ro + ')' : b.jenis === 'akun' ? b.r.akun + ' ' + (b.r.akun_n || '') + ' di ' + b.r.sub : (b.n || '') + ' di ' + b.r.sub + ' · ' + b.r.akun) +
+      ' · ' + (b.jenis === 'sub' ? src.map(function(r){ return r.akun; }).filter(function(v, i, a){ return a.indexOf(v) === i; }).length + ' akun · ' : '') + src.length + ' detail · Rp ' + rp(src.reduce(function(t, r){ return t + r.jumlah; }, 0)) };
   R.info = ''; gambarUlang();
 }
 /* baris tujuan yang sah untuk Paste, atau null */
@@ -634,9 +634,19 @@ function tujuanPaste(b){
 }
 function ketPaste(){
   var c = R.clip; if (!c) return '';
-  return c.jenis === 'sub' ? 'Untuk menempel sub komponen: pilih baris komponen atau sub komponen di komponen ' + c.komp + '.' :
+  return c.jenis === 'sub' ? 'Untuk menempel sub komponen: pilih baris komponen ' + c.komp + ' (ditempel setelah ' + String(c.sub).split('.').pop() + ') atau sub komponen lain di komponen itu (ditempel setelahnya).' :
          c.jenis === 'akun' ? 'Untuk menempel akun: pilih baris sub komponen di komponen ' + c.komp + '.' :
          c.jenis === 'h1' ? 'Untuk menempel Header 1: pilih baris akun tujuan.' : 'Untuk menempel Header 2: pilih baris Header 1 tujuan.';
+}
+/* kode berikutnya setelah kode asal yang belum dipakai di RO + komponen itu: BC → BD (lewati yang terpakai) */
+function kodeSetelah(ro, komp, asal){
+  var pakai = {}, cek = function(r){ if (r.ro === ro && r.komp === komp) pakai[String(r.sub || '').split('.').pop()] = 1; };
+  R.rows.forEach(cek); Object.keys(R.basis).forEach(function(id){ cek(R.basis[id]); });
+  if (/^[A-Z]{2}$/.test(asal)){
+    var H = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', n = H.indexOf(asal[0]) * 26 + H.indexOf(asal[1]);
+    for (var k = n + 1; k < 676; k++){ var kd = H[Math.floor(k / 26)] + H[k % 26]; if (!pakai[kd]) return kd; }
+  }
+  return saranKode(ro, komp);
 }
 /* salin baris src (urutan dipertahankan) dan sisipkan setelah baris 'setelah' */
 function tempelSalinan(src, ganti, denganNilai, setelah){
@@ -656,6 +666,20 @@ function tempelSalinan(src, ganti, denganNilai, setelah){
 /* Paste: tempel isi Copy ke baris tujuan yang dipilih */
 function bukaPaste(){
   var c = R.clip, b = tujuanPaste(barisTerpilih(susun())); if (!c || !b) return;
+  if (c.jenis === 'sub'){
+    /* sub komponen: langsung ditempel — setelah sub asal (tujuan = baris komponen) atau setelah sub yang dipilih;
+       kode = kode berikutnya yang masih kosong (BC → BD); kode & uraian bisa diganti lewat Ubah */
+    var asalKode = String(c.sub).split('.').pop(), kodeBaru = kodeSetelah(c.ro, c.komp, asalKode);
+    if (!kodeBaru) return toast('Tidak ada kode sub komponen yang masih kosong di komponen ini.', 'err', 'Paste gagal');
+    var acuan = b.jenis === 'sub' ? b.r.sub : c.sub;
+    var grupAcuan = R.rows.filter(function(r){ return r.ro === c.ro && r.sub === acuan; });
+    var setelahS = grupAcuan.length ? grupAcuan[grupAcuan.length - 1] : R.rows.filter(function(r){ return r.ro === c.ro && r.komp === c.komp; }).pop();
+    var hasil = tempelSalinan(c.rows, { sub: c.komp + '.' + kodeBaru, sub_n: c.rows[0].sub_n }, true, setelahS);
+    R.sel = { key: 'i' + R.rows.indexOf(hasil[0]) }; R.kotor = true; R.fokus = true;
+    R.info = 'Sub komponen ' + kodeBaru + ' ditempel setelah ' + String(acuan).split('.').pop() + ' (salinan ' + asalKode + '): ' + hasil.length + ' detail, Rp ' + rp(hasil.reduce(function(t, r){ return t + r.jumlah; }, 0)) +
+      '. Ganti kode/uraian lewat Ubah bila perlu, lalu Simpan.';
+    return gambarUlang();
+  }
   var src = c.rows, tot = src.reduce(function(t, r){ return t + r.jumlah; }, 0);
   var inp = function(id, lbl, v, ph, extra){ return '<label class="f" for="' + id + '"' + (extra && extra.lebar ? ' style="flex:0 0 ' + extra.lebar + '"' : '') + '>' + lbl + '<input type="text" id="' + id + '" value="' + esc(v) + '" placeholder="' + (ph || '') + '" autocomplete="off"' + (extra && extra.attr || '') + '></label>'; };
   var isian = '', tuju = '';
