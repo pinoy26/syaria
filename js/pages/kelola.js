@@ -1,12 +1,12 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611251113';
-import { S, FAK_ORDER, DB, BOOT, sess, HAK, HAK_AWAL, NAMA_PERAN } from '../state.js?v=202611251113';
-import { card, openModal } from '../ui-components.js?v=202611251113';
-import { SB } from '../api.js?v=202611251113';
-import { refresh } from '../nav.js?v=202611251113';
-import { reboot, loadData } from '../main.js?v=202611251113';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611251113';
-import { lupakanAnggaran } from './anggaran.js?v=202611251113';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611251118';
+import { S, FAK_ORDER, DB, BOOT, sess, HAK, HAK_AWAL, NAMA_PERAN } from '../state.js?v=202611251118';
+import { card, openModal } from '../ui-components.js?v=202611251118';
+import { SB } from '../api.js?v=202611251118';
+import { refresh } from '../nav.js?v=202611251118';
+import { reboot, loadData } from '../main.js?v=202611251118';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611251118';
+import { lupakanAnggaran } from './anggaran.js?v=202611251118';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -212,7 +212,7 @@ export function renderKelolaUser(){
   var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th><th></th></tr></thead><tbody>'+
     A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]), sendiri=u[0]===emailSaya;
       /* akun sendiri tidak diubah di sini (peran/status dijaga database); sandi sendiri lewat menu akun → Ubah sandi */
-      var aksi=sendiri?'<td class="row-actions"><span class="pill st-info"><i></i>Akun Anda</span><br><span class="note">Ganti sandi lewat menu akun → Ubah sandi</span></td>':
+      var aksi=sendiri?'<td class="row-actions"><span class="pill st-info"><i></i>Akun Anda</span></td>':
         '<td class="row-actions"><button class="btn" type="button" data-edit="'+u[6]+'">Ubah</button><button class="btn" type="button" data-act="'+u[6]+'" data-on="'+(aktif?0:1)+'">'+(aktif?'Nonaktifkan':'Aktifkan')+'</button><button class="btn" type="button" data-del="'+u[6]+'" data-email="'+esc(u[0])+'">Hapus</button></td>';
       return '<tr><td>'+esc(u[0])+'</td><td><b>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</b>'+hakUser(u)+'</td><td>'+cakupanUser(u)+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td>'+aksi+'</tr>'; }).join('')+'</tbody></table></div>';
   var form='<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
