@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250247';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250247';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250247';
-import { SB } from '../api.js?v=202611250247';
-import { refresh } from '../nav.js?v=202611250247';
-import { lupakanUsulan } from './usulan.js?v=202611250247';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250255';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250255';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250255';
+import { SB } from '../api.js?v=202611250255';
+import { refresh } from '../nav.js?v=202611250255';
+import { lupakanUsulan } from './usulan.js?v=202611250255';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -65,6 +65,18 @@ function muatSalinan(u){
     R.u = u; R.rows = r[0]; R.cekKey = {}; R.clip = null; R.bl = r[2]; R.rk = r[3]; R.bas = r[4]; R.sel = null; R.kotor = false;
     /* usulan seluruh satker (kategori kosong): basis = seluruh DIPA */
     R.basis = {}; r[1].forEach(function(b){ if (u.kategori == null || (b.kategori === u.kategori && (b.unit || '') === (u.unit || ''))) R.basis[b.id] = b; });
+    /* sub komponen baru yang tersimpan sebelum diurutkan (mis. BD di bawah CH): rapikan menurut kode saat dibuka;
+       bila ada yang berpindah, tandai belum disimpan agar urutannya bisa disimpan (hanya untuk usulan yang dapat diedit) */
+    if (bolehUbah(u)){
+      urut();
+      var sebelum = R.rows.slice(), nilaiLama = R.rows.map(function(x){ return x.urutan; });
+      urutkanSubBaru();
+      var pindah = R.rows.some(function(x, i){ return x !== sebelum[i]; });
+      if (!pindah) sebelum.forEach(function(x, i){ x.urutan = nilaiLama[i]; });   /* posisi sudah benar: nilai urutan dibiarkan apa adanya */
+      if (pindah){
+        R.kotor = true; R.info = 'Urutan sub komponen baru dirapikan menurut kode (mis. BD tepat di bawah BC). Klik Simpan untuk menyimpan urutannya.';
+      }
+    }
     R.memuat = false; if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }

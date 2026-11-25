@@ -1,7 +1,7 @@
 /* js/pages/perhatian.js — Perlu Perhatian */
-import { esc, rp, pc, group, sum } from '../utils.js?v=202611250247';
-import { rows, subName, pill } from '../state.js?v=202611250247';
-import { card, printHead } from '../ui-components.js?v=202611250247';
+import { esc, rp, pc, group, sum } from '../utils.js?v=202611250255';
+import { rows, subName, pill } from '../state.js?v=202611250255';
+import { card, printHead } from '../ui-components.js?v=202611250255';
 
 /* ================= perlu perhatian ================= */
 export function renderPerhatian(){
