@@ -1,12 +1,12 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611250853';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611250853';
-import { card, openModal } from '../ui-components.js?v=202611250853';
-import { SB } from '../api.js?v=202611250853';
-import { refresh } from '../nav.js?v=202611250853';
-import { reboot, loadData } from '../main.js?v=202611250853';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611250853';
-import { lupakanAnggaran } from './anggaran.js?v=202611250853';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611250858';
+import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611250858';
+import { card, openModal } from '../ui-components.js?v=202611250858';
+import { SB } from '../api.js?v=202611250858';
+import { refresh } from '../nav.js?v=202611250858';
+import { reboot, loadData } from '../main.js?v=202611250858';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611250858';
+import { lupakanAnggaran } from './anggaran.js?v=202611250858';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -151,7 +151,29 @@ function doUpload(){
   if (jenis==='RKK' && !(tahun>=2000 && tahun<=2100)){ upStatus('err','Isi tahun anggaran RKK, misalnya '+new Date().getFullYear()+'.'); return; }
   if (jenis==='RKK' && revisi!=='' && !(/^\d{1,3}$/.test(revisi))){ upStatus('err','Nomor revisi DIPA harus angka 0–999, atau kosongkan agar dihitung otomatis.'); return; }
   if (typeof XLSX==='undefined'){ upGagal('Pembaca Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.'); return; }
-  upButton(true); upStatus('busy','Membaca file '+f.name+'…');
+  upButton(true); upStatus('busy','Memeriksa usulan revisi yang sedang berjalan…');
+  cekUsulanBerjalan(jenis, jenis==='RKK'?tahun:parseInt(String(tg).slice(0,4),10)).then(function(lanjut){
+    if (!lanjut){ upButton(false); var m=$('upMsg'); if(m) m.hidden=true; return; }
+    bacaDanUnggah(f, jenis, tg, tahun, revisi);
+  });
+}
+/* Peringatan sebelum unggah: RKK baru membuat usulan draf/diajukan/dikembalikan tidak dapat dikirim
+   atau disetujui (basis DIPA berubah); realisasi baru diperiksa ulang saat usulan diajukan disetujui. */
+var ST_USULAN={draf:'Draf',diajukan:'Diajukan',dikembalikan:'Dikembalikan'};
+function cekUsulanBerjalan(jenis, tahun){
+  var st=jenis==='RKK'?['draf','diajukan','dikembalikan']:['diajukan'];
+  return SB.usulanDaftar().then(function(l){
+    var ada=l.filter(function(u){ return u.histori && u.tahun===tahun && st.indexOf(u.status)>=0; });
+    if (!ada.length) return true;
+    var daftar=ada.map(function(u){ return '#'+u.id+' '+(u.judul||'')+' ('+(u.unit||u.kategori||'Seluruh satker')+') — '+ST_USULAN[u.status]; }).join('; ');
+    var pesan=jenis==='RKK'
+      ? 'Masih ada usulan revisi TA '+tahun+' yang berjalan: '+daftar+'. Setelah RKK baru diunggah, usulan tersebut tidak dapat dikirim atau disetujui karena basis DIPA berubah dan harus dibentuk ulang dari Status Histori. Lanjutkan bila RKK ini memang hasil revisi yang sudah ditetapkan di SAKTI.'
+      : 'Masih ada usulan revisi yang sedang diperiksa: '+daftar+'. Data realisasi baru ikut diperiksa saat usulan disetujui; detail yang realisasinya naik melebihi nilai usulan akan membuat persetujuan ditolak dan usulan harus dikembalikan. Sebaiknya validasi usulan lebih dulu.';
+    return tanya({ judul:'Ada usulan revisi yang berjalan', pesan:pesan, ya:'Tetap unggah' });
+  }).catch(function(){ return true; });
+}
+function bacaDanUnggah(f, jenis, tg, tahun, revisi){
+  upStatus('busy','Membaca file '+f.name+'…');
   var rd=new FileReader();
   rd.onerror=function(){ upGagal('File tidak bisa dibaca dari perangkat.'); };
   rd.onload=function(e){
