@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250813';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611250813';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250813';
-import { SB } from '../api.js?v=202611250813';
-import { refresh, keepScroll } from '../nav.js?v=202611250813';
-import { kunciItem } from './anggaran.js?v=202611250813';
-import { muatPdfLib } from './laporan.js?v=202611250813';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611250813';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250853';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin } from '../state.js?v=202611250853';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250853';
+import { SB } from '../api.js?v=202611250853';
+import { refresh, keepScroll } from '../nav.js?v=202611250853';
+import { kunciItem } from './anggaran.js?v=202611250853';
+import { muatPdfLib } from './laporan.js?v=202611250853';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611250853';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -245,6 +245,7 @@ function renderDetail(){
     aksi += '<div class="tools">' + (u.histori ? '<button class="btn" type="button" data-us-redesain="' + u.id + '">Edit di Belanja Redesain</button>' : '<button class="btn" type="button" data-us-edit>Ubah usulan</button>') + '<button class="btn primary" type="button" data-us-ajukan>Ajukan</button><button class="btn" type="button" data-us-hapus>Hapus</button></div>';
   if (adminP && u.status === 'diajukan')
     aksi += kotakProses();
+  if (adminP && u.status === 'disetujui') aksi += kotakBatalSetuju();
   if (adminP && (u.status === 'disetujui' || u.status === 'diinput_sakti'))
     aksi += '<div class="form"><label class="f" for="usNo">No. Revisi SAKTI<input type="text" id="usNo" value="' + esc(u.no_revisi) + '" placeholder="mis. 2026.307740.015"></label></div>' +
       '<div class="tools" style="margin-top:8px"><button class="btn primary" type="button" data-us-norev>' + (u.status === 'disetujui' ? 'Catat: sudah diinput ke SAKTI' : 'Perbarui No. Revisi') + '</button></div>';
@@ -366,8 +367,10 @@ function bind(){
   on('[data-us-proses]', function(el){
     var aksi = el.getAttribute('data-us-proses'), cat = $('usCatatan') ? $('usCatatan').value : '';
     if (aksi === 'kembalikan' && cat.trim().length < 3){ toast('Tuliskan catatan perbaikan untuk pengusul sebelum mengembalikan usulan.', 'err', 'Catatan wajib diisi'); if ($('usCatatan')) $('usCatatan').focus(); return; }
-    var judul = { setujui: 'Validasi & setujui usulan #' + U.id + '?', kembalikan: 'Kembalikan usulan #' + U.id + ' ke pengusul?' }[aksi];
-    tanya({ judul: judul, pesan: aksi === 'setujui' ? 'Usulan disetujui dan siap diinput ke SAKTI.' : 'Usulan kembali ke unit untuk diperbaiki. Pengusul akan melihat catatan Anda.', ya: { setujui: 'Validasi & Setujui', kembalikan: 'Kembalikan' }[aksi] }).then(function(ya){
+    var batal = el.hasAttribute('data-batal-setuju');
+    var judul = batal ? 'Batalkan persetujuan usulan #' + U.id + '?' : { setujui: 'Validasi & setujui usulan #' + U.id + '?', kembalikan: 'Kembalikan usulan #' + U.id + ' ke pengusul?' }[aksi];
+    var pesan = batal ? 'Usulan kembali berstatus Dikembalikan. Lembar kerja dapat diedit lagi, lalu dikirim dan divalidasi ulang.' : aksi === 'setujui' ? 'Usulan disetujui dan siap diinput ke SAKTI.' : 'Usulan kembali ke unit untuk diperbaiki. Pengusul akan melihat catatan Anda.';
+    tanya({ judul: judul, pesan: pesan, ya: batal ? 'Batalkan persetujuan' : { setujui: 'Validasi & Setujui', kembalikan: 'Kembalikan' }[aksi] }).then(function(ya){
       if (!ya) return; el.disabled = true;
       SB.prosesUsulan(U.id, aksi, cat).then(function(r){ muatUlang('Status usulan: ' + ((ST[r.status] || [0, r.status])[1]) + '.', 'Usulan diproses'); }).catch(function(e){ el.disabled = false; toast(errMsg(e), 'err', 'Gagal memproses'); });
     });
@@ -401,6 +404,13 @@ function ukuran(n){ n = +n || 0; return n >= 1048576 ? (n / 1048576).toLocaleStr
 function logHtml(d){
   return '<ol class="us-log">' + d.log.map(function(l){ return '<li><b>' + esc(({ dibuat: 'Dibuat', diajukan: 'Dikirim', dikembalikan: 'Dikembalikan', disetujui: 'Divalidasi & disetujui', ditolak: 'Ditolak', diinput_sakti: 'Diinput ke SAKTI', selesai: 'Selesai' })[l.aksi] || l.aksi) + '</b> · ' +
     esc(String(l.waktu).slice(0, 16).replace('T', ' ')) + ' · ' + esc(l.email) + (l.catatan ? '<br><span class="note">' + esc(l.catatan) + '</span>' : '') + '</li>'; }).join('') + '</ol>';
+}
+/* usulan disetujui tetapi belum diinput ke SAKTI: dapat dikembalikan bila ditemukan kesalahan saat input */
+function kotakBatalSetuju(){
+  return '<details class="us-batal-setuju" style="margin-top:12px"><summary>Ada yang perlu diperbaiki sebelum input SAKTI?</summary>' +
+    '<p class="note">Persetujuan dibatalkan dan usulan kembali berstatus <b>Dikembalikan</b>: lembar kerja dapat diedit lagi lalu dikirim ulang, tanpa menghapus usulan.</p>' +
+    '<label class="f" for="usCatatan">Catatan perbaikan (wajib)<textarea id="usCatatan" rows="3" maxlength="2000" placeholder="mis. Volume akun 524111 pada sub 052.BA disesuaikan dengan SAKTI."></textarea></label>' +
+    '<div class="tools" style="margin-top:8px"><button class="btn danger" type="button" data-us-proses="kembalikan" data-batal-setuju>Batalkan persetujuan &amp; kembalikan</button></div></details>';
 }
 function kotakProses(){
   return '<label class="f" for="usCatatan">Catatan untuk pengusul (wajib bila dikembalikan)<textarea id="usCatatan" rows="3" maxlength="2000" placeholder="mis. Lengkapi rincian volume pada akun 521211; lampirkan TOR kegiatan."></textarea></label>' +
@@ -460,7 +470,8 @@ function renderPengajuanForm(){
   else if (adminP && u.status === 'diajukan') aksi = kotakProses();
   else if (adminP && (u.status === 'disetujui' || u.status === 'diinput_sakti'))
     aksi = '<div class="form"><label class="f" for="usNo">No. Revisi SAKTI<input type="text" id="usNo" value="' + esc(u.no_revisi) + '" placeholder="mis. 2026.307740.015"></label></div>' +
-      '<div class="tools" style="margin-top:8px"><button class="btn primary" type="button" data-us-norev>' + (u.status === 'disetujui' ? 'Catat: sudah diinput ke SAKTI' : 'Perbarui No. Revisi') + '</button></div>';
+      '<div class="tools" style="margin-top:8px"><button class="btn primary" type="button" data-us-norev>' + (u.status === 'disetujui' ? 'Catat: sudah diinput ke SAKTI' : 'Perbarui No. Revisi') + '</button></div>' +
+      (u.status === 'disetujui' ? kotakBatalSetuju() : '');
   else if (u.status === 'diajukan') aksi = '<p class="note">Usulan sedang diperiksa Admin perencanaan.</p>';
   if (u.status === 'diinput_sakti') aksi += cocokRKK(d);
   return '<div class="page-sec grid">' + kartu1 + kartu2 + kartu3 +
