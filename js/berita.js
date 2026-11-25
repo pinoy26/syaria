@@ -1,8 +1,8 @@
 /* js/berita.js — Berita & Pengumuman: tampilan bersama (halaman login, lonceng dasbor, halaman baca berita) */
-import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611250906';
-import { SB } from './api.js?v=202611250906';
-import { sess } from './state.js?v=202611250906';
-import { openModal, closeModal } from './ui-components.js?v=202611250906';
+import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611251040';
+import { SB } from './api.js?v=202611251040';
+import { sess, punyaSalah } from './state.js?v=202611251040';
+import { openModal, closeModal } from './ui-components.js?v=202611251040';
 
 export var JENIS = { info: ['st-info', 'Info'], penting: ['st-crit', 'Penting'], tenggat: ['st-warn', 'Tenggat'] };
 export var IC_BERITA = '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>';
@@ -184,11 +184,12 @@ export function muatNotifUsulan(){
 }
 function notifUsulan(){
   var s = sess(); if (!s || !s.role) return [];
-  if (s.role === 'SUPERADMIN') return USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).map(function(u){
-    return { id: u.id, teks: 'Usulan #' + u.id + ' dari ' + (u.lintas_unit ? 'lintas unit' : (u.unit || '—')) + ' menunggu persetujuan', judul: u.judul, telaah: u.perlu_telaah, kunci: null }; });
+  var antre = punyaSalah(['periksa', 'setujui']) ? USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).map(function(u){
+    return { id: u.id, teks: 'Usulan #' + u.id + ' dari ' + (u.lintas_unit ? 'lintas unit' : (u.unit || '—')) + ' menunggu persetujuan', judul: u.judul, telaah: u.perlu_telaah, kunci: null }; }) : [];
+  if (s.role === 'SUPERADMIN') return antre;
   var dilihat = ambilSet(K_USULAN);
-  return USULAN.list.filter(function(u){ return u.dibuat_email === s.email && TEKS_ST[u.status] && dilihat.indexOf(u.id + ':' + u.status) < 0; }).map(function(u){
-    return { id: u.id, teks: 'Usulan #' + u.id + ' ' + TEKS_ST[u.status], judul: u.judul, telaah: false, kunci: u.id + ':' + u.status }; });
+  return antre.concat(USULAN.list.filter(function(u){ return u.dibuat_email === s.email && TEKS_ST[u.status] && dilihat.indexOf(u.id + ':' + u.status) < 0; }).map(function(u){
+    return { id: u.id, teks: 'Usulan #' + u.id + ' ' + TEKS_ST[u.status], judul: u.judul, telaah: false, kunci: u.id + ':' + u.status }; }));
 }
 export function tandaiUsulanDilihat(id, status){
   var a = ambilSet(K_USULAN), k = id + ':' + status;
@@ -197,8 +198,11 @@ export function tandaiUsulanDilihat(id, status){
 /* angka di menu: Admin perencanaan = menunggu persetujuan; pengusul = usulannya yang dikembalikan */
 export function hitungMenuUsulan(){
   var s = sess(); if (!s || !s.role) return {};
-  if (s.role === 'SUPERADMIN') return { 'kelola-usulan': USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).length };
-  return { 'anggaran-usulan': USULAN.list.filter(function(u){ return u.dibuat_email === s.email && u.status === 'dikembalikan'; }).length };
+  var m = {};
+  if (punyaSalah(['periksa', 'setujui'])) m['kelola-usulan'] = USULAN.list.filter(function(u){ return u.status === 'diajukan'; }).length;
+  if (s.role === 'SUPERADMIN') return m;
+  m['anggaran-usulan'] = USULAN.list.filter(function(u){ return u.dibuat_email === s.email && u.status === 'dikembalikan'; }).length;
+  return m;
 }
 function tampilBel(){
   var b = $('btnBerita'); if (!b) return;

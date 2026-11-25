@@ -1,12 +1,12 @@
 /* js/pages/kelola.js — Kelola Data & Kelola Pengguna (admin) */
-import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611250906';
-import { S, FAK_ORDER, DB, BOOT, sess } from '../state.js?v=202611250906';
-import { card, openModal } from '../ui-components.js?v=202611250906';
-import { SB } from '../api.js?v=202611250906';
-import { refresh } from '../nav.js?v=202611250906';
-import { reboot, loadData } from '../main.js?v=202611250906';
-import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611250906';
-import { lupakanAnggaran } from './anggaran.js?v=202611250906';
+import { $, esc, rp, pc, tgl, toast, tanya, notifHtml, errMsg } from '../utils.js?v=202611251040';
+import { S, FAK_ORDER, DB, BOOT, sess, HAK, HAK_AWAL, NAMA_PERAN } from '../state.js?v=202611251040';
+import { card, openModal } from '../ui-components.js?v=202611251040';
+import { SB } from '../api.js?v=202611251040';
+import { refresh } from '../nav.js?v=202611251040';
+import { reboot, loadData } from '../main.js?v=202611251040';
+import { IC_EYE, IC_EYE_OFF } from '../akun.js?v=202611251040';
+import { lupakanAnggaran } from './anggaran.js?v=202611251040';
 
 /* ================= data admin bersama (dipakai Kelola Data & Kelola Pengguna) ================= */
 function ensureAdmin(){
@@ -197,24 +197,37 @@ function bacaDanUnggah(f, jenis, tg, tahun, revisi){
 export function renderKelolaUser(){
   var A=ensureAdmin(); if (!A) return '<div class="loading">Memuat data admin…</div>';
   var units={Fakultas:{},Rektorat:{}}; A.rules.forEach(function(r){ if(r[4]) (units[r[4]]=units[r[4]]||{})[r[5]]=1; });
-  var peranName={SUPERADMIN:'Admin perencanaan',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Unit'};
+  var peranName=NAMA_PERAN, HAK_PENDEK={usulan:'Usulan',satker:'Seluruh satker',periksa:'Periksa',setujui:'Setujui',sakti:'SAKTI',periode:'Periode',blokir:'Blokir',unggah:'Kelola Data',berita:'Berita'};
+  var cakupanUser=function(u){ var p=String(u[1]).toUpperCase(), hak=u[8]||[];
+    if (p==='UNIT') return u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'—';
+    if (p==='SUPERADMIN') return 'Seluruh satker';
+    if (hak.indexOf('satker')>=0) return 'Seluruh satker<br><span class="note">usulan: semua unit</span>';
+    if (hak.indexOf('usulan')>=0) return 'Seluruh satker<br><span class="note">usulan: '+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'semua unit')+'</span>';
+    return 'Seluruh satker <span class="note">(baca)</span>'; };
+  var hakUser=function(u){ var p=String(u[1]).toUpperCase(), hak=u[8]||[];
+    if (p==='SUPERADMIN') return '<br><span class="note">Semua hak</span>';
+    if (p!=='PERENCANAAN'&&p!=='ADMIN') return p==='PIMPINAN'?'<br><span class="note">Baca saja</span>':'';
+    return '<br><span class="note">'+(hak.length?hak.map(function(h){ return HAK_PENDEK[h]||h; }).join(' · '):'Baca saja')+'</span>'; };
   var emailSaya=sess().email;
   var users='<div class="tbl"><table><thead><tr><th>Email / nama pengguna</th><th>Peran</th><th>Cakupan</th><th>Masuk dengan</th><th>Status</th><th>Keterangan</th><th></th></tr></thead><tbody>'+
     A.users.map(function(u){ var aktif=/^(YA|Y|TRUE|AKTIF|1)$/i.test(u[4]), sendiri=u[0]===emailSaya;
       var aksi='<td class="row-actions"><button class="btn" type="button" data-edit="'+u[6]+'">Ubah</button><button class="btn" type="button" data-act="'+u[6]+'" data-on="'+(aktif?0:1)+'">'+(aktif?'Nonaktifkan':'Aktifkan')+'</button>'+(sendiri?'':'<button class="btn" type="button" data-del="'+u[6]+'" data-email="'+esc(u[0])+'">Hapus</button>')+'</td>';
-      return '<tr><td>'+esc(u[0])+'</td><td>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</td><td>'+(u[2]?esc(u[2])+(u[3]?' › '+esc(u[3]):' (semua)'):'Seluruh satker')+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td>'+aksi+'</tr>'; }).join('')+'</tbody></table></div>';
+      return '<tr><td>'+esc(u[0])+'</td><td><b>'+esc(peranName[String(u[1]).toUpperCase()]||u[1])+'</b>'+hakUser(u)+'</td><td>'+cakupanUser(u)+'</td><td>'+loginWay(u)+'</td><td><span class="pill '+(aktif?'st-good':'st-crit')+'"><i></i>'+(aktif?'Aktif':'Nonaktif')+'</span></td><td>'+esc(u[5])+'</td>'+aksi+'</tr>'; }).join('')+'</tbody></table></div>';
   var form='<h3 class="eyebrow" style="margin:18px 0 8px" id="uFormTitle">Tambah pengguna</h3><div class="form"><input type="hidden" id="uRow">'+
     '<label class="f" for="uEmail">Email pengguna<input type="text" id="uEmail" placeholder="nama@kampus.ac.id"></label>'+
     '<label class="f" for="uPassword" id="uPasswordWrap"><span id="uPwLabel">Kata sandi awal</span><span class="pw-wrap"><input type="password" id="uPassword" placeholder="Minimal 8 karakter" autocomplete="new-password">'+
       '<button type="button" class="icon pw-eye" id="uPwEye" aria-label="Tampilkan kata sandi" aria-pressed="false" title="Tampilkan kata sandi">'+IC_EYE+'</button></span></label>'+
-    '<label class="f" for="uPeran">Peran<select id="uPeran"><option value="UNIT">Fakultas / unit</option><option value="PIMPINAN">Pimpinan</option><option value="ADMIN">Admin keuangan</option></select></label>'+
-    '<label class="f" for="uKat">Kategori<select id="uKat"><option value="Fakultas">Fakultas</option><option value="Rektorat">Rektorat</option></select></label>'+
+    '<label class="f" for="uPeran">Peran<select id="uPeran"><option value="UNIT">Admin fakultas/unit</option><option value="PERENCANAAN">Admin perencanaan</option><option value="ADMIN">Admin keuangan</option><option value="PIMPINAN">Pimpinan</option></select></label>'+
+    '<label class="f" for="uKat"><span id="uKatLbl">Kategori</span><select id="uKat"><option value="" id="uKatSemua">Semua unit</option><option value="Fakultas">Fakultas</option><option value="Rektorat">Rektorat</option></select></label>'+
     '<label class="f" for="uUnit">Unit<select id="uUnit"></select></label>'+
+    '<fieldset class="u-hak" id="uHakWrap" style="grid-column:1/-1"><legend>Hak akses <span class="note">— tanpa centang = baca saja</span></legend>'+
+      HAK.map(function(h){ return '<label class="u-hak-i"><input type="checkbox" data-hak="'+h[0]+'"> '+esc(h[1])+'</label>'; }).join('')+
+      '<p class="note" style="margin:6px 0 0">Cakupan usulan (Kategori/Unit di atas) berlaku untuk hak <b>Membuat &amp; mengedit usulan revisi</b>. Hak <b>Usulan seluruh satker</b> mencakup semua unit. Kelola Pengguna tetap khusus Super admin.</p></fieldset>'+
     '<label class="f" for="uKet">Keterangan<input type="text" id="uKet" placeholder="Jabatan / catatan"></label>'+
     '<p class="note" style="grid-column:1/-1;margin:0" id="uPwNote">Saat mengubah pengguna (tombol <b>Ubah</b>), isi kolom kata sandi hanya bila ingin menggantinya — kosongkan untuk mempertahankan kata sandi lama. Sampaikan kata sandi baru langsung kepada pengguna.</p>'+
     '<div class="tools"><button class="btn primary" type="button" id="btnSaveUser">Buat pengguna baru</button><button class="btn" type="button" id="btnClearUser">Kosongkan</button></div></div><div id="userMsg" class="note" style="margin-top:8px"></div>';
   setTimeout(function(){ bindKelolaUser(units); },0);
-  return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin dan pimpinan melihat seluruh satker; pengguna unit hanya melihat cakupannya.',users+form)+'</div>';
+  return '<div class="page-sec grid">'+card('k-user','Pengguna & hak akses','Admin perencanaan, Admin keuangan, dan Pimpinan membaca seluruh satker; menambah/mengubah data hanya sesuai hak yang dicentang. Admin fakultas/unit hanya melihat dan merevisi unitnya.',users+form)+'</div>';
 }
 function bindKelolaUser(units){
   if (!$('uPeran')) return;
@@ -224,9 +237,26 @@ function bindKelolaUser(units){
       b.disabled=true; SB.hapusPengguna(b.dataset.del).then(function(r){ toast(r.pesan,'ok','Akun dihapus'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err','Gagal menghapus akun'); });
     });
   }; });
-  var fillUnits=function(sel){ var k=$('uKat').value; $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
-  var peranChange=function(){ var unit=$('uPeran').value==='UNIT'; $('uKat').disabled=!unit; $('uUnit').disabled=!unit; };
-  $('uKat').onchange=function(){ fillUnits(''); }; $('uPeran').onchange=peranChange; fillUnits(''); peranChange();
+  var fillUnits=function(sel){ var k=$('uKat').value; if (!k){ $('uUnit').innerHTML='<option value="">—</option>'; return; } $('uUnit').innerHTML='<option value="">Semua '+k+'</option>'+Object.keys(units[k]||{}).sort(function(a,b){var ia=FAK_ORDER.indexOf(a),ib=FAK_ORDER.indexOf(b);if(ia>=0&&ib>=0)return ia-ib;return a<b?-1:1;}).map(function(u){return '<option'+(u===sel?' selected':'')+'>'+esc(u)+'</option>';}).join(''); };
+  var hakCentang=function(){ return [].filter.call(document.querySelectorAll('[data-hak]'),function(x){ return x.checked; }).map(function(x){ return x.dataset.hak; }); };
+  var aturHak=function(l){ [].forEach.call(document.querySelectorAll('[data-hak]'),function(x){ x.checked=l.indexOf(x.dataset.hak)>=0; }); };
+  /* UNIT: kategori/unit = cakupan data; Admin perencanaan/keuangan: hak + cakupan usulan; Pimpinan: baca saja */
+  var peranChange=function(){
+    var p=$('uPeran').value, unit=p==='UNIT', staf=p==='PERENCANAAN'||p==='ADMIN', hak=hakCentang();
+    var cakUsulan=staf && hak.indexOf('usulan')>=0 && hak.indexOf('satker')<0;
+    $('uHakWrap').hidden=!staf;
+    $('uKatSemua').hidden=unit; $('uKatSemua').disabled=unit;
+    if (unit && !$('uKat').value){ $('uKat').value='Fakultas'; fillUnits(''); }
+    $('uKatLbl').textContent=unit?'Kategori':'Cakupan usulan';
+    $('uKat').disabled=!(unit||cakUsulan); $('uUnit').disabled=!(unit||cakUsulan)||!$('uKat').value;
+  };
+  [].forEach.call(document.querySelectorAll('[data-hak]'),function(x){ x.onchange=function(){
+    if (x.dataset.hak==='satker' && x.checked) aturHak(hakCentang().concat('usulan'));
+    if (x.dataset.hak==='usulan' && !x.checked) aturHak(hakCentang().filter(function(h){ return h!=='satker'; }));
+    peranChange(); }; });
+  $('uKat').onchange=function(){ fillUnits(''); peranChange(); };
+  $('uPeran').onchange=function(){ if (!$('uRow').value){ var p=$('uPeran').value; aturHak(HAK_AWAL[p]||[]); if ((p==='PERENCANAAN'||p==='ADMIN')){ $('uKat').value=''; fillUnits(''); } } peranChange(); };
+  fillUnits(''); peranChange();
   var lihatSandi=function(on){
     var b=$('uPwEye'); $('uPassword').type=on?'text':'password';
     b.innerHTML=on?IC_EYE_OFF:IC_EYE; b.setAttribute('aria-pressed',on?'true':'false');
@@ -242,17 +272,20 @@ function bindKelolaUser(units){
     $('uPassword').placeholder=edit?'Kosongkan bila tidak diganti':'Minimal 8 karakter';
     $('btnSaveUser').textContent=edit?'Simpan perubahan':'Buat pengguna baru';
   };
-  var clear=function(){ $('uRow').value=''; $('uEmail').value=''; $('uPassword').value=''; $('uKet').value=''; $('uPeran').value='UNIT'; $('uKat').value='Fakultas'; fillUnits(''); peranChange(); mode(); $('uFormTitle').textContent='Tambah pengguna'; };
+  var clear=function(){ $('uRow').value=''; $('uEmail').value=''; $('uPassword').value=''; $('uKet').value=''; $('uPeran').value='UNIT'; $('uKat').value='Fakultas'; aturHak([]); fillUnits(''); peranChange(); mode(); $('uFormTitle').textContent='Tambah pengguna'; };
   $('btnClearUser').onclick=clear;
   mode();
   [].forEach.call(document.querySelectorAll('[data-edit]'),function(b){ b.onclick=function(){
     var u=S.admin.users.filter(function(x){return String(x[6])===b.dataset.edit;})[0]; if(!u) return;
-    $('uRow').value=u[6]; $('uEmail').value=u[0]; $('uPeran').value=String(u[1]).toUpperCase(); if(u[2]) $('uKat').value=u[2]; fillUnits(u[3]); $('uKet').value=u[5]; peranChange(); mode();
+    $('uRow').value=u[6]; $('uEmail').value=u[0]; $('uPeran').value=String(u[1]).toUpperCase(); $('uKat').value=u[2]||(String(u[1]).toUpperCase()==='UNIT'?'Fakultas':''); fillUnits(u[3]); $('uKet').value=u[5]; aturHak(u[8]||[]); peranChange(); mode();
     $('uFormTitle').textContent='Ubah pengguna '+u[0];
   }; });
   [].forEach.call(document.querySelectorAll('[data-act]'),function(b){ b.onclick=function(){
     b.disabled=true; SB.aktifkan(b.dataset.act, b.dataset.on==='1').then(function(r){ toast(r.pesan,'ok'); S.admin=null; refresh(); }).catch(function(e){ b.disabled=false; toast(errMsg(e),'err'); });
   }; });
+  /* nilai yang dikirim: kategori kosong = semua unit; hak hanya untuk Admin perencanaan/keuangan */
+  var kat=function(){ return $('uKat').disabled?'':$('uKat').value; };
+  var hakSimpan=function(){ var p=$('uPeran').value; return p==='PERENCANAAN'||p==='ADMIN'?hakCentang():[]; };
   $('btnSaveUser').onclick=function(){
     var btn=this, edit=!!$('uRow').value;
     btn.disabled=true; $('userMsg').textContent=edit?'Menyimpan…':'Membuat akun…';
@@ -261,7 +294,7 @@ function bindKelolaUser(units){
     if (edit){
       var id=$('uRow').value, sandiBaru=$('uPasswordWrap').hidden?'':$('uPassword').value;
       if (sandiBaru && sandiBaru.length<8){ gagal(new Error('Kata sandi baru minimal 8 karakter, atau kosongkan bila tidak diganti.')); return; }
-      SB.simpanPengguna(id,$('uPeran').value,$('uKat').value,$('uUnit').value,$('uKet').value).then(function(r){
+      SB.simpanPengguna(id,$('uPeran').value,kat(),$('uUnit').value,$('uKet').value,hakSimpan()).then(function(r){
         if (!sandiBaru) return r;
         $('userMsg').textContent='Mengganti kata sandi…';
         return SB.aturSandi(id,sandiBaru).then(function(){ return { ok:true, pesan:'Pengguna disimpan dan kata sandinya diganti.' }; });
@@ -271,7 +304,7 @@ function bindKelolaUser(units){
     var email=$('uEmail').value.trim(), pass=$('uPassword').value;
     if (!email){ gagal(new Error('Isi email pengguna.')); return; }
     if (pass.length<8){ gagal(new Error('Kata sandi minimal 8 karakter.')); return; }
-    SB.buatPengguna(email,pass,$('uPeran').value,$('uKat').value,$('uUnit').value,$('uKet').value).then(function(r){ clear(); selesai(r); }).catch(gagal);
+    SB.buatPengguna(email,pass,$('uPeran').value,kat(),$('uUnit').value,$('uKet').value,hakSimpan()).then(function(r){ clear(); selesai(r); }).catch(gagal);
   };
 }
 function loginWay(u){

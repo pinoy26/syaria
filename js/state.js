@@ -34,6 +34,31 @@ try { localStorage.removeItem('dasbor-v2'); } catch(e){}
 export function persist(){}
 export function sess(){ return BOOT.session; }
 export function isAdmin(){ return sess().role==='ADMIN'||sess().role==='SUPERADMIN'; }
+/* hak akses per pengguna (Super admin punya semua; Admin perencanaan/keuangan sesuai centang di Kelola Pengguna) */
+export var HAK=[
+  ['usulan','Membuat & mengedit usulan revisi'],
+  ['satker','Usulan seluruh satker & lintas unit'],
+  ['periksa','Memeriksa & mengembalikan usulan'],
+  ['setujui','Menyetujui usulan (termasuk membatalkan persetujuan)'],
+  ['sakti','Mencatat No. Revisi SAKTI & menyelesaikan usulan'],
+  ['periode','Mengatur periode revisi'],
+  ['blokir','Mengatur blokir manual'],
+  ['unggah','Kelola Data: unggah RKK/realisasi & pemetaan unit'],
+  ['berita','Mengelola berita']
+];
+export var HAK_AWAL={PERENCANAAN:['usulan','satker','periksa'],ADMIN:[]};
+export var NAMA_PERAN={SUPERADMIN:'Super admin',PERENCANAAN:'Admin perencanaan',ADMIN:'Admin keuangan',PIMPINAN:'Pimpinan',UNIT:'Admin fakultas/unit'};
+export function punya(h){ var s=sess(); return !!s && (s.role==='SUPERADMIN' || ((s.role==='PERENCANAAN'||s.role==='ADMIN') && (s.hak||[]).indexOf(h)>=0)); }
+export function punyaSalah(l){ return l.some(punya); }
+/* unit yang boleh dibuatkan usulan revisi oleh pengguna ini (sama dengan fn_unit_usulan di database) */
+export function bolehUnitUsulan(kat, unit){
+  var s=sess(); if (!s) return false;
+  if (s.role==='UNIT') return true;           /* data unit sudah dibatasi server */
+  if (punya('satker')) return true;
+  if (!punya('usulan')) return false;
+  var c=s.cakUsulan||[]; if (!c.length) return true;
+  return c.some(function(x){ return x.kat===kat && (!x.unit || x.unit===(unit||'')); });
+}
 export function isSuperAdmin(){ return sess().role==='SUPERADMIN'; }
 export function isUnitUser(){ return !sess().all; }
 export function scopeLabel(s){ return s.unit || ('Seluruh '+s.kat); }

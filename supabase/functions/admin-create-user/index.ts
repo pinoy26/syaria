@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const keterangan = String(body.keterangan || "");
     if (!email) return json({ error: "Email wajib diisi." }, 400);
     if (password.length < 8) return json({ error: "Kata sandi minimal 8 karakter." }, 400);
-    if (!["ADMIN", "PIMPINAN", "UNIT"].includes(peran)) return json({ error: "Peran tidak dikenal." }, 400);
+    if (!["PERENCANAAN", "ADMIN", "PIMPINAN", "UNIT"].includes(peran)) return json({ error: "Peran tidak dikenal." }, 400);
 
     // 3) buat akun auth + tetapkan peran/cakupan (pakai service_role, bypass RLS)
     const admin = createClient(url, serviceKey);

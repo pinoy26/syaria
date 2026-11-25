@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611250906';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611250906';
+import { BOOT } from './state.js?v=202611251040';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611251040';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -36,7 +36,7 @@ SB.boot = function(){
     var user = s.data.session && s.data.session.user;
     if (!user) return { session: { allowed: false, email: '', via: '' }, satker: '', kode: '', periods: [] };
     return Promise.all([
-      SBC.from('pengguna').select('id,email,nama,peran,aktif,keterangan').eq('id', user.id).maybeSingle(),
+      SBC.from('pengguna').select('id,email,nama,peran,aktif,keterangan,hak').eq('id', user.id).maybeSingle(),
       SBC.from('pengguna_cakupan').select('kategori,unit').eq('user_id', user.id),
       SBC.from('pengaturan').select('kunci,nilai'),
       SBC.from('ref_akun').select('kode,nama'),
@@ -48,10 +48,12 @@ SB.boot = function(){
       var aktif = !!(p && p.aktif);
       var sess = {
         uid: user.id, email: (p && p.email) || user.email, via: 'sandi', allowed: aktif,
-        role: p ? p.peran : '', all: !!p && (p.peran === 'ADMIN' || p.peran === 'SUPERADMIN' || p.peran === 'PIMPINAN'),
+        role: p ? p.peran : '', all: !!p && (p.peran === 'ADMIN' || p.peran === 'SUPERADMIN' || p.peran === 'PIMPINAN' || p.peran === 'PERENCANAAN'),
+        hak: (p && p.hak) || [],
         scopes: cak.map(function(c){ return { kat: c.kategori, unit: c.unit }; })
       };
-      if (sess.all) sess.scopes = [];
+      /* peran baca seluruh satker: cakupan (bila ada) adalah cakupan usulan revisi, bukan pembatas data */
+      if (sess.all){ sess.cakUsulan = sess.scopes; sess.scopes = []; }
       if (aktif && !sess.all && !sess.scopes.length) { sess.allowed = false; sess.tanpaCakupan = true; }
       return {
         session: sess, satker: set.NAMA_SATKER || '', kode: set.KODE_SATKER || '', akunNames: akun,
@@ -184,7 +186,7 @@ SB.adminInfo = function(){
   return Promise.all([
     SBC.from('periode').select('*').order('periode'),
     SBC.from('ref_unit').select('*').order('id'),
-    SBC.from('pengguna').select('id,email,nama,peran,aktif,keterangan').order('email'),
+    SBC.from('pengguna').select('id,email,nama,peran,aktif,keterangan,hak').order('email'),
     SBC.from('pengguna_cakupan').select('user_id,kategori,unit'),
     SBC.from('anggaran_versi').select('*').order('posisi')
   ]).then(function(r){
@@ -201,7 +203,7 @@ SB.adminInfo = function(){
       rules: (r[1].data || []).map(function(x){ return [x.kro, x.komponen, x.jenis_aturan, x.kode, x.kategori, x.unit, x.keterangan, x.tahun]; }),
       users: (r[2].data || []).map(function(u){
         var c = cak[u.id] || [];
-        return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1];
+        return [u.email, u.peran, c.length ? c[0].kategori : '', c.length ? c[0].unit : '', u.aktif ? 'YA' : 'TIDAK', u.keterangan, u.id, 1, u.hak || []];
       }),
       rkk: (r[4].data || []).map(function(v){ return { id: v.id, revisi: v.revisi_ke, posisi: v.posisi, tahun: v.tahun, file: v.nama_file, diunggah: (v.diunggah_pada || '').replace('T', ' ').slice(0, 16), pengunggah: v.diunggah_oleh, item: v.jumlah_item, pagu: v.pagu, blokir: v.item_blokir }; }),
       domain: '', sheetUrl: sbDashboardUrl('editor')
@@ -212,14 +214,25 @@ function sbDashboardUrl(bagian){
   var m = /https:\/\/([a-z0-9]+)\.supabase\.co/i.exec(window.SB_CONFIG.url || '');
   return m ? 'https://supabase.com/dashboard/project/' + m[1] + '/' + bagian : 'https://supabase.com/dashboard';
 }
-SB.simpanPengguna = function(id, peran, kategori, unit, keterangan){
+/* kategori kosong = semua unit (cakupan usulan Admin perencanaan/keuangan) */
+SB.simpanPengguna = function(id, peran, kategori, unit, keterangan, hak){
   if (!id) return Promise.reject(new Error('Pilih pengguna dari tabel di atas (tombol Ubah), atau gunakan "Buat pengguna baru".'));
-  var cak = peran === 'UNIT' ? [{ kategori: kategori, unit: unit || '' }] : [];
-  return SBC.rpc('simpan_pengguna', { p_id: id, p_peran: peran, p_aktif: true, p_keterangan: keterangan || '', p_cakupan: cak })
+  var cak = kategori ? [{ kategori: kategori, unit: unit || '' }] : [];
+  return SBC.rpc('simpan_pengguna', { p_id: id, p_peran: peran, p_aktif: true, p_keterangan: keterangan || '', p_cakupan: cak, p_hak: hak || [] })
     .then(function(r){ if (r.error) throw r.error; return { ok: true, pesan: 'Pengguna disimpan.' }; });
 };
 /* ---------- buat akun pengguna baru (lewat Edge Function, memakai service_role di server) ---------- */
-SB.buatPengguna = function(email, password, peran, kategori, unit, keterangan){
+SB.buatPengguna = function(email, password, peran, kategori, unit, keterangan, hak){
+  /* Edge Function hanya mengenal peran lama: akun Admin perencanaan / akun berhak dibuat sebagai Pimpinan (baca saja),
+     lalu peran & haknya ditetapkan lewat simpan_pengguna */
+  var duaLangkah = peran === 'PERENCANAAN' || (hak && hak.length);
+  return SB._buatAkun(email, password, duaLangkah ? 'PIMPINAN' : peran, kategori, unit, keterangan).then(function(r){
+    if (!duaLangkah) return r;
+    if (!r.id) throw new Error('Akun ' + email + ' dibuat sebagai Pimpinan, tetapi perannya belum dapat ditetapkan. Ubah perannya lewat tombol Ubah.');
+    return SB.simpanPengguna(r.id, peran, kategori, unit, keterangan, hak).then(function(){ return r; });
+  });
+};
+SB._buatAkun = function(email, password, peran, kategori, unit, keterangan){
   return SBC.functions.invoke('admin-create-user', {
     body: { email: email, password: password, peran: peran, kategori: kategori, unit: unit, keterangan: keterangan }
   }).then(function(r){
@@ -229,7 +242,7 @@ SB.buatPengguna = function(email, password, peran, kategori, unit, keterangan){
       if (ctx && typeof ctx.json === 'function') return ctx.json().then(function(j){ throw new Error((j && j.error) || r.error.message); });
       throw new Error(r.error.message);
     }
-    return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dibuat.' };
+    return { ok: true, pesan: (r.data && r.data.pesan) || 'Pengguna dibuat.', id: r.data && r.data.id };
   });
 };
 /* ---------- hapus akun pengguna (lewat Edge Function, memakai service_role di server) ---------- */

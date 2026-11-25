@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250906';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250906';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250906';
-import { SB } from '../api.js?v=202611250906';
-import { refresh } from '../nav.js?v=202611250906';
-import { lupakanUsulan } from './usulan.js?v=202611250906';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611251040';
+import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611251040';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611251040';
+import { SB } from '../api.js?v=202611251040';
+import { refresh } from '../nav.js?v=202611251040';
+import { lupakanUsulan } from './usulan.js?v=202611251040';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -178,7 +178,7 @@ export function renderRedesain(){
     sub = esc(labelVersi(v) + ' · posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun) + '. Kolom Blokir = nilai blokir per item seperti di SAKTI.';
     act = '<label class="f ag-versi" for="rdVersi"><span class="sr-only">Versi DIPA</span><select id="rdVersi">' + R.vs.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === v.id ? ' selected' : '') + '>' + esc(labelVersi(x) + ' · ' + tgl(x.posisi) + ' · TA ' + x.tahun) + '</option>'; }).join('') + '</select></label>';
     ring = '<div class="rd-ring"><div><span class="note">Pagu</span><b>Rp ' + rp(pagu) + '</b></div><div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div><div><span class="note">Dapat digunakan</span><b>Rp ' + rp(pagu - totBl) + '</b></div></div>';
-    if (isSuperAdmin()) alat = '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' + tb('blokir', 'Ubah Blokir', sel.blokir) + '</div><p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
+    if (punya('blokir')) alat = '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' + tb('blokir', 'Ubah Blokir', sel.blokir) + '</div><p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
   } else {
     var selisih = pagu - u.pagu_awal;
     judul = 'Belanja Redesain — ' + esc(u.judul);
