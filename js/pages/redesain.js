@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250255';
-import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250255';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611250255';
-import { SB } from '../api.js?v=202611250255';
-import { refresh } from '../nav.js?v=202611250255';
-import { lupakanUsulan } from './usulan.js?v=202611250255';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611250336';
+import { S, sess, isSuperAdmin, KODE_KL, KODE_IND } from '../state.js?v=202611250336';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611250336';
+import { SB } from '../api.js?v=202611250336';
+import { refresh } from '../nav.js?v=202611250336';
+import { lupakanUsulan } from './usulan.js?v=202611250336';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -271,6 +271,16 @@ function centang(key, on){
     if (on) R.cekKey[key] = true;
     anggota(b).filter(bisaDicentang).forEach(function(r){ r._hapus = on; });
   }
+}
+/* perbarui hanya kotak centang & tombol Hapus sesuai tanda saat ini (tanpa menggambar ulang tabel) */
+function perbaruiCentang(pg){
+  var peta = {}; susun().forEach(function(b){ peta[b.key] = b; });
+  [].forEach.call(pg.querySelectorAll('.rd-grid input[data-rd-cek]'), function(x){
+    var b = peta[x.getAttribute('data-rd-cek')]; if (!b) return;
+    x.checked = b.jenis === 'item' ? !!b.r._hapus : dicentangLangsung(b.key);
+  });
+  var t = pg.querySelector('[data-rd="hapus"]');
+  if (t){ t.textContent = labelHapus(); if (dicentang().length) t.disabled = false; else perbaruiAlat(); }
 }
 function hapusTanda(){
   var t = dicentang(), n = t.reduce(function(a, r){ return a + r.jumlah; }, 0);
@@ -863,7 +873,7 @@ function bindLanjutan(pg){
     el.onclick = function(e){ e.stopPropagation(); };
     el.onchange = function(){
       centang(el.getAttribute('data-rd-cek'), el.checked);
-      gambarUlang();
+      perbaruiCentang(pg);   /* tanpa menggambar ulang seluruh lembar kerja: tidak berkedip, gulir tidak bergerak */
     };
   });
   [].forEach.call(pg.querySelectorAll('[data-rd-pulih]'), function(el){ el.onclick = function(){ pulihkan(+el.getAttribute('data-rd-pulih')); }; });
