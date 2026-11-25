@@ -1,6 +1,6 @@
 /* js/ui-components.js — kartu, tooltip, tabel bertingkat (komponen UI umum) */
-import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611250336';
-import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3, KODE_KL, KODE_IND } from './state.js?v=202611250336';
+import { $, esc, rp, pc, sum, tgl, bukaJendela, tutupJendela } from './utils.js?v=202611250445';
+import { WAKTU, BOOT, DB, D, FAK_ORDER, FAK_FULL, SRC, S, pill, status, A2, A3, KODE_KL, KODE_IND } from './state.js?v=202611250445';
 
 /* ================= komponen UI ================= */
 export var IC = {
@@ -145,7 +145,9 @@ export function tree(id,R,levels){
   var out=[];
   var ST_ICON={'st-good':IC.stGood,'st-warn':IC.stWarn,'st-crit':IC.stCrit};
   var statusBadge=function(p){ var s=status(p,WAKTU); return '<span class="st-badge '+s[0]+'" title="'+esc(s[1])+'" aria-label="'+esc(s[1])+'">'+ST_ICON[s[0]]+'</span>'; };
-  var cols=function(t){ return '<td class="n">'+rp(t.pagu)+'</td><td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="stc">'+statusBadge(t.p)+'</td>'; };
+  /* kolom Blokir (seperti Monev Anggaran): tampil bila ada pagu diblokir; baris "Pagu diblokir" diberi tanda * */
+  var adaBl=sum(R).bl>0;
+  var cols=function(t,blk){ return '<td class="n">'+rp(t.pagu)+'</td>'+(adaBl?'<td class="n tg-bl">'+(t.bl?rp(t.bl)+(blk?'<span class="rd-t" title="Pagu diblokir dari RKK SAKTI (RKK − FA Detail)">*</span>':''):'')+'</td>':'')+'<td class="n">'+rp(t.sd)+'</td><td class="n">'+rp(t.ini)+'</td><td class="n">'+pc(t.p)+'<span class="minibar"><b style="width:'+Math.min(100,t.p*100)+'%;'+(t.p>1.0001?'background:var(--crit)':'')+'"></b></span></td><td class="n'+(t.sisa<0?' neg':'')+'">'+rp(t.sisa)+'</td><td class="stc">'+statusBadge(t.p)+'</td>'; };
   (function walk(n){
     n.children.forEach(function(c){
       var open=!!S.open[c.id], ind=c.depth*18;
@@ -158,7 +160,7 @@ export function tree(id,R,levels){
         '<td class="tg-u"><span class="tw"><span class="tw-label">'+kp[1]+'</span></span></td>'+cols(c.t)+'</tr>');
       if (!open) return;
       if (c.leaf) c.rows.slice().sort(function(a,b){return a.no<b.no?-1:1;}).forEach(function(r){
-        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">- '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]))+'</tr>');
+        out.push('<tr class="leaf'+(r.blokir?' ag-blokir':'')+'"><td class="tg-k"></td><td class="tg-u"><span style="display:inline-block">- '+esc(r.item)+' <span class="chip" style="font-size:11px;padding:1px 7px">'+(r.sumber==='PNP'?'PNBP':(r.sumber||'?'))+'</span></span></td>'+cols(sum([r]),r.blokir)+'</tr>');
       }); else walk(c);
     });
   })(root);
@@ -167,7 +169,7 @@ export function tree(id,R,levels){
     '<button type="button" class="icon" data-search-prev="'+id+'" aria-label="Hasil sebelumnya">'+IC.up+'</button>'+
     '<button type="button" class="icon" data-search-next="'+id+'" aria-label="Hasil berikutnya">'+IC.down+'</button></span>';
   return '<div class="tools noprint" style="margin-bottom:10px"><button class="btn" type="button" data-openall="'+id+'">Buka satu tingkat</button><button class="btn" type="button" data-expandall="'+id+'">Buka semua</button><button class="btn" type="button" data-closeall="'+id+'">Tutup semua</button>'+search+legend+'</div>'+
-    '<div class="tbl tbl-grid"><table><thead><tr><th class="tg-k">Kode</th><th class="tg-u">Uraian</th><th class="n">Pagu</th><th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
+    '<div class="tbl tbl-grid"><table><thead><tr><th class="tg-k">Kode</th><th class="tg-u">Uraian</th><th class="n">Pagu</th>'+(adaBl?'<th class="n" title="Pagu diblokir · * = dari RKK SAKTI (RKK − FA Detail)">Blokir</th>':'')+'<th class="n">Realisasi</th><th class="n">Periode ini</th><th class="n">%</th><th class="n">Sisa</th><th class="stc">Status</th></tr></thead><tbody>'+out.join('')+
     '<tr class="tot"><td class="tg-k"></td><td class="tg-u">Jumlah</td>'+cols(sum(R))+'</tr></tbody></table></div>';
 }
 /* pre: isi tambahan di atas tabel (mis. tombol pilihan urutan) */

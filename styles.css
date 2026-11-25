@@ -1242,3 +1242,7 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .rd-grid tbody tr.rd-dicopy td{border-top:2px dashed var(--accent)!important;border-bottom:2px dashed var(--accent)!important}
 .rd-grid tbody tr.rd-dicopy td:first-child{border-left:2px dashed var(--accent)!important}
 .rd-grid tbody tr.rd-dicopy td:last-child{border-right:2px dashed var(--accent)!important}
+/* Monev Realisasi: kolom Blokir seperti Monev Anggaran */
+.tbl-grid td.tg-bl{color:var(--crit-ink);font-weight:600}
+.tbl-grid td.tg-bl .rd-t{display:inline-block;width:10px;margin-left:3px;text-align:left;color:var(--crit-ink);font-weight:800}
+.tbl-grid tr td.tg-bl{color:var(--crit-ink)!important}
