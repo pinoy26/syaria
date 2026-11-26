@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611260144';
-import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611260144';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611260144';
-import { SB } from '../api.js?v=202611260144';
-import { refresh } from '../nav.js?v=202611260144';
-import { lupakanUsulan } from './usulan.js?v=202611260144';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611261024';
+import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611261024';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611261024';
+import { SB } from '../api.js?v=202611261024';
+import { refresh } from '../nav.js?v=202611261024';
+import { lupakanUsulan } from './usulan.js?v=202611261024';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -138,6 +138,44 @@ function susun(){
   });
   return baris;
 }
+/* susunan untuk DITAMPILKAN di mode usulan: baris usulan + detail DIPA yang dihapus (dicoret) di posisi aslinya.
+   Baris kepala yang seluruh isinya dihapus (mis. akun yang semua detailnya dihapus) tetap muncul, ditandai "hapus".
+   Baris "hapus" hanya penanda: tidak dihitung ke pagu, tidak bisa dipilih/diedit. Kunci baris aktif sama dengan susun(),
+   sehingga pilihan baris, centang, dan tombol tetap bekerja seperti biasa.
+   chg[kunci] = {u: diubah, b: baru, h: dihapus} untuk tanda perubahan di baris kepala & filter "Hanya yang berubah". */
+function susunTampil(){
+  urut();
+  var tot = {}, hidup = {}, chg = {};
+  var catat = function(ks, f){ ks.forEach(function(k){ var c = chg[k] = chg[k] || { u: 0, b: 0, h: 0 }; c[f]++; }); };
+  R.rows.forEach(function(r){ jalur(r).forEach(function(k){ tot[k] = (tot[k] || 0) + r.jumlah; hidup[k] = 1; });
+    var st = statusItem(r); if (st) catat(jalur(r), st === 'baru' ? 'b' : 'u');
+    /* detail yang dipindah sub komponen/akun: lokasi lamanya juga ditandai berubah */
+    var b = R.basis[r.anggaran_id]; if (b){ var pr = jalur(r); catat(jalur(b).filter(function(k){ return pr.indexOf(k) < 0; }), 'u'); } });
+  var hantu = dihapus().map(function(b){ var g = {}; for (var x in b) g[x] = b[x]; g.anggaran_id = b.id; g._hantu = true; catat(jalur(g), 'h'); return g; });
+  var semua = R.rows.map(function(r, i){ return { r: r, i: i }; }).concat(hantu.map(function(g){ return { r: g, i: -1 }; }));
+  semua.sort(function(a, b){ return a.r.urutan - b.r.urutan || (a.i < 0) - (b.i < 0); });
+  var baris = [], prev = [];
+  semua.forEach(function(x){
+    var r = x.r, p = jalur(r), beda = false;
+    TK.forEach(function(L, d){
+      if (!beda && p[d] === prev[d]) return;
+      beda = true;
+      if ((L.t === 'h1' || L.t === 'h2') && !L.k(r)) return;
+      baris.push({ jenis: L.t, d: d, key: p[d], r: r, kode: L.kode(r), n: L.n(r), j: tot[p[d]] || 0, hantu: !hidup[p[d]], chg: chg[p[d]] });
+    });
+    baris.push(x.i < 0 ? { jenis: 'item', d: 9, key: 'h' + r.id, r: r, hantu: true } : { jenis: 'item', d: 9, key: 'i' + x.i, r: r, idx: x.i });
+    prev = p;
+  });
+  /* "Hanya yang berubah": baris kepala yang memuat perubahan + detail yang diubah/baru/dihapus */
+  if (R.hanyaUbah) baris = baris.filter(function(b){ return b.jenis === 'item' ? (b.hantu || !!statusItem(b.r)) : !!b.chg; });
+  return baris;
+}
+/* tanda perubahan di baris kepala, mis. "● 2 ubah · 2 hapus" */
+function tandaUbah(c){
+  if (!c) return '';
+  var t = [c.u ? c.u + ' ubah' : '', c.b ? c.b + ' baru' : '', c.h ? c.h + ' hapus' : ''].filter(Boolean);
+  return '<span class="rd-chg' + (c.h ? ' ada-hapus' : '') + '" title="Perubahan di bawah baris ini: ' + t.join(', ') + '">● ' + t.join(' · ') + '</span>';
+}
 function statusItem(r){
   if (r.anggaran_id == null) return 'baru';
   var b = R.basis[r.anggaran_id]; if (!b) return '';
@@ -168,7 +206,7 @@ export function renderRedesain(){
   if (!u){
     if (!R.rows || !R.u || !R.u.dipa || R.u.versi.id !== R.dv){ muatDipa(); return '<div class="loading">Memuat Belanja Redesain…</div>'; }
   } else if (!R.rows || !R.u || R.u.id !== u.id){ muatSalinan(u); return '<div class="loading">Memuat ' + esc(u.judul) + '…</div>'; }
-  var dipa = !u, ubah = !dipa && bolehUbah(u), baris = susun(), sel = pilihan(baris);
+  var dipa = !u, ubah = !dipa && bolehUbah(u), baris = susun(), sel = pilihan(baris), tampil = dipa ? baris : susunTampil();
   var adaKey = {}; baris.forEach(function(x){ adaKey[x.key] = 1; }); Object.keys(R.cekKey).forEach(function(k){ if (!adaKey[k]) delete R.cekKey[k]; });
   var pagu = R.rows.reduce(function(a, r){ return a + r.jumlah; }, 0), totBl = R.rows.reduce(function(a, r){ return a + blk(r).blokir; }, 0);
   var ring, alat = '', judul, sub, act = '';
@@ -182,13 +220,15 @@ export function renderRedesain(){
   } else {
     var selisih = pagu - u.pagu_awal;
     judul = 'Belanja Redesain — ' + esc(u.judul);
-    sub = esc((u.unit || u.kategori || 'Seluruh satker') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru.';
+    sub = esc((u.unit || u.kategori || 'Seluruh satker') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru, dicoret = dihapus.';
     ring = '<div class="rd-ring"><div><span class="note">Pagu usulan</span><b>Rp ' + rp(pagu) + '</b></div><div><span class="note">Pagu DIPA unit</span><b>Rp ' + rp(u.pagu_awal) + '</b></div>' +
       '<div><span class="note">Selisih</span><b class="' + (selisih ? 'neg' : 'pos') + '">' + (selisih ? tanda(selisih) : 'Rp 0 · seimbang') + '</b></div>' +
       '<div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div>' +
       '<div><span class="note">Status</span><b>' + esc(ST[u.status] || u.status) + (R.kotor ? ' · <span class="neg">belum disimpan</span>' : '') + '</b></div></div>';
     if (R.lihat === u.id) act = '<div class="tools"><button class="btn" type="button" data-rd-kembali="' + u.id + '">‹ Kembali ke pengajuan</button><button class="btn" type="button" data-rd-tutup>Tutup</button></div>';
-    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru; detail yang dihapus tercantum di bawah lembar kerja.</div>' :
+    /* daftar kerja operator saat input SAKTI: hanya sub komponen/akun yang berubah, termasuk yang dihapus */
+    act += '<label class="rd-ubahsaja noprint" for="rdHanyaUbah"><input type="checkbox" id="rdHanyaUbah"' + (R.hanyaUbah ? ' checked' : '') + '> Hanya yang berubah</label>';
+    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru, dicoret = dihapus.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
         '<span class="rd-kiri" id="rdKiri">' + htmlKiri(sel) + '</span><span class="rd-sp"></span>' +
         (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') +
@@ -217,9 +257,16 @@ export function renderRedesain(){
   var IND = 7;
   var grid = '<div class="tbl rd-grid"><table><colgroup><col class="c-kode"><col><col class="c-n"><col class="c-sat"><col class="c-rp"><col class="c-rp">' + (dipa ? '' : '<col class="c-rp">') + '<col class="c-rp c-bl"><col class="c-sd">' + (ubah ? '<col class="c-cek">' : '') + '</colgroup>' +
     '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th>' + (dipa ? '' : '<th class="n" title="Jumlah usulan − jumlah DIPA">Selisih</th>') + '<th class="n" title="Nilai blokir · * = blokir dari RKK SAKTI · M = blokir manual Admin perencanaan">Blokir</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
-    baris.map(function(b){
+    (tampil.length ? '' : '<tr><td colspan="10" class="empty">Belum ada perubahan pada usulan ini.</td></tr>') +
+    tampil.map(function(b){
       var on = R.sel && R.sel.key === b.key ? ' sel' : '';
-      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
+      /* baris "hapus": detail DIPA yang dihapus / kepala yang seluruh isinya dihapus — penanda saja */
+      if (b.hantu && b.jenis !== 'item') return '<tr class="rd-' + b.jenis + ' rd-hapus"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u"><span class="rd-coret">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</span> <span class="rd-lbl-hapus">dihapus</span></td><td></td><td></td><td></td><td class="n">0</td>' + selTd(selK[b.key] || 0) +
+        '<td class="n rd-bl"></td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? '<td class="rd-cek"></td>' : '') + '</tr>';
+      if (b.hantu) return '<tr class="rd-item rd-hapus" title="Dihapus dari usulan · jumlah DIPA Rp ' + rp(b.r.jumlah) + '"><td class="code">hapus</td><td class="rd-u"><span class="rd-coret">- ' + esc(b.r.uraian) + '</span></td>' +
+        '<td class="n rd-coret">' + vol(b.r.volume) + '</td><td class="rd-coret">' + esc(b.r.satuan) + '</td><td class="n rd-coret">' + (b.r.harga == null ? '' : rp(b.r.harga)) + '</td><td class="n">0</td>' + selTd(-b.r.jumlah) +
+        '<td class="n rd-bl"></td><td class="rd-sd">' + sd(b.r.sumber) + '</td>' + (ubah ? '<td class="rd-cek"></td>' : '') + '</tr>';
+      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + (dipa || ['ro', 'komp', 'sub', 'akun'].indexOf(b.jenis) < 0 ? '' : tandaUbah(b.chg)) + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
       var r = b.r, st = dipa ? '' : statusItem(r), i = blk(r);
       return '<tr class="rd-item' + (st ? ' rd-' + st : '') + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td class="rd-u">- ' + esc(r.uraian) + '</td>' +
@@ -842,6 +889,7 @@ function bind(){
   [].forEach.call(pg.querySelectorAll('[data-rd-kembali]'), function(el){ el.onclick = function(){ var id = +el.getAttribute('data-rd-kembali'); R.lihat = null; R.mode = null; R.daftar = null; document.dispatchEvent(new CustomEvent('buka-usulan', { detail: id })); }; });
   [].forEach.call(pg.querySelectorAll('[data-rd-tutup]'), function(el){ el.onclick = function(){ R.lihat = null; R.mode = null; R.daftar = null; R.u = null; R.rows = null; refresh(); }; });
   if ($('rdVersi')) $('rdVersi').onchange = function(){ R.dv = +this.value; R.rows = null; R.u = null; R.sel = null; refresh(); };
+  if ($('rdHanyaUbah')) $('rdHanyaUbah').onchange = function(){ R.hanyaUbah = this.checked; gambarUlang(); };
   if ($('rdUsulan')) $('rdUsulan').onchange = function(){
     var sel = this, m = sel.value === 'dipa' ? 'dipa' : +sel.value;
     var ganti = function(){ R.mode = m; R.kotor = false; R.rows = null; R.u = null; R.sel = null; refresh(); };
