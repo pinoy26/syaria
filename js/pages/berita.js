@@ -1,10 +1,10 @@
 /* js/pages/berita.js — Kelola Berita & Pengumuman (admin keuangan & super admin) */
-import { $, esc, toast, tanya, errMsg } from '../utils.js?v=202611251118';
-import { S, FAK_ORDER } from '../state.js?v=202611251118';
-import { card } from '../ui-components.js?v=202611251118';
-import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS } from '../api.js?v=202611251118';
-import { refresh } from '../nav.js?v=202611251118';
-import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js?v=202611251118';
+import { $, esc, toast, tanya, errMsg } from '../utils.js?v=202611260144';
+import { S, FAK_ORDER } from '../state.js?v=202611260144';
+import { card } from '../ui-components.js?v=202611260144';
+import { SB, LAMPIRAN_TIPE, LAMPIRAN_MAKS, FLAYER_MAKS } from '../api.js?v=202611260144';
+import { refresh } from '../nav.js?v=202611260144';
+import { JENIS, pillJenis, tglBerita, tglLokal, ukuran, bukaHalamanBerita, muatBeritaDasbor } from '../berita.js?v=202611260144';
 
 /* list: semua berita; units: {kategori:[unit…]}; edit: berita yang sedang diubah (null = tulis baru); sasaran: [{kategori,unit}] */
 var K = { list: null, units: null, edit: null, sasaran: [], memuat: false };
@@ -55,7 +55,7 @@ function listHtml(){
   return '<div class="tbl"><table><thead><tr><th>Berita</th><th>Tampil untuk</th><th>Status</th><th>Masa tayang</th><th class="n">Lampiran</th><th></th></tr></thead><tbody>' +
     K.list.map(function(b){
       var s = statusBerita(b);
-      return '<tr' + (K.edit && K.edit.id === b.id ? ' class="b-sedang"' : '') + '><td><div class="nw-meta">' + pillJenis(b.jenis) + (b.disematkan ? '<span class="nw-tag">Disematkan</span>' : '') + '</div><b>' + esc(b.judul) + '</b></td>' +
+      return '<tr' + (K.edit && K.edit.id === b.id ? ' class="b-sedang"' : '') + '><td><div class="nw-meta">' + pillJenis(b.jenis) + (b.bentuk === 'flayer' ? '<span class="nw-tag">Flayer · ' + (b.durasi || 8) + ' dtk</span>' : '') + (b.disematkan ? '<span class="nw-tag">Disematkan</span>' : '') + '</div><b>' + esc(b.judul) + '</b></td>' +
         '<td>' + untukSiapa(b) + '</td>' +
         '<td><span class="pill ' + s[0] + '"><i></i>' + s[1] + '</span></td>' +
         '<td>' + tglBerita(b.mulai) + '<br><span class="note">s.d. ' + (b.sampai ? tglBerita(b.sampai) : 'tanpa batas') + '</span></td>' +
@@ -70,14 +70,20 @@ function formHtml(){
   var lamp = (b.lampiran || []).map(function(l){
     return '<li><span>' + esc(l.nama) + ' <span class="note">' + (l.mime === 'application/pdf' ? 'PDF' : 'Foto') + ' · ' + ukuran(l.ukuran) + '</span></span><button class="btn" type="button" data-lhapus="' + l.id + '">Hapus</button></li>';
   }).join('');
+  var fl = b.bentuk === 'flayer';
   return '<form id="bForm" class="b-form" novalidate>' +
-    '<label class="f" for="bJudul">Judul<input type="text" id="bJudul" maxlength="200" required value="' + esc(b.judul || '') + '"></label>' +
-    '<label class="f" for="bIsi">Isi berita<textarea id="bIsi" rows="7" maxlength="20000" placeholder="Teks biasa. Baris baru dipertahankan.">' + esc(b.isi || '') + '</textarea></label>' +
+    '<fieldset class="b-box b-bentuk"><legend class="eyebrow">Bentuk berita</legend>' +
+      '<label class="chk"><input type="radio" name="bBentuk" value="redaksi"' + (!fl ? ' checked' : '') + '><span><b>Redaksi</b> — berita teks, tampil di daftar berita</span></label>' +
+      '<label class="chk"><input type="radio" name="bBentuk" value="flayer"' + (fl ? ' checked' : '') + '><span><b>Flayer</b> — gambar di baris teratas ruang berita, berganti otomatis</span></label>' +
+    '</fieldset>' +
+    '<label class="f" for="bJudul"><span id="bJudulLbl">Judul</span><input type="text" id="bJudul" maxlength="200" required value="' + esc(b.judul || '') + '"></label>' +
+    '<label class="f" for="bIsi"><span id="bIsiLbl">Isi berita</span><textarea id="bIsi" rows="7" maxlength="20000" placeholder="Teks biasa. Baris baru dipertahankan.">' + esc(b.isi || '') + '</textarea></label>' +
     '<div class="form">' +
       '<label class="f" for="bJenis">Jenis<select id="bJenis">' + Object.keys(JENIS).map(function(k){ return '<option value="' + k + '"' + (k === j ? ' selected' : '') + '>' + JENIS[k][1] + '</option>'; }).join('') + '</select></label>' +
       '<label class="f" for="bMulai">Mulai tayang<input type="date" id="bMulai" value="' + (b.mulai ? tglLokal(b.mulai) : tglLokal(new Date().toISOString())) + '"></label>' +
       '<label class="f" for="bSampai">Berakhir (opsional)<input type="date" id="bSampai" value="' + (b.sampai ? tglLokal(b.sampai) : '') + '"></label>' +
       '<label class="f" for="bTautan">Tautan (opsional)<input type="url" id="bTautan" placeholder="https://…" value="' + esc(b.tautan || '') + '"></label>' +
+      '<label class="f" for="bDurasi" id="bDurasiWrap">Durasi tampil (detik)<input type="number" id="bDurasi" min="3" max="60" step="1" inputmode="numeric" value="' + (b.durasi || 8) + '"></label>' +
     '</div>' +
     '<fieldset class="b-box"><legend class="eyebrow">Tampil untuk</legend>' +
       '<label class="chk"><input type="radio" name="bPublik" value="1"' + (b.publik ? ' checked' : '') + '><span><b>Publik</b> — halaman login dan dasbor, bisa dibaca siapa saja</span></label>' +
@@ -90,9 +96,9 @@ function formHtml(){
       '</div>' +
     '</fieldset>' +
     '<label class="chk"><input type="checkbox" id="bSemat"' + (b.disematkan ? ' checked' : '') + '><span>Sematkan — tampil paling atas di daftar berita</span></label>' +
-    '<fieldset class="b-box"><legend class="eyebrow">Lampiran</legend>' +
+    '<fieldset class="b-box"><legend class="eyebrow" id="bLampLegend">Lampiran</legend>' +
       (lamp ? '<ul class="b-lamp" id="bLampLama">' + lamp + '</ul>' : '') +
-      '<label class="f" for="bFile">Tambah PDF atau foto (JPG, PNG, WEBP) · maks. 10 MB per berkas<input type="file" id="bFile" multiple accept="application/pdf,image/jpeg,image/png,image/webp"></label>' +
+      '<label class="f" for="bFile"><span id="bFileLbl">Tambah PDF atau foto (JPG, PNG, WEBP) · maks. 10 MB per berkas</span><input type="file" id="bFile" multiple accept="application/pdf,image/jpeg,image/png,image/webp"></label>' +
       '<div id="bFileInfo" class="note"></div>' +
     '</fieldset>' +
     '<div id="bMsg" class="status-box" role="status" aria-live="polite" hidden></div>' +
@@ -110,13 +116,29 @@ function msg(type, text){
   m.lastChild.textContent = text;
 }
 function sibuk(on){ ['bTerbit', 'bDraf', 'bBatal'].forEach(function(id){ if ($(id)) $(id).disabled = on; }); }
+function bentuk(){ var r = document.querySelector('input[name=bBentuk]:checked'); return r ? r.value : 'redaksi'; }
 function berkasDipilih(){
-  var fs = [].slice.call(($('bFile') && $('bFile').files) || []), salah = [];
+  var fs = [].slice.call(($('bFile') && $('bFile').files) || []), salah = [], fl = bentuk() === 'flayer';
+  if (fl && fs.length > 1) salah.push('flayer hanya memakai satu gambar');
   fs.forEach(function(f){
-    if (!LAMPIRAN_TIPE[f.type]) salah.push(f.name + ' (jenis berkas tidak diterima)');
+    if (fl && !/^image\//.test(f.type)) salah.push(f.name + ' (flayer harus berupa gambar JPG, PNG, atau WEBP)');
+    else if (!LAMPIRAN_TIPE[f.type]) salah.push(f.name + ' (jenis berkas tidak diterima)');
+    else if (fl && f.size > FLAYER_MAKS) salah.push(f.name + ' (' + ukuran(f.size) + ', gambar flayer maks. 5 MB)');
     else if (f.size > LAMPIRAN_MAKS) salah.push(f.name + ' (' + ukuran(f.size) + ', lebih dari 10 MB)');
   });
   return { files: fs, salah: salah };
+}
+/* tampilan formulir mengikuti bentuk: flayer = satu gambar + durasi, isi opsional */
+function bentukChange(){
+  var fl = bentuk() === 'flayer';
+  $('bDurasiWrap').hidden = !fl;
+  $('bJudulLbl').textContent = fl ? 'Judul flayer (keterangan gambar)' : 'Judul';
+  $('bIsiLbl').textContent = fl ? 'Keterangan (opsional) — tampil saat flayer diklik' : 'Isi berita';
+  $('bLampLegend').textContent = fl ? 'Gambar flayer' : 'Lampiran';
+  $('bFileLbl').textContent = fl ? (K.edit && K.edit.lampiran.some(function(l){ return /^image\//.test(l.mime); }) ? 'Ganti gambar flayer' : 'Pilih gambar flayer') + ' (JPG, PNG, WEBP) · maks. 5 MB · disarankan tegak 4:5'
+                                 : 'Tambah PDF atau foto (JPG, PNG, WEBP) · maks. 10 MB per berkas';
+  var f = $('bFile'); f.multiple = !fl; f.accept = fl ? 'image/jpeg,image/png,image/webp' : 'application/pdf,image/jpeg,image/png,image/webp';
+  if (f.onchange) f.onchange();
 }
 function tampilChips(){
   var h = $('bChips'); if (!h) return;
@@ -139,6 +161,7 @@ function bind(){
   var publikChange = function(){ var pub = document.querySelector('input[name=bPublik]:checked').value === '1'; $('bSasaranWrap').hidden = pub; };
   [].forEach.call(document.querySelectorAll('input[name=bPublik]'), function(r){ r.onchange = publikChange; });
   publikChange();
+  [].forEach.call(document.querySelectorAll('input[name=bBentuk]'), function(r){ r.onchange = bentukChange; });
   if ($('bKat')){ $('bKat').onchange = isiUnit; if ($('bKat').options.length) isiUnit(); }
   tampilChips();
   $('bTambahSasaran').onclick = function(){
@@ -152,6 +175,7 @@ function bind(){
     info.className = p.salah.length ? 'note neg' : 'note';
     info.textContent = p.salah.length ? 'Tidak bisa dilampirkan: ' + p.salah.join('; ') + '.' : (p.files.length ? p.files.length + ' berkas akan diunggah saat disimpan.' : '');
   };
+  bentukChange();
   $('bForm').onsubmit = function(e){ e.preventDefault(); simpan(true); };
   $('bDraf').onclick = function(){ simpan(false); };
   if ($('bBatal')) $('bBatal').onclick = function(){ K.edit = null; K.sasaran = []; refresh(); };
@@ -198,10 +222,17 @@ function simpan(terbit){
   if (sampaiStr && sampaiStr < mulaiStr){ msg('err', 'Tanggal berakhir tidak boleh sebelum tanggal mulai tayang.'); $('bSampai').focus(); return; }
   if (tautan && !/^https:\/\/\S+$/i.test(tautan)){ msg('err', 'Tautan harus diawali https:// dan tanpa spasi.'); $('bTautan').focus(); return; }
   if (p.salah.length){ msg('err', 'Perbaiki lampiran dulu. Tidak bisa dilampirkan: ' + p.salah.join('; ') + '.'); return; }
+  var fl = bentuk() === 'flayer', durasi = Math.round(+$('bDurasi').value);
+  var gambarLama = fl && K.edit ? K.edit.lampiran.filter(function(l){ return /^image\//.test(l.mime); }) : [];
+  if (fl && !p.files.length && !gambarLama.length){ msg('err', 'Flayer wajib memiliki gambar. Pilih gambar JPG, PNG, atau WEBP.'); $('bFile').focus(); return; }
+  if (fl && !(durasi >= 3 && durasi <= 60)){ msg('err', 'Durasi tampil flayer 3 sampai 60 detik.'); $('bDurasi').focus(); return; }
 
   var data = { judul: judul, isi: isi, jenis: $('bJenis').value, publik: publik, disematkan: $('bSemat').checked, terbit: terbit,
-    mulai: awalHari(mulaiStr), sampai: sampaiStr ? akhirHari(sampaiStr) : null, tautan: tautan || null };
-  var editId = K.edit && K.edit.id, urut = K.edit ? K.edit.lampiran.length : 0, idTersimpan = null;
+    mulai: awalHari(mulaiStr), sampai: sampaiStr ? akhirHari(sampaiStr) : null, tautan: tautan || null,
+    bentuk: fl ? 'flayer' : 'redaksi', durasi: fl ? durasi : 8 };
+  /* flayer: gambar baru menggantikan gambar lama (dihapus setelah gambar baru terunggah) dan diletakkan paling depan */
+  var gantiGambar = fl && p.files.length ? gambarLama : [];
+  var editId = K.edit && K.edit.id, urut = fl && p.files.length ? -1 : (K.edit ? K.edit.lampiran.length : 0), idTersimpan = null;
   sibuk(true); msg('busy', 'Menyimpan berita…');
   SB.simpanBerita(editId, data, publik ? [] : K.sasaran).then(function(id){
     idTersimpan = id;
@@ -211,6 +242,8 @@ function simpan(terbit){
         return SB.unggahLampiran(id, f, urut + i);
       });
     }, Promise.resolve());
+  }).then(function(){
+    return gantiGambar.reduce(function(rantai, l){ return rantai.then(function(){ return SB.hapusLampiran(l); }); }, Promise.resolve());
   }).then(function(){
     toast(terbit ? '"' + judul + '" sudah tayang sesuai masa tayangnya.' : '"' + judul + '" disimpan sebagai draf dan belum tampil ke pengguna.', 'ok', terbit ? 'Berita diterbitkan' : 'Draf disimpan');
     K.edit = null; K.sasaran = []; muatUlang();

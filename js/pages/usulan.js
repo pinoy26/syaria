@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611251118';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611251118';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611251118';
-import { SB } from '../api.js?v=202611251118';
-import { refresh, keepScroll } from '../nav.js?v=202611251118';
-import { kunciItem } from './anggaran.js?v=202611251118';
-import { muatPdfLib } from './laporan.js?v=202611251118';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611251118';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611260144';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611260144';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611260144';
+import { SB } from '../api.js?v=202611260144';
+import { refresh, keepScroll } from '../nav.js?v=202611260144';
+import { kunciItem } from './anggaran.js?v=202611260144';
+import { muatPdfLib } from './laporan.js?v=202611260144';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611260144';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -519,7 +519,7 @@ function bindPengajuan(pg, on){
       if (bolehExt.indexOf(ext) < 0){ toast((jenis === 'surat' ? 'Surat usulan harus berformat PDF.' : 'Dokumen pendukung harus berformat PDF atau ZIP.'), 'err', 'Format tidak sesuai'); return; }
       if (file.size > batas * 1048576){ toast('Ukuran ' + file.name + ' ' + ukuran(file.size) + ', melebihi batas ' + batas + ' MB.', 'err', 'Berkas terlalu besar'); return; }
       var lbl = el.parentNode; lbl.classList.add('disabled'); lbl.firstChild.textContent = 'Mengunggah…';
-      SB.unggahLampiran(U.id, jenis, file).then(function(){ toast(file.name + ' terunggah.', 'ok', jenis === 'surat' ? 'Surat usulan' : 'Dokumen pendukung'); segarkanPj(); })
+      SB.unggahBerkasUsulan(U.id, jenis, file).then(function(){ toast(file.name + ' terunggah.', 'ok', jenis === 'surat' ? 'Surat usulan' : 'Dokumen pendukung'); segarkanPj(); })
         .catch(function(e){ lbl.classList.remove('disabled'); lbl.firstChild.textContent = 'Pilih berkas'; toast(errMsg(e), 'err', 'Gagal mengunggah'); });
     };
   });
@@ -527,7 +527,7 @@ function bindPengajuan(pg, on){
     var jenis = el.getAttribute('data-pj-buang');
     tanya({ judul: 'Hapus ' + (jenis === 'surat' ? 'surat usulan' : 'dokumen pendukung') + '?', pesan: 'Berkas dihapus dari usulan ini.', ya: 'Hapus', bahaya: true }).then(function(ya){
       if (!ya) return; el.disabled = true;
-      SB.hapusLampiran(U.id, jenis).then(function(){ toast('Berkas dihapus.', 'ok', 'Lampiran'); segarkanPj(); }).catch(function(e){ el.disabled = false; toast(errMsg(e), 'err', 'Gagal menghapus'); });
+      SB.hapusBerkasUsulan(U.id, jenis).then(function(){ toast('Berkas dihapus.', 'ok', 'Lampiran'); segarkanPj(); }).catch(function(e){ el.disabled = false; toast(errMsg(e), 'err', 'Gagal menghapus'); });
     });
   });
   on('[data-pj-konsep]', function(el){ unduhKonsep(el); });

@@ -1253,3 +1253,31 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .u-hak-i{ display:flex; gap:8px; align-items:flex-start; font-size:13px; line-height:1.4; cursor:pointer; }
 .u-hak-i input{ margin-top:2px; flex:none; }
 .u-hak > p{ grid-column:1 / -1; }
+
+/* ===== Flayer berita: gambar berganti otomatis (baris teratas ruang berita) ===== */
+.fl{ display:flex; flex-direction:column; gap:8px; }
+.fl-bingkai{ position:relative; aspect-ratio:4 / 5; width:100%; overflow:hidden; border-radius:14px; background:#0A142A; box-shadow:0 6px 20px rgba(10,20,42,.18); }
+.fl-s{ position:absolute; inset:0; margin:0; padding:0; border:0; background:none; cursor:pointer; opacity:0; visibility:hidden; transition:opacity .6s ease, visibility 0s linear .6s; }
+.fl-s.aktif{ opacity:1; visibility:visible; z-index:1; transition:opacity .6s ease, visibility 0s; }
+.fl-s:focus-visible{ outline:3px solid #f2b33d; outline-offset:-3px; }
+.fl-bg{ position:absolute; inset:-24px; background:center / cover no-repeat; filter:blur(22px) brightness(.7) saturate(1.1); }
+.fl-img{ position:relative; display:block; width:100%; height:100%; object-fit:contain; }
+.fl-img:not([src]){ visibility:hidden; }
+.fl-nav{ position:absolute; top:50%; z-index:2; width:36px; height:36px; margin-top:-18px; border-radius:50%; border:0; display:grid; place-items:center;
+  background:rgba(10,20,42,.55); color:#fff; cursor:pointer; opacity:0; transition:opacity .2s ease, background .2s ease; }
+.fl-prev{ left:8px; } .fl-next{ right:8px; }
+.fl-bingkai:hover .fl-nav, .fl-nav:focus-visible{ opacity:1; }
+.fl-nav:hover{ background:rgba(10,20,42,.8); }
+.fl-nav svg, .fl-jeda svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+@media (hover:none){ .fl-nav{ opacity:1; } }
+.fl-bawah{ display:flex; align-items:center; justify-content:center; gap:10px; }
+.fl-titik{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }
+.fl-titik button{ width:8px; height:8px; padding:0; border:0; border-radius:99px; background:currentColor; opacity:.3; cursor:pointer; transition:width .25s ease, opacity .25s ease; }
+.fl-titik button[aria-current="true"]{ width:22px; background:var(--accent, #285ea6); opacity:1; }
+.fl-jeda{ width:30px; height:30px; border-radius:50%; border:1px solid var(--line-strong); background:transparent; color:inherit; display:grid; place-items:center; cursor:pointer; }
+.fl-jeda svg{ width:14px; height:14px; }
+.fl-besar{ display:block; max-width:100%; max-height:78vh; margin:0 auto; border-radius:10px; }
+.lp-fl{ max-width:420px; margin:0 auto 18px; }
+.rk-fl{ margin-bottom:14px; }
+.b-bentuk .chk{ margin:2px 0; }
+@media (prefers-reduced-motion:reduce){ .fl-s, .fl-s.aktif, .fl-titik button{ transition:none; } }

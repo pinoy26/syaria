@@ -1,6 +1,6 @@
 /* js/api.js — Lapisan Supabase: autentikasi, baca data, unggah, kelola pengguna */
-import { BOOT } from './state.js?v=202611251118';
-import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611251118';
+import { BOOT } from './state.js?v=202611260144';
+import { parseRealisasi, parseRKK, parseRKKLengkap } from './parser.js?v=202611260144';
 
 export var SBC = null; // klien supabase
 export var SB = {};
@@ -357,7 +357,7 @@ SB.simpanPengajuan = function(id, data){ return rpc('simpan_pengajuan', { p_id: 
 SB.jenisUsulan = function(id){ return rpc('jenis_usulan', { p_id: id }).then(function(r){ return r || []; }); };
 SB.kirimUsulan = function(id){ return rpc('kirim_usulan', { p_id: id }); };
 /* unggah ke Storage, catat di usulan (server memeriksa ukuran & tipe), lalu buang berkas lama */
-SB.unggahLampiran = function(id, jenis, file){
+SB.unggahBerkasUsulan = function(id, jenis, file){
   var tipe = tipeBerkas(file.name), ext = file.name.toLowerCase().split('.').pop(), path = id + '/' + jenis + '-' + Date.now() + '.' + ext;
   return pastikanSesi().then(function(){ return SBC.storage.from(BKT).upload(path, file, { contentType: tipe, upsert: false }); }).then(function(u){
     if (u.error) throw u.error;
@@ -366,7 +366,7 @@ SB.unggahLampiran = function(id, jenis, file){
     });
   }).then(function(r){ if (r && r.lama) SBC.storage.from(BKT).remove([r.lama]); return r; });
 };
-SB.hapusLampiran = function(id, jenis){
+SB.hapusBerkasUsulan = function(id, jenis){
   return rpc('atur_lampiran', { p_id: id, p_jenis: jenis, p_path: '', p_nama: '' }).then(function(r){ if (r && r.lama) return SBC.storage.from(BKT).remove([r.lama]).then(function(){ return r; }); return r; });
 };
 /* buang semua berkas usulan (sebelum usulan dibatalkan); gagal dihapus tidak menghalangi pembatalan */
@@ -443,20 +443,23 @@ SB.keluar = function(){ return SBC.auth.signOut().then(function(){ location.relo
 /* ---------- Berita & Pengumuman (tabel pengumuman*, bucket Storage privat 'pengumuman') ---------- */
 export var LAMPIRAN_TIPE = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 export var LAMPIRAN_MAKS = 10 * 1024 * 1024;
-var BERITA_KOLOM = 'id,judul,isi,jenis,publik,disematkan,terbit,mulai,sampai,tautan,dibuat_pada,pengumuman_lampiran(id,path,nama,mime,ukuran,urutan)';
+var BERITA_KOLOM = 'id,judul,isi,jenis,bentuk,durasi,publik,disematkan,terbit,mulai,sampai,tautan,dibuat_pada,pengumuman_lampiran(id,path,nama,mime,ukuran,urutan)';
 function rapikanBerita(x){
   x.lampiran = (x.pengumuman_lampiran || []).sort(function(a, b){ return a.urutan - b.urutan || a.id - b.id; });
   x.sasaran = x.pengumuman_sasaran || [];
   delete x.pengumuman_lampiran; delete x.pengumuman_sasaran;
   return x;
 }
-/* berita yang sedang tayang. publikSaja=true untuk halaman login; batas = jumlah maksimal (kosong = semua).
+/* berita yang sedang tayang. publikSaja=true untuk halaman login; batas = jumlah maksimal (kosong = semua);
+   bentuk = 'redaksi' / 'flayer' (kosong = keduanya).
    RLS sudah menyaring draf/kedaluwarsa untuk non-admin; filter di sini menjaga admin juga hanya melihat yang tayang. */
-SB.beritaTayang = function(publikSaja, batas){
+export var FLAYER_MAKS = 5 * 1024 * 1024;
+SB.beritaTayang = function(publikSaja, batas, bentuk){
   var now = new Date().toISOString();
   var q = SBC.from('pengumuman').select(BERITA_KOLOM, { count: 'exact' })
     .eq('terbit', true).lte('mulai', now).or('sampai.is.null,sampai.gt."' + now + '"');
   if (publikSaja) q = q.eq('publik', true);
+  if (bentuk) q = q.eq('bentuk', bentuk);
   q = q.order('disematkan', { ascending: false }).order('mulai', { ascending: false }).order('id', { ascending: false });
   if (batas) q = q.limit(batas);
   return q.then(function(r){
