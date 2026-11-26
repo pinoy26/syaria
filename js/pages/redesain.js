@@ -7,12 +7,12 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611261024';
-import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611261024';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611261024';
-import { SB } from '../api.js?v=202611261024';
-import { refresh } from '../nav.js?v=202611261024';
-import { lupakanUsulan } from './usulan.js?v=202611261024';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611261109';
+import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611261109';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611261109';
+import { SB } from '../api.js?v=202611261109';
+import { refresh } from '../nav.js?v=202611261109';
+import { lupakanUsulan } from './usulan.js?v=202611261109';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -138,7 +138,7 @@ function susun(){
   });
   return baris;
 }
-/* susunan untuk DITAMPILKAN di mode usulan: baris usulan + detail DIPA yang dihapus (dicoret) di posisi aslinya.
+/* susunan untuk DITAMPILKAN di mode usulan: baris usulan + detail DIPA yang dihapus (latar merah muda, angka dikosongkan; nilainya di kolom Selisih) di posisi aslinya.
    Baris kepala yang seluruh isinya dihapus (mis. akun yang semua detailnya dihapus) tetap muncul, ditandai "hapus".
    Baris "hapus" hanya penanda: tidak dihitung ke pagu, tidak bisa dipilih/diedit. Kunci baris aktif sama dengan susun(),
    sehingga pilihan baris, centang, dan tombol tetap bekerja seperti biasa.
@@ -220,7 +220,7 @@ export function renderRedesain(){
   } else {
     var selisih = pagu - u.pagu_awal;
     judul = 'Belanja Redesain — ' + esc(u.judul);
-    sub = esc((u.unit || u.kategori || 'Seluruh satker') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru, dicoret = dihapus.';
+    sub = esc((u.unit || u.kategori || 'Seluruh satker') + ' · basis DIPA – Revisi ke ' + ((u.revisi_ke || 1) - 1) + ' · TA ' + u.tahun) + '. Baris kuning = diubah, hijau = baru, merah muda = dihapus.';
     ring = '<div class="rd-ring"><div><span class="note">Pagu usulan</span><b>Rp ' + rp(pagu) + '</b></div><div><span class="note">Pagu DIPA unit</span><b>Rp ' + rp(u.pagu_awal) + '</b></div>' +
       '<div><span class="note">Selisih</span><b class="' + (selisih ? 'neg' : 'pos') + '">' + (selisih ? tanda(selisih) : 'Rp 0 · seimbang') + '</b></div>' +
       '<div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div>' +
@@ -228,7 +228,7 @@ export function renderRedesain(){
     if (R.lihat === u.id) act = '<div class="tools"><button class="btn" type="button" data-rd-kembali="' + u.id + '">‹ Kembali ke pengajuan</button><button class="btn" type="button" data-rd-tutup>Tutup</button></div>';
     /* daftar kerja operator saat input SAKTI: hanya sub komponen/akun yang berubah, termasuk yang dihapus */
     act += '<label class="rd-ubahsaja noprint" for="rdHanyaUbah"><input type="checkbox" id="rdHanyaUbah"' + (R.hanyaUbah ? ' checked' : '') + '> Hanya yang berubah</label>';
-    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru, dicoret = dihapus.</div>' :
+    alat = !ubah ? '<div class="status-box us-telaah">' + esc(u.judul) + ' berstatus ' + esc(ST[u.status] || u.status) + ': hanya dapat dilihat. Baris kuning = diubah, hijau = baru, merah muda = dihapus.</div>' :
       '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' +
         '<span class="rd-kiri" id="rdKiri">' + htmlKiri(sel) + '</span><span class="rd-sp"></span>' +
         (R.info ? '<span class="rd-info" role="status">' + esc(R.info) + '</span>' : '') +
@@ -261,10 +261,10 @@ export function renderRedesain(){
     tampil.map(function(b){
       var on = R.sel && R.sel.key === b.key ? ' sel' : '';
       /* baris "hapus": detail DIPA yang dihapus / kepala yang seluruh isinya dihapus — penanda saja */
-      if (b.hantu && b.jenis !== 'item') return '<tr class="rd-' + b.jenis + ' rd-hapus"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u"><span class="rd-coret">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</span> <span class="rd-lbl-hapus">dihapus</span></td><td></td><td></td><td></td><td class="n">0</td>' + selTd(selK[b.key] || 0) +
+      if (b.hantu && b.jenis !== 'item') return '<tr class="rd-' + b.jenis + ' rd-hapus"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + ' <span class="rd-lbl-hapus">dihapus</span></td><td></td><td></td><td></td><td class="n"></td>' + selTd(selK[b.key] || 0) +
         '<td class="n rd-bl"></td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? '<td class="rd-cek"></td>' : '') + '</tr>';
-      if (b.hantu) return '<tr class="rd-item rd-hapus" title="Dihapus dari usulan · jumlah DIPA Rp ' + rp(b.r.jumlah) + '"><td class="code">hapus</td><td class="rd-u"><span class="rd-coret">- ' + esc(b.r.uraian) + '</span></td>' +
-        '<td class="n rd-coret">' + vol(b.r.volume) + '</td><td class="rd-coret">' + esc(b.r.satuan) + '</td><td class="n rd-coret">' + (b.r.harga == null ? '' : rp(b.r.harga)) + '</td><td class="n">0</td>' + selTd(-b.r.jumlah) +
+      if (b.hantu) return '<tr class="rd-item rd-hapus" title="Dihapus dari usulan · jumlah DIPA Rp ' + rp(b.r.jumlah) + '"><td class="code">hapus</td><td class="rd-u">- ' + esc(b.r.uraian) + '</td>' +
+        '<td class="n"></td><td></td><td class="n"></td><td class="n"></td>' + selTd(-b.r.jumlah) +
         '<td class="n rd-bl"></td><td class="rd-sd">' + sd(b.r.sumber) + '</td>' + (ubah ? '<td class="rd-cek"></td>' : '') + '</tr>';
       if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + (dipa || ['ro', 'komp', 'sub', 'akun'].indexOf(b.jenis) < 0 ? '' : tandaUbah(b.chg)) + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';

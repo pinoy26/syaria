@@ -1283,7 +1283,7 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 @media (prefers-reduced-motion:reduce){ .fl-s, .fl-s.aktif, .fl-titik button{ transition:none; } }
 
 /* Belanja Redesain: detail/akun/sub yang dihapus tetap tampil (dicoret) di posisi aslinya + tanda perubahan di baris kepala */
-.rd-grid tr.rd-hapus td{ background:rgba(220,38,38,.07); color:var(--muted); }
+.rd-grid tr.rd-hapus td{ background:rgba(220,38,38,.07); }
 .rd-grid tr.rd-hapus td.code{ color:#c0392b; font-weight:700; }
 .rd-grid tr.rd-hapus:not(.rd-item) td.code{ color:#c0392b; }
 .rd-coret{ text-decoration:line-through; text-decoration-color:rgba(192,57,43,.75); text-decoration-thickness:1.5px; }
