@@ -7,12 +7,13 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611270722';
-import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611270722';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611270722';
-import { SB } from '../api.js?v=202611270722';
-import { refresh } from '../nav.js?v=202611270722';
-import { lupakanUsulan } from './usulan.js?v=202611270722';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611270923';
+import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611270923';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611270923';
+import { SB } from '../api.js?v=202611270923';
+import { refresh } from '../nav.js?v=202611270923';
+import { bandingRKK } from './anggaran.js?v=202611270923';
+import { lupakanUsulan } from './usulan.js?v=202611270923';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
@@ -80,16 +81,78 @@ function muatSalinan(u){
     R.memuat = false; if (S.page === 'anggaran-rkk') refresh();
   }).catch(function(e){ R.memuat = false; R.err = errMsg(e); if (S.page === 'anggaran-rkk') refresh(); });
 }
-/* lembar kerja DIPA: versi terpilih (bawaan: DIPA terakhir pada tahun anggaran terbaru) */
+/* ---------- DIPA proyeksi: hasil usulan revisi yang sudah disetujui, sebelum RKK resminya diunggah ----------
+   Lembar kerja DIPA "bersih" (tanpa tanda ubah/hapus) dari usulan berstatus Disetujui / Diinput SAKTI:
+   usulan seluruh satker = isi usulan; usulan satu unit = DIPA basis unit lain + isi usulan unit itu.
+   Hanya untuk dilihat; setelah RKK SAKTI yang lebih baru diunggah, dapat dicocokkan baris per baris. */
+var ST_PROYEKSI = ['disetujui', 'diinput_sakti'];
+function proyeksiDaftar(){ return (R.daftar || []).filter(function(u){ return u.histori && ST_PROYEKSI.indexOf(u.status) >= 0; }); }
+function labelProyeksi(u){ return 'DIPA – Revisi ke ' + (u.revisi_ke || '?') + ' (proyeksi) · ' + u.judul + (u.unit || u.kategori ? ' · ' + (u.unit || u.kategori) : ''); }
+function muatProyeksi(u, vs){
+  var basisV = vs.filter(function(x){ return x.id === u.versi_id; })[0];
+  return Promise.all([SB.salinan(u.id), SB.anggaranItem(u.versi_id), SB.blokirItem(u.versi_id)]).then(function(r){
+    var milikUnit = function(b){ return u.kategori == null || (b.kategori === u.kategori && (b.unit || '') === (u.unit || '')); };
+    R.basis = {}; r[1].forEach(function(b){ R.basis[b.id] = b; });
+    var lain = r[1].filter(function(b){ return !milikUnit(b); }).map(function(b){ var x = {}; Object.keys(b).forEach(function(k){ x[k] = b[k]; }); x.anggaran_id = b.id; return x; });
+    R.rows = lain.concat(r[0]);
+    R.u = { dipa: true, proyeksi: u, id: 'proy-' + u.id, versi: basisV, kunci: R.dv };
+    R.bl = r[2]; R.sel = null; R.kotor = false; R.cocok = null;
+  });
+}
+/* RKK resmi yang lebih baru dari basis proyeksi (tahun sama) untuk pencocokan */
+function kotakCocok(pagu){
+  var v = rkkPembanding(), pu = R.u.proyeksi;
+  if (!v) return '<div class="status-box us-telaah rd-cocok-box">Belum ada RKK SAKTI yang lebih baru dari ' + esc(labelVersi(R.u.versi)) + '. Setelah revisi ditetapkan di SAKTI, unggah RKK DIPA – Revisi ke ' + (pu.revisi_ke || '?') +
+    ' di <b>Kelola Data</b>, lalu kembali ke sini untuk <b>Pencocokan</b>.</div>';
+  var pilih = '<label class="rd-ubahsaja" for="rdCocok"><input type="checkbox" id="rdCocok"' + (R.cocokOn ? ' checked' : '') + '> Pencocokan dengan RKK ' + esc(labelVersi(v) + ' · ' + tgl(v.posisi)) + '</label>';
+  var kc = R.cocokOn ? R.cocok : null;
+  if (!kc) return '<div class="rd-alat noprint rd-cocok-bar">' + pilih + (R.cocokOn ? '<span class="note">Mencocokkan…</span>' : '<span class="note">Bandingkan proyeksi ini dengan RKK hasil input SAKTI, baris per baris.</span>') + '</div>';
+  var beda = 0, tidak = 0; kc.st.forEach(function(x){ if (x.st === 'beda') beda++; else tidak++; });
+  var cocok = R.rows.length - beda - tidak, semua = !beda && !tidak && !kc.hanya.length;
+  return '<div class="rd-alat noprint rd-cocok-bar">' + pilih +
+      '<label class="rd-ubahsaja" for="rdHanyaBeda"><input type="checkbox" id="rdHanyaBeda"' + (R.hanyaBeda ? ' checked' : '') + (semua ? ' disabled' : '') + '> Hanya yang tidak cocok</label></div>' +
+    '<div class="status-box ' + (semua ? 's-ok' : 'us-telaah') + ' rd-cocok-box"><div>' + (semua ? '<b>Semua detail cocok</b> dengan RKK SAKTI. ' : '<b>Hasil pencocokan:</b> ') +
+      rp(cocok) + ' cocok · <span class="rd-cc beda">' + beda + ' jumlah berbeda</span> · <span class="rd-cc tidak">' + tidak + ' tidak ada di RKK</span> · <span class="rd-cc hanya">' + kc.hanya.length + ' hanya ada di RKK</span>' +
+      (kc.totalRkk !== pagu ? ' · pagu berbeda Rp ' + rp(Math.abs(kc.totalRkk - pagu)) : '') +
+      (kc.hanya.length ? '<details class="rd-hanya"><summary>Lihat ' + kc.hanya.length + ' detail yang hanya ada di RKK SAKTI</summary><div class="tbl"><table><thead><tr><th>RO · Sub komponen</th><th>Akun</th><th>Uraian</th><th class="n">Jumlah</th></tr></thead><tbody>' +
+        kc.hanya.map(function(r){ return '<tr><td class="code">' + esc(r.ro + ' · ' + String(r.sub || '').split('.').pop()) + ' ' + esc(r.sub_n || '') + '</td><td class="code">' + esc(r.akun) + '</td><td>' + esc(r.uraian) + '</td><td class="n">' + rp(r.jumlah) + '</td></tr>'; }).join('') +
+        '</tbody></table></div></details>' : '') + '</div></div>';
+}
+function rkkPembanding(){
+  var p = R.u && R.u.proyeksi, b = R.u && R.u.versi; if (!p || !b || !R.vs) return null;
+  var l = R.vs.filter(function(v){ return v.tahun === b.tahun && v.posisi > b.posisi; });
+  return l.length ? l[l.length - 1] : null;
+}
+/* hasil pencocokan: st (Map baris proyeksi → beda/tidak), hanyaRkk (item RKK yang tidak ada di proyeksi), tot (total RKK per baris kepala) */
+function siapkanCocok(){
+  var v = rkkPembanding(); if (!v || !R.cocokOn) return;
+  if (R.cocok && R.cocok.versi.id === v.id) return;
+  if (R.memuatCocok) return; R.memuatCocok = true;
+  SB.anggaranItem(v.id).then(function(rows){
+    var h = bandingRKK(R.rows, rows), st = new Map(), hanya = [], tot = {};
+    h.item.forEach(function(it){
+      if (it.st.indexOf('baru') >= 0) hanya.push(it.b);
+      else if (it.st.indexOf('hapus') >= 0) st.set(it.a, { st: 'tidak' });
+      else if (it.st.indexOf('ubah') >= 0) st.set(it.a, { st: 'beda', y: it.b });
+    });
+    rows.forEach(function(r){ jalur(r).forEach(function(k){ tot[k] = (tot[k] || 0) + r.jumlah; }); });
+    R.cocok = { versi: v, rows: rows, st: st, hanya: hanya, tot: tot, totalRkk: h.totalBaru, totalP: h.totalLama };
+    R.memuatCocok = false; if (S.page === 'anggaran-rkk') gambarUlang();
+  }).catch(function(e){ R.memuatCocok = false; R.cocokOn = false; toast(errMsg(e), 'err', 'Pencocokan gagal'); if (S.page === 'anggaran-rkk') gambarUlang(); });
+}
+/* lembar kerja DIPA: versi terpilih (bawaan: DIPA terakhir pada tahun anggaran terbaru) atau proyeksi ('p' + id usulan) */
 function muatDipa(){
   if (R.memuat) return; R.memuat = true; R.err = null;
   SB.anggaranVersi().then(function(vs){
     R.vs = vs;
     if (!vs.length) throw new Error('Belum ada RKK. Admin perencanaan perlu mengunggah RKK lebih dulu.');
+    var pu = typeof R.dv === 'string' ? proyeksiDaftar().filter(function(x){ return 'p' + x.id === R.dv; })[0] : null;
+    if (pu) return muatProyeksi(pu, vs);
+    if (typeof R.dv === 'string') R.dv = null;
     var v = vs.filter(function(x){ return x.id === R.dv; })[0];
     if (!v){ var th = Math.max.apply(null, vs.map(function(x){ return x.tahun; })), sm = vs.filter(function(x){ return x.tahun === th; }); v = sm[sm.length - 1]; }
     return Promise.all([SB.anggaranItem(v.id), SB.blokirItem(v.id)]).then(function(r){
-      R.dv = v.id; R.u = { dipa: true, id: 'dipa-' + v.id, versi: v };
+      R.dv = v.id; R.u = { dipa: true, id: 'dipa-' + v.id, versi: v, kunci: v.id };
       R.basis = {}; R.rows = r[0].map(function(b){ R.basis[b.id] = b; var x = {}; Object.keys(b).forEach(function(k){ x[k] = b[k]; }); x.anggaran_id = b.id; return x; });
       R.bl = r[1]; R.sel = null; R.kotor = false;
     });
@@ -198,19 +261,38 @@ export function renderRedesain(){
   if (R.mode !== 'dipa' && !u) R.mode = 'dipa';
   if (R.err) return '<div class="page-sec grid">' + card('rd', 'Belanja Redesain', '', '<p class="note">' + esc(R.err) + '</p>', '<div class="rd-act">' + barMode() + '</div>') + '</div>' + ikat();
   if (!u){
-    if (!R.rows || !R.u || !R.u.dipa || R.u.versi.id !== R.dv){ muatDipa(); return '<div class="loading">Memuat Belanja Redesain…</div>'; }
+    if (!R.rows || !R.u || !R.u.dipa || R.u.kunci !== R.dv){ muatDipa(); return '<div class="loading">Memuat Belanja Redesain…</div>'; }
   } else if (!R.rows || !R.u || R.u.id !== u.id){ muatSalinan(u); return '<div class="loading">Memuat ' + esc(u.judul) + '…</div>'; }
   var dipa = !u, ubah = !dipa && bolehUbah(u), baris = susun(), sel = pilihan(baris), tampil = dipa ? baris : susunTampil();
   var adaKey = {}; baris.forEach(function(x){ adaKey[x.key] = 1; }); Object.keys(R.cekKey).forEach(function(k){ if (!adaKey[k]) delete R.cekKey[k]; });
   var pagu = R.rows.reduce(function(a, r){ return a + r.jumlah; }, 0), totBl = R.rows.reduce(function(a, r){ return a + blk(r).blokir; }, 0);
   var ring, alat = '', judul, sub, act = '';
+  var pro = dipa && R.u.proyeksi, kc = pro && R.cocokOn ? R.cocok : null;
+  if (pro) siapkanCocok();
+  if (kc && R.hanyaBeda){
+    var bedaKey = {}; kc.st.forEach(function(x, r){ jalur(r).forEach(function(k){ bedaKey[k] = 1; }); });
+    tampil = tampil.filter(function(b){ return b.jenis === 'item' ? kc.st.has(b.r) : (bedaKey[b.key] || (kc.tot[b.key] || 0) !== b.j); });
+  }
+  /* kolom RKK SAKTI (pencocokan proyeksi): total RKK per baris kepala; per detail ✓ / jumlah RKK yang berbeda / tidak ada */
+  var rkkKepala = function(b){ if (!kc) return ''; var t = kc.tot[b.key] || 0; return '<td class="n rd-rkk' + (t !== b.j ? ' beda' : '') + '">' + rp(t) + '</td>'; };
+  var rkkItem = function(r){ if (!kc) return ''; var x = kc.st.get(r);
+    if (!x) return '<td class="n rd-rkk ok" title="Cocok dengan RKK SAKTI">✓</td>';
+    if (x.st === 'tidak') return '<td class="n rd-rkk tidak" title="Detail ini tidak ditemukan di RKK SAKTI">tidak ada</td>';
+    return '<td class="n rd-rkk beda" title="RKK SAKTI: ' + esc(vol(x.y.volume) + ' ' + (x.y.satuan || '') + ' × ' + rp(x.y.harga || 0)) + '">' + rp(x.y.jumlah) + '</td>'; };
+  var ccKelas = function(r){ if (!kc) return ''; var x = kc.st.get(r); return x ? ' rd-cc-' + x.st : ''; };
   if (dipa){
     var v = R.u.versi;
-    judul = 'Belanja Redesain';
-    sub = esc(labelVersi(v) + ' · posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun) + '. Kolom Blokir = nilai blokir per item seperti di SAKTI.';
-    act = '<label class="f ag-versi" for="rdVersi"><span class="sr-only">Versi DIPA</span><select id="rdVersi">' + R.vs.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === v.id ? ' selected' : '') + '>' + esc(labelVersi(x) + ' · ' + tgl(x.posisi) + ' · TA ' + x.tahun) + '</option>'; }).join('') + '</select></label>';
-    ring = '<div class="rd-ring"><div><span class="note">Pagu</span><b>Rp ' + rp(pagu) + '</b></div><div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div><div><span class="note">Dapat digunakan</span><b>Rp ' + rp(pagu - totBl) + '</b></div></div>';
-    if (punya('blokir')) alat = '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' + tb('blokir', 'Ubah Blokir', sel.blokir) + '</div><p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
+    judul = pro ? 'Belanja Redesain — DIPA – Revisi ke ' + (pro.revisi_ke || '?') + ' (proyeksi)' : 'Belanja Redesain';
+    sub = pro ? esc('Hasil ' + pro.judul + ' (' + (ST[pro.status] || pro.status) + ') dari ' + labelVersi(v) + ' · TA ' + v.tahun) + '. <b>Proyeksi — belum ditetapkan SAKTI</b>; hanya dapat dilihat.'
+              : esc(labelVersi(v) + ' · posisi ' + tgl(v.posisi) + ' · TA ' + v.tahun) + '. Kolom Blokir = nilai blokir per item seperti di SAKTI.';
+    act = '<label class="f ag-versi" for="rdVersi"><span class="sr-only">Versi DIPA</span><select id="rdVersi">' +
+      proyeksiDaftar().map(function(x){ return '<option value="p' + x.id + '"' + ('p' + x.id === R.dv ? ' selected' : '') + '>' + esc(labelProyeksi(x)) + '</option>'; }).join('') +
+      R.vs.slice().reverse().map(function(x){ return '<option value="' + x.id + '"' + (x.id === R.dv ? ' selected' : '') + '>' + esc(labelVersi(x) + ' · ' + tgl(x.posisi) + ' · TA ' + x.tahun) + '</option>'; }).join('') + '</select></label>';
+    ring = '<div class="rd-ring"><div><span class="note">' + (pro ? 'Pagu proyeksi' : 'Pagu') + '</span><b>Rp ' + rp(pagu) + '</b></div>' +
+      (kc ? '<div><span class="note">Pagu RKK ' + esc(tgl(kc.versi.posisi)) + '</span><b' + (kc.totalRkk !== pagu ? ' class="neg"' : '') + '>Rp ' + rp(kc.totalRkk) + '</b></div>' : '') +
+      '<div><span class="note">Diblokir</span><b>Rp ' + rp(totBl) + '</b></div><div><span class="note">Dapat digunakan</span><b>Rp ' + rp(pagu - totBl) + '</b></div></div>';
+    if (pro) alat = kotakCocok(pagu);
+    else if (punya('blokir')) alat = '<div class="rd-alat noprint" role="toolbar" aria-label="Alat Belanja Redesain">' + tb('blokir', 'Ubah Blokir', sel.blokir) + '</div><p class="note rd-petunjuk">' + esc(sel.ket) + '</p>';
   } else {
     var selisih = pagu - u.pagu_awal;
     judul = 'Belanja Redesain — ' + esc(u.judul);
@@ -249,9 +331,9 @@ export function renderRedesain(){
   var selTd = function(n){ return dipa ? '' : '<td class="n rd-sel' + (n > 0 ? ' pos' : n < 0 ? ' neg' : '') + '">' + (n ? tanda(n) : '') + '</td>'; };
   var blK = {}; R.rows.forEach(function(r){ var n = blk(r).blokir; if (n) jalur(r).forEach(function(k){ blK[k] = (blK[k] || 0) + n; }); });
   var IND = 7;
-  var grid = '<div class="tbl rd-grid"><table><colgroup><col class="c-kode"><col><col class="c-n"><col class="c-sat"><col class="c-rp"><col class="c-rp">' + (dipa ? '' : '<col class="c-rp">') + '<col class="c-rp c-bl"><col class="c-sd">' + (ubah ? '<col class="c-cek">' : '') + '</colgroup>' +
-    '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th>' + (dipa ? '' : '<th class="n" title="Jumlah usulan − jumlah DIPA">Selisih</th>') + '<th class="n" title="Nilai blokir · * = blokir dari RKK SAKTI · M = blokir manual Admin perencanaan">Blokir</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
-    (tampil.length ? '' : '<tr><td colspan="10" class="empty">Belum ada perubahan pada usulan ini.</td></tr>') +
+  var grid = '<div class="tbl rd-grid"><table><colgroup><col class="c-kode"><col><col class="c-n"><col class="c-sat"><col class="c-rp"><col class="c-rp">' + (dipa ? '' : '<col class="c-rp">') + (kc ? '<col class="c-rp">' : '') + '<col class="c-rp c-bl"><col class="c-sd">' + (ubah ? '<col class="c-cek">' : '') + '</colgroup>' +
+    '<thead><tr><th>Kode</th><th>Uraian</th><th class="n">Vol</th><th>Sat</th><th class="n">Harga</th><th class="n">Jumlah</th>' + (dipa ? '' : '<th class="n" title="Jumlah usulan − jumlah DIPA">Selisih</th>') + (kc ? '<th class="n" title="Jumlah di RKK SAKTI ' + esc(tgl(kc.versi.posisi)) + '">RKK SAKTI</th>' : '') + '<th class="n" title="Nilai blokir · * = blokir dari RKK SAKTI · M = blokir manual Admin perencanaan">Blokir</th><th title="Sumber dana">SD</th>' + (ubah ? '<th class="rd-cek" title="Centang untuk dihapus">Hapus</th>' : '') + '</tr></thead><tbody>' +
+    (tampil.length ? '' : '<tr><td colspan="10" class="empty">' + (dipa ? 'Semua baris cocok dengan RKK SAKTI.' : 'Belum ada perubahan pada usulan ini.') + '</td></tr>') +
     tampil.map(function(b){
       var on = R.sel && R.sel.key === b.key ? ' sel' : '';
       /* baris "hapus": detail DIPA yang dihapus / kepala yang seluruh isinya dihapus — penanda saja */
@@ -260,11 +342,11 @@ export function renderRedesain(){
       if (b.hantu) return '<tr class="rd-item rd-hapus" title="Dihapus dari usulan · jumlah DIPA Rp ' + rp(b.r.jumlah) + '"><td class="code"></td><td class="rd-u">- ' + esc(b.r.uraian) + '</td>' +
         '<td class="n"></td><td></td><td class="n"></td><td class="n"></td>' + selTd(-b.r.jumlah) +
         '<td class="n rd-bl"></td><td class="rd-sd">' + sd(b.r.sumber) + '</td>' + (ubah ? '<td class="rd-cek"></td>' : '') + '</tr>';
-      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) +
+      if (b.jenis !== 'item') return '<tr class="rd-' + b.jenis + on + (R.clip && R.clip.key === b.key ? ' rd-dicopy' : '') + '" data-rd-sel="' + esc(b.key) + '" tabindex="0"><td class="code" style="padding-left:' + (KODE_IND[b.jenis] || 6) + 'px">' + esc(b.kode) + '</td><td class="rd-u">' + (b.jenis === 'h1' ? '&gt; ' : b.jenis === 'h2' ? '&gt;&gt; ' : '') + esc(b.n || '') + '</td><td></td><td></td><td></td><td class="n">' + rp(b.j) + '</td>' + selTd(selK[b.key] || 0) + rkkKepala(b) +
         '<td class="n rd-bl">' + (blK[b.key] ? rp(blK[b.key]) : '') + '</td><td class="rd-sd">' + (b.jenis === 'akun' ? sd(b.r.sumber) : '') + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
       var r = b.r, st = dipa ? '' : statusItem(r), i = blk(r);
-      return '<tr class="rd-item' + (st ? ' rd-' + st : '') + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td class="rd-u">- ' + esc(r.uraian) + '</td>' +
-        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n"' + (!dipa && R.basis[r.anggaran_id] && R.basis[r.anggaran_id].jumlah !== r.jumlah ? ' title="Jumlah DIPA Rp ' + rp(R.basis[r.anggaran_id].jumlah) + '"' : '') + '>' + rp(r.jumlah) + '</td>' + selTd(dipa ? 0 : selItem(r)) +
+      return '<tr class="rd-item' + (st ? ' rd-' + st : '') + ccKelas(r) + on + '" data-rd-sel="' + b.key + '" tabindex="0"><td class="code">' + (st === 'baru' ? 'baru' : st === 'ubah' ? 'ubah' : '') + '</td><td class="rd-u">- ' + esc(r.uraian) + '</td>' +
+        '<td class="n">' + vol(r.volume) + '</td><td>' + esc(r.satuan) + '</td><td class="n">' + (r.harga == null ? '' : rp(r.harga)) + '</td><td class="n"' + (!dipa && R.basis[r.anggaran_id] && R.basis[r.anggaran_id].jumlah !== r.jumlah ? ' title="Jumlah DIPA Rp ' + rp(R.basis[r.anggaran_id].jumlah) + '"' : '') + '>' + rp(r.jumlah) + '</td>' + selTd(dipa ? 0 : selItem(r)) + rkkItem(r) +
         '<td class="n rd-bl"' + (i.blokir ? ' title="' + (i.manual ? 'Blokir manual Admin perencanaan' : 'Blokir dari RKK SAKTI') + '"' : '') + '>' + (i.blokir ? rp(i.blokir) + '<span class="rd-t">' + (i.manual ? 'M' : '*') + '</span>' : '') + '</td><td class="rd-sd">' + sd(r.sumber) + '</td>' + (ubah ? kotak(b) : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
   var hapus = dipa ? [] : dihapus();
@@ -882,7 +964,9 @@ function bind(){
   if (R.info){ var inf = R.info; setTimeout(function(){ if (R.info === inf){ R.info = ''; var el = document.querySelector('.rd-info'); if (el) el.remove(); } }, 8000); }
   [].forEach.call(pg.querySelectorAll('[data-rd-kembali]'), function(el){ el.onclick = function(){ var id = +el.getAttribute('data-rd-kembali'); R.lihat = null; R.mode = null; R.daftar = null; document.dispatchEvent(new CustomEvent('buka-usulan', { detail: id })); }; });
   [].forEach.call(pg.querySelectorAll('[data-rd-tutup]'), function(el){ el.onclick = function(){ R.lihat = null; R.mode = null; R.daftar = null; R.u = null; R.rows = null; refresh(); }; });
-  if ($('rdVersi')) $('rdVersi').onchange = function(){ R.dv = +this.value; R.rows = null; R.u = null; R.sel = null; refresh(); };
+  if ($('rdVersi')) $('rdVersi').onchange = function(){ var x = this.value; R.dv = x.charAt(0) === 'p' ? x : +x; R.rows = null; R.u = null; R.sel = null; R.cocok = null; R.cocokOn = false; R.hanyaBeda = false; refresh(); };
+  if ($('rdCocok')) $('rdCocok').onchange = function(){ R.cocokOn = this.checked; if (!R.cocokOn) R.hanyaBeda = false; gambarUlang(); };
+  if ($('rdHanyaBeda')) $('rdHanyaBeda').onchange = function(){ R.hanyaBeda = this.checked; gambarUlang(); };
   if ($('rdHanyaUbah')) $('rdHanyaUbah').onchange = function(){ R.hanyaUbah = this.checked; gambarUlang(); };
   if ($('rdUsulan')) $('rdUsulan').onchange = function(){
     var sel = this, m = sel.value === 'dipa' ? 'dipa' : +sel.value;

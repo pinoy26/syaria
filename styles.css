@@ -1326,3 +1326,18 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .rd-grid, .rd-grid :is(table,th,td,span,b,i,a,small,em,strong),
 .tbl-grid, .tbl-grid :is(table,th,td,span,b,i,a,small,em,strong,button){ font-family:var(--sakti)!important; }
 .rd-grid td.n, .rd-grid th.n, .tbl-grid td.n, .tbl-grid th.n, .rd-grid .code, .tbl-grid .code{ font-variant-numeric:tabular-nums; letter-spacing:0; }
+
+/* ===== Belanja Redesain: DIPA proyeksi & pencocokan dengan RKK SAKTI ===== */
+.rd-cocok-bar{ gap:14px; flex-wrap:wrap; }
+.rd-cocok-box{ margin-top:8px; font-size:12.5px; }
+.rd-cc{ font-weight:700; }
+.rd-cc.beda{ color:#a15c00; } .rd-cc.tidak{ color:#c0392b; } .rd-cc.hanya{ color:#285ea6; }
+.rd-grid tr.rd-cc-beda td{ background:rgba(245,158,11,.16); }
+.rd-grid tr.rd-cc-tidak td{ background:rgba(220,38,38,.08); }
+.rd-grid td.rd-rkk{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rd-grid td.rd-rkk.ok{ color:var(--good-ink, #15803d); text-align:center; }
+.rd-grid td.rd-rkk.beda{ color:#a15c00; font-weight:700; }
+.rd-grid td.rd-rkk.tidak{ color:#c0392b; font-weight:700; text-align:center; }
+.rd-hanya{ margin-top:8px; }
+.rd-hanya summary{ cursor:pointer; font-weight:600; }
+.rd-hanya .tbl{ margin-top:6px; max-height:260px; overflow:auto; }
