@@ -1318,3 +1318,11 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
   .tbl-grid th.tg-k,.tbl-grid td.tg-k{width:110px;min-width:110px!important;max-width:110px}
   .tbl-grid th.tg-u,.tbl-grid td.tg-u{min-width:210px}
 }
+
+/* ===== Huruf tabel seperti SAKTI: font bawaan sistem (Windows: Segoe UI, Android: Roboto, Mac/iOS: San Francisco),
+   termasuk angka (lebar angka seragam agar kolom rupiah tetap rata). Berlaku di lembar kerja Belanja Redesain
+   dan tabel bertingkat realisasi/anggaran; bagian lain LANTERA tetap memakai huruf aplikasi. ===== */
+:root{ --sakti:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+.rd-grid, .rd-grid :is(table,th,td,span,b,i,a,small,em,strong),
+.tbl-grid, .tbl-grid :is(table,th,td,span,b,i,a,small,em,strong,button){ font-family:var(--sakti)!important; }
+.rd-grid td.n, .rd-grid th.n, .tbl-grid td.n, .tbl-grid th.n, .rd-grid .code, .tbl-grid .code{ font-variant-numeric:tabular-nums; letter-spacing:0; }

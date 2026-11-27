@@ -1,8 +1,8 @@
 /* js/pages/laporan.js — Laporan: form pilihan cetak ala SAKTI, unduh PDF langsung (jsPDF) & Excel */
-import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611270719';
-import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611270719';
-import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611270719';
-import { refresh } from '../nav.js?v=202611270719';
+import { esc, rp, pc, tgl, sum, group, toast, errMsg } from '../utils.js?v=202611270722';
+import { S, D, CHAIN, FLABEL, FAK_ORDER, DB, BOOT, SRC, A2, scoped, applyF, isUnitUser, sess, subName, rows, unitCaption } from '../state.js?v=202611270722';
+import { treeCard, printHead, LV, IC } from '../ui-components.js?v=202611270722';
+import { refresh } from '../nav.js?v=202611270722';
 
 var JENIS=[
   {id:'unit',t:'Rincian per Unit Kerja',sub:'Kategori → Unit → KRO → RO → Komponen → Sub Komponen → Akun → Detail belanja.',lv:[LV.kat,LV.unit,LV.kro,LV.ro,LV.komp,LV.sub,LV.akun]},
