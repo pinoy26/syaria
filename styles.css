@@ -1294,3 +1294,27 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .rd-chg{ color:#f5c451; } :root:not([data-theme="light"]) .rd-chg.ada-hapus{ color:#ff8a80; } }
 .rd-ubahsaja{ display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; color:var(--muted); margin:0 6px 0 0; cursor:pointer; white-space:nowrap; }
 @media print{ .rd-grid tr.rd-hapus td{ background:none; } }
+
+/* ===== Ukuran huruf lembar kerja (Belanja Redesain) & tabel realisasi sedikit lebih besar (≈ +1px),
+   lebar kolom disesuaikan proporsional ===== */
+@media screen{
+  .rd-grid table{font-size:13.5px;min-width:1060px}
+  .rd-grid th,.rd-grid td{padding:6px 8px}
+  .rd-grid thead th{font-size:12.5px}
+  .rd-grid thead th.rd-cek{font-size:11px}
+  .rd-grid .rd-sd{font-size:12.5px}
+  .rd-grid .c-kode{width:138px} .rd-grid .c-n{width:70px} .rd-grid .c-sat{width:70px}
+  .rd-grid .c-rp{width:128px} .rd-grid .c-bl{width:142px} .rd-grid .c-sd{width:56px} .rd-grid .c-cek{width:54px}
+  .rd-lbl-hapus{font-size:11px;line-height:18px}
+
+  .tbl-grid table{font-size:13px}
+  .tbl-grid th{font-size:13px}
+  .tbl-grid th,.tbl-grid td{padding:8px 11px}
+  .tg-kw .code,.tbl-grid .tg-no{font-size:13px}
+  .tbl-grid th.tg-k,.tbl-grid td.tg-k{width:142px;min-width:142px!important;max-width:142px}
+  .tbl-grid th.tg-u,.tbl-grid td.tg-u{left:142px;min-width:300px}
+}
+@media screen and (max-width:640px){
+  .tbl-grid th.tg-k,.tbl-grid td.tg-k{width:110px;min-width:110px!important;max-width:110px}
+  .tbl-grid th.tg-u,.tbl-grid td.tg-u{min-width:210px}
+}
