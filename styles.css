@@ -1448,3 +1448,23 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .uk-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
 .uk-btn:focus-visible{ outline:3px solid #f2b33d; outline-offset:2px; }
 @media print{ .uk-btn{ display:none; } .uk{ break-inside:avoid; box-shadow:none; } }
+
+/* Unit Kerja: batang panah memanjang Fakultas → Rektorat (pengganti judul kartu) */
+.uk-step{ display:flex; gap:6px; margin:0 0 24px; }
+.uk-st{ --uk-takik:24px; flex:1 1 0; min-width:0; position:relative; border:0; cursor:pointer; text-align:left; color:#fff; background:var(--uk-bg,#285ea6);
+  padding:16px calc(var(--uk-takik) + 18px) 16px calc(var(--uk-takik) + 14px); margin-left:calc(-1 * var(--uk-takik) + 6px); font:inherit; display:flex; flex-direction:column; gap:7px;
+  clip-path:polygon(0 0, calc(100% - var(--uk-takik)) 0, 100% 50%, calc(100% - var(--uk-takik)) 100%, 0 100%, var(--uk-takik) 50%); transition:filter .15s; }
+.uk-st:first-child{ margin-left:0; padding-left:20px; clip-path:polygon(0 0, calc(100% - var(--uk-takik)) 0, 100% 50%, calc(100% - var(--uk-takik)) 100%, 0 100%); border-radius:12px 0 0 12px; }
+.uk-st:hover{ filter:brightness(1.1); }
+.uk-st:focus-visible{ outline:3px solid #f2b33d; outline-offset:-3px; }
+.uk-st-hd{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.uk-st-hd b{ font-size:17px; font-weight:800; letter-spacing:-.01em; }
+.uk-st-pct{ font-size:21px; font-weight:800; color:#f2b33d; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.uk-st-sub{ font-size:12px; color:rgba(255,255,255,.85); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.uk-st-bar{ display:block; height:8px; border-radius:99px; background:rgba(255,255,255,.22); overflow:hidden; }
+.uk-st-bar i{ display:block; height:100%; border-radius:99px; background:#f2b33d; }
+@media (max-width:760px){
+  .uk-step{ flex-direction:column; }
+  .uk-st, .uk-st:first-child{ margin-left:0; padding:14px 16px; clip-path:none; border-radius:12px; }
+  .uk-st-sub{ white-space:normal; }
+}

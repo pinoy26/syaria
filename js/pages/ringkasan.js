@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611280524';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611280524';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611280524';
-import { SB } from '../api.js?v=202611280524';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611280543';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611280543';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611280543';
+import { SB } from '../api.js?v=202611280543';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){

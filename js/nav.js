@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611280524';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280524';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611280524';
-import { THEME_BTN } from './theme.js?v=202611280524';
-import { renderFilters } from './filters.js?v=202611280524';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280524';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280524';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280524';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280524';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280524';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280524';
-import { renderLaporan } from './pages/laporan.js?v=202611280524';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280524';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280524';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280524';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280524';
+import { $, esc } from './utils.js?v=202611280543';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280543';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611280543';
+import { THEME_BTN } from './theme.js?v=202611280543';
+import { renderFilters } from './filters.js?v=202611280543';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280543';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280543';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280543';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280543';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280543';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280543';
+import { renderLaporan } from './pages/laporan.js?v=202611280543';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280543';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280543';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280543';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280543';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -186,6 +186,16 @@ export function refresh(){
   [].forEach.call(pg.querySelectorAll('[data-goa2]'),function(b){ b.onclick=function(){ S.f.a2=b.getAttribute('data-goa2'); S.f.a3=''; S.page='jenis'; S.open={}; S.open['t-jenis/'+S.f.a2]=true; refresh(); window.scrollTo(0,0); }; });
   [].forEach.call(pg.querySelectorAll('[data-unitview]'),function(b){ b.onclick=function(){ S.unitView=b.getAttribute('data-unitview'); keepScroll(); }; });
   [].forEach.call(pg.querySelectorAll('[data-unit]'),function(b){ b.onclick=function(){ openModal(unitModalHtml(b.getAttribute('data-unit'))); }; });
+  /* kartu Unit Kerja: "Lihat selengkapnya" langsung ke rincian lengkap fakultas/unit (Rincian Unit Kerja, terbuka di unit itu) */
+  [].forEach.call(pg.querySelectorAll('[data-rincian-unit]'),function(b){ b.onclick=function(){
+    var key=b.getAttribute('data-rincian-unit'), parts=key.split('|');
+    S.f.unit=key; S.f.a2=''; S.f.a3=''; S.cmp=null;
+    S.page='unit-rincian'; S.open={}; S.unitView='unit';
+    S.open['t-unit/'+parts[0]]=true; S.open['t-unit/'+parts[0]+'/'+parts[1]]=true;
+    refresh(); window.scrollTo(0,0);
+  }; });
+  /* batang panah Fakultas/Rektorat di Unit Kerja: gulir ke kelompoknya */
+  [].forEach.call(pg.querySelectorAll('[data-uk-ke]'),function(b){ b.onclick=function(){ var t=document.getElementById(b.getAttribute('data-uk-ke')); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); }; });
   [].forEach.call(pg.querySelectorAll('[data-print]'),function(b){ b.onclick=function(){ printCard(b.getAttribute('data-print')); }; });
   [].forEach.call(pg.querySelectorAll('[data-pdf]'),function(b){ b.onclick=function(){ pdfCard(b.getAttribute('data-pdf'),b.getAttribute('data-title')); }; });
   [].forEach.call(pg.querySelectorAll('[data-printall]'),function(b){ b.onclick=printAll; });

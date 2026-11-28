@@ -1,7 +1,7 @@
 /* js/pages/analisis.js — Unit Kerja, Sumber Dana, Jenis Belanja, Struktur DIPA */
-import { esc, rp, rpk, pc, group, sum } from '../utils.js?v=202611280524';
-import { FAK_ORDER, FAK_FULL, SRC, S, WAKTU, rows, pill, status, A2 } from '../state.js?v=202611280524';
-import { card, actions, track, trackIdeal, printHead, treeCard, LV } from '../ui-components.js?v=202611280524';
+import { esc, rp, rpk, pc, group, sum } from '../utils.js?v=202611280543';
+import { FAK_ORDER, FAK_FULL, SRC, S, WAKTU, rows, pill, status, A2 } from '../state.js?v=202611280543';
+import { card, actions, track, trackIdeal, printHead, treeCard, LV } from '../ui-components.js?v=202611280543';
 
 /* ================= halaman analisis ================= */
 export function unitSort(a,b){ var ka=a.key.split('|'),kb=b.key.split('|'); if(ka[0]!==kb[0]) return ka[0]==='Fakultas'?-1:1; var ia=FAK_ORDER.indexOf(ka[1]),ib=FAK_ORDER.indexOf(kb[1]); if(ia>=0&&ib>=0) return ia-ib; return b.pagu-a.pagu; }
@@ -30,19 +30,28 @@ export function renderUnit(){
       '<span class="uk-meta">'+UK_IK.real+'<span>Realisasi <b>Rp '+rpk(g.sd)+'</b></span></span>'+
       '<span class="uk-meta">'+UK_IK.sisa+'<span>Sisa <b>Rp '+rpk(g.sisa)+'</b></span></span>'+
       '<div class="uk-ft"><span class="uk-prog"><small>Realisasi</small><b style="color:'+(UK_TINTA[st[0]]||'inherit')+'" title="'+esc(st[1])+'">'+pc(g.p)+'</b></span>'+
-        '<button type="button" class="uk-btn" data-unit="'+esc(g.key)+'" aria-label="Lihat selengkapnya: '+esc(p[1])+'">Lihat selengkapnya</button></div></article>';
+        '<button type="button" class="uk-btn" data-rincian-unit="'+esc(g.key)+'" aria-label="Lihat selengkapnya: '+esc(p[1])+'">Lihat selengkapnya</button></div></article>';
   };
   /* dikelompokkan per kategori (Fakultas lebih dulu), masing-masing dengan subtotal */
   var kats=[]; gu.forEach(function(g){ var k=g.key.split('|')[0]; if(kats.indexOf(k)<0) kats.push(k); });
+  var ringkas=kats.map(function(k){ var gs=gu.filter(function(g){ return g.key.split('|')[0]===k; }); return { k:k, n:gs.length, t:sum([].concat.apply([],gs.map(function(g){ return g.rows; }))) }; });
+  var idSec=function(k){ return 'uk-sec-'+String(k).replace(/\W+/g,''); };
+  /* batang panah memanjang (seperti langkah wizard): satu ruas per kelompok, berisi angka & batang realisasi */
+  var panah='<nav class="uk-step noprint" aria-label="Ringkasan Fakultas dan Rektorat">'+ringkas.map(function(x,i){
+      var w=Math.min(100,Math.max(0,x.t.p*100));
+      return '<button type="button" class="uk-st" data-uk-ke="'+idSec(x.k)+'" style="--uk-bg:'+(['#285ea6','#194276','#16264d'][i%3])+'">'+
+        '<span class="uk-st-hd"><b>'+esc(x.k)+'</b><span class="uk-st-pct">'+pc(x.t.p)+'</span></span>'+
+        '<span class="uk-st-sub">'+x.n+' unit · Pagu Rp '+rpk(x.t.pagu)+' · Realisasi Rp '+rpk(x.t.sd)+' · Sisa Rp '+rpk(x.t.sisa)+'</span>'+
+        '<span class="uk-st-bar" role="img" aria-label="Realisasi '+esc(x.k)+' '+pc(x.t.p)+'"><i style="width:'+w.toFixed(1)+'%"></i></span></button>';
+    }).join('')+'</nav>';
   var sections=kats.map(function(k){
     var gs=gu.filter(function(g){ return g.key.split('|')[0]===k; });
-    var t=sum([].concat.apply([],gs.map(function(g){ return g.rows; })));
-    return '<section class="unit-sec" aria-label="'+esc(k)+'">'+
-      '<div class="unit-sec-hd"><div><h3>'+esc(k)+'</h3><span class="note">'+gs.length+' unit · pagu '+rpk(t.pagu)+' · realisasi '+rpk(t.sd)+' ('+pc(t.p)+') · sisa '+rpk(t.sisa)+'</span></div></div>'+
+    return '<section class="unit-sec" id="'+idSec(k)+'" aria-label="'+esc(k)+'">'+
+      '<div class="unit-sec-hd"><div><h3>'+esc(k)+'</h3><span class="note">'+gs.length+' unit</span></div></div>'+
       '<div class="uk-grid">'+gs.map(unitCard).join('')+'</div></section>';
   }).join('');
   return '<div class="page-sec grid">'+printHead()+
-    card('c-units','Unit kerja','Klik <b>Lihat selengkapnya</b> pada kartu untuk melihat rincian sumber dana dan jenis belanja unit tersebut. Warna persentase: hijau sesuai jadwal, kuning perlu percepatan, merah tertinggal (waktu berjalan '+pc(WAKTU)+').',sections)+'</div>';
+    '<section class="glass card" id="c-units">'+panah+sections+'</section></div>';
 }
 export function unitModalHtml(key){
   var gu=group(rows(),function(r){return r.kat+'|'+r.unit;});
