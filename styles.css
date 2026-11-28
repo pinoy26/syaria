@@ -1342,8 +1342,10 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .rd-hanya summary{ cursor:pointer; font-weight:600; }
 .rd-hanya .tbl{ margin-top:6px; max-height:260px; overflow:auto; }
 
-/* cincin logo LANTERA & avatar akun (mis. Super admin): oranye (sebelumnya kuning aksen sidebar) */
-:root{ --cincin:#f5821f; }
-.sn-mark{ box-shadow:0 0 0 3px var(--cincin)!important; }
-.topbar .brand>.mark{ box-shadow:0 0 0 3px var(--cincin); }
+/* Oranye LANTERA (seperti roket & tombol "Upgrade Now" pada contoh): logo di halaman login dan di dalam aplikasi
+   sama-sama kotak membulat bergradasi oranye dengan ikon lentera putih; cincin avatar akun ikut oranye */
+:root{ --oranye:#f26b2c; --oranye-muda:#ff9a4d; --cincin:var(--oranye); }
+.lentera .mark{ background:linear-gradient(150deg,var(--oranye-muda),var(--oranye)); box-shadow:0 6px 16px -8px var(--oranye); }
+.sn-mark{ background:linear-gradient(150deg,var(--oranye-muda),var(--oranye))!important; color:#fff!important; border-radius:10px!important; box-shadow:0 4px 12px -6px var(--oranye)!important; }
+.topbar .brand>.mark{ background:linear-gradient(150deg,var(--oranye-muda),var(--oranye)); color:#fff; border-radius:10px; box-shadow:0 4px 12px -6px var(--oranye); }
 .sn-av{ box-shadow:0 0 0 2px var(--cincin)!important; }
