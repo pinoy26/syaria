@@ -1,8 +1,8 @@
 /* js/berita.js — Berita & Pengumuman: tampilan bersama (halaman login, lonceng dasbor, halaman baca berita) */
-import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280618';
-import { SB } from './api.js?v=202611280618';
-import { sess, punyaSalah } from './state.js?v=202611280618';
-import { openModal, closeModal } from './ui-components.js?v=202611280618';
+import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280625';
+import { SB } from './api.js?v=202611280625';
+import { sess, punyaSalah } from './state.js?v=202611280625';
+import { openModal, closeModal } from './ui-components.js?v=202611280625';
 
 export var JENIS = { info: ['st-info', 'Info'], penting: ['st-crit', 'Penting'], tenggat: ['st-warn', 'Tenggat'] };
 export var IC_BERITA = '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>';

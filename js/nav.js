@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc, toast } from './utils.js?v=202611280618';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280618';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280618';
-import { THEME_BTN } from './theme.js?v=202611280618';
-import { renderFilters } from './filters.js?v=202611280618';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280618';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280618';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280618';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280618';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280618';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280618';
-import { renderLaporan } from './pages/laporan.js?v=202611280618';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280618';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280618';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280618';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280618';
+import { $, esc, toast } from './utils.js?v=202611280625';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280625';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280625';
+import { THEME_BTN } from './theme.js?v=202611280625';
+import { renderFilters } from './filters.js?v=202611280625';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280625';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280625';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280625';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280625';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280625';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280625';
+import { renderLaporan } from './pages/laporan.js?v=202611280625';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280625';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280625';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280625';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280625';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -202,8 +202,12 @@ export function refresh(){
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
   isiPanelBerita();
   if (p.after && !kunci) p.after();
-  /* tombol Kembali di bagian bawah isi halaman (label & tampil-tidaknya diatur tombolKembali) */
-  pg.insertAdjacentHTML('beforeend','<div class="kembali-bawah noprint"><button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Back</span></button></div>');
+  /* tombol Back: di Belanja Redesain masuk ke bilah ringkasan pagu (selalu terlihat, tidak menutupi lembar kerja);
+     di halaman lain mengambang di pojok kanan bawah layar. Tampil-tidaknya diatur tombolKembali. */
+  var tb='<button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Back</span></button>';
+  var foot=pg.querySelector('.rd-foot');
+  if (foot) foot.insertAdjacentHTML('beforeend','<div class="kembali-foot noprint">'+tb+'</div>');
+  else pg.insertAdjacentHTML('beforeend','<div class="kembali-apung noprint">'+tb+'</div>');
   catatRiwayat();
 }
 

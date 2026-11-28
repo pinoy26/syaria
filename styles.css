@@ -1469,16 +1469,20 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
   .uk-st-sub{ white-space:normal; }
 }
 
-/* tombol Back di pojok kanan bawah isi halaman (transparan, garis & tulisan biru) & jejak lokasi di navbar */
-.kembali-bawah{ display:flex; justify-content:flex-end; margin:22px 0 8px; }
-.kembali-bawah:has(.btn-kembali[hidden]){ display:none; }
-.btn-kembali{ display:inline-flex; align-items:center; gap:8px; padding:11px 20px 11px 14px; border:0; border-radius:999px; cursor:pointer;
-  background:transparent; color:var(--accent,#285ea6); border:1.5px solid currentColor; font:700 14px var(--sans); box-shadow:none; transition:transform .15s, background .15s; }
+/* tombol Back: mengambang di pojok kanan bawah layar (semua halaman) atau di ujung kanan bilah ringkasan pagu (Belanja Redesain) */
+.kembali-apung{ position:fixed; right:calc(18px + env(safe-area-inset-right,0px)); bottom:calc(18px + env(safe-area-inset-bottom,0px)); z-index:35; }
+.kembali-apung:has(.btn-kembali[hidden]), .kembali-foot:has(.btn-kembali[hidden]){ display:none; }
+.btn-kembali{ display:inline-flex; align-items:center; gap:6px; padding:9px 18px 9px 12px; border-radius:999px; cursor:pointer;
+  background:var(--glass-strong); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:var(--accent,#285ea6); border:1.5px solid currentColor;
+  font:700 14px var(--sans); box-shadow:0 8px 20px -12px rgba(10,20,42,.55); transition:transform .15s, background .15s; }
 .btn-kembali:hover{ transform:translateY(-1px); background:var(--accent-soft,rgba(40,94,166,.1)); }
 .btn-kembali:focus-visible{ outline:3px solid #f2b33d; outline-offset:3px; }
-.btn-kembali svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
-/* Belanja Redesain punya bilah ringkasan tetap di bawah layar: beri ruang agar tombol tidak tertutup */
-#page:has(.rd-foot) .kembali-bawah{ margin-bottom:64px; }
+.btn-kembali svg{ width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+@media (max-width:900px){ .kembali-apung{ bottom:calc(var(--nav-h,60px) + env(safe-area-inset-bottom,0px) + 14px); right:14px; } }
+/* di bilah ringkasan pagu Belanja Redesain: ringkas, di ujung kanan */
+.kembali-foot{ display:flex; align-items:center; padding-left:6px; }
+.kembali-foot .btn-kembali{ padding:2px 12px 2px 8px; font-size:12px; box-shadow:none; background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none; border-width:1.2px; }
+.kembali-foot .btn-kembali svg{ width:14px; height:14px; }
 .tb-jejak{ display:flex; align-items:center; gap:7px; min-width:0; margin-left:14px; font-size:12.5px; color:rgba(255,255,255,.72); overflow:hidden; white-space:nowrap; }
 .tb-jejak span{ overflow:hidden; text-overflow:ellipsis; }
 .tb-jejak span[aria-current]{ color:#fff; font-weight:700; }
