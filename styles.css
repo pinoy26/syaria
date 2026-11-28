@@ -1341,3 +1341,9 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .rd-hanya{ margin-top:8px; }
 .rd-hanya summary{ cursor:pointer; font-weight:600; }
 .rd-hanya .tbl{ margin-top:6px; max-height:260px; overflow:auto; }
+
+/* cincin logo LANTERA & avatar akun (mis. Super admin): oranye (sebelumnya kuning aksen sidebar) */
+:root{ --cincin:#f5821f; }
+.sn-mark{ box-shadow:0 0 0 3px var(--cincin)!important; }
+.topbar .brand>.mark{ box-shadow:0 0 0 3px var(--cincin); }
+.sn-av{ box-shadow:0 0 0 2px var(--cincin)!important; }

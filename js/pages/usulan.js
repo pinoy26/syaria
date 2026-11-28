@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611270923';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611270923';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611270923';
-import { SB } from '../api.js?v=202611270923';
-import { refresh, keepScroll } from '../nav.js?v=202611270923';
-import { kunciItem } from './anggaran.js?v=202611270923';
-import { muatPdfLib } from './laporan.js?v=202611270923';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611270923';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611280334';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611280334';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611280334';
+import { SB } from '../api.js?v=202611280334';
+import { refresh, keepScroll } from '../nav.js?v=202611280334';
+import { kunciItem } from './anggaran.js?v=202611280334';
+import { muatPdfLib } from './laporan.js?v=202611280334';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611280334';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
