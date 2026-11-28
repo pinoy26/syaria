@@ -1479,10 +1479,11 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .btn-kembali:focus-visible{ outline:3px solid #f2b33d; outline-offset:3px; }
 .btn-kembali svg{ width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
 @media (max-width:900px){ .kembali-apung{ bottom:calc(var(--nav-h,60px) + env(safe-area-inset-bottom,0px) + 14px); right:14px; } }
-/* di dalam lembar kerja Belanja Redesain: pojok kanan bawah, diam walau tabel digulir (menjauhi batang gulir) */
-.rd-grid-wrap{ position:relative; }
-.kembali-lk{ position:absolute; right:74px; bottom:22px; z-index:4; }   /* kolom centang Hapus di paling kanan tetap bisa diklik */
-.kembali-lk:has(.btn-kembali[hidden]){ display:none; }
+/* Belanja Redesain: tombol Back di ujung kanan baris keterangan blokir di bawah lembar kerja */
+.rd-ket.rd-ket-back{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.kembali-ket{ flex:none; }
+.kembali-ket:has(.btn-kembali[hidden]){ display:none; }
+.kembali-ket .btn-kembali{ padding:6px 14px 6px 10px; font-size:13px; box-shadow:none; }
 /* bilah ringkasan pagu Belanja Redesain sedikit lebih besar (baris & huruf) */
 .rd-ring.rd-foot{ height:40px; }
 .rd-ring.rd-foot .note{ font-size:13px; }

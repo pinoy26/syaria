@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc, toast } from './utils.js?v=202611280632';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280632';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280632';
-import { THEME_BTN } from './theme.js?v=202611280632';
-import { renderFilters } from './filters.js?v=202611280632';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280632';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280632';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280632';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280632';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280632';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280632';
-import { renderLaporan } from './pages/laporan.js?v=202611280632';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280632';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280632';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280632';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280632';
+import { $, esc, toast } from './utils.js?v=202611280644';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280644';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280644';
+import { THEME_BTN } from './theme.js?v=202611280644';
+import { renderFilters } from './filters.js?v=202611280644';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280644';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280644';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280644';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280644';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280644';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280644';
+import { renderLaporan } from './pages/laporan.js?v=202611280644';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280644';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280644';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280644';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280644';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -202,12 +202,13 @@ export function refresh(){
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
   isiPanelBerita();
   if (p.after && !kunci) p.after();
-  /* tombol Back: di Belanja Redesain berada DI DALAM lembar kerja, pojok kanan bawah, diam di tempat walau isi tabel digulir
-     (tabel dibungkus wadah relatif; yang bergulir hanya tabelnya). Di halaman lain mengambang di pojok kanan bawah layar.
+  /* tombol Back: di Belanja Redesain di pojok kanan bawah lembar kerja, sejajar baris keterangan blokir (diam walau tabel digulir).
+     Di halaman lain mengambang di pojok kanan bawah layar.
      Tampil-tidaknya diatur tombolKembali. */
   var tb='<button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Back</span></button>';
-  var lk=pg.querySelector('.rd-card .rd-grid');
-  if (lk){ var bungkus=document.createElement('div'); bungkus.className='rd-grid-wrap'; lk.parentNode.insertBefore(bungkus,lk); bungkus.appendChild(lk); bungkus.insertAdjacentHTML('beforeend','<div class="kembali-lk noprint">'+tb+'</div>'); }
+  /* Belanja Redesain: di ujung kanan baris keterangan blokir tepat di bawah tabel (tidak ikut bergulir) */
+  var ket=pg.querySelector('.rd-card .rd-ket');
+  if (ket){ ket.classList.add('rd-ket-back'); ket.insertAdjacentHTML('beforeend','<span class="kembali-ket noprint">'+tb+'</span>'); }
   else pg.insertAdjacentHTML('beforeend','<div class="kembali-apung noprint">'+tb+'</div>');
   catatRiwayat();
 }
