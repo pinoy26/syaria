@@ -1,8 +1,8 @@
 /* js/pages/ringkasan.js — halaman Ringkasan Realisasi */
-import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611280426';
-import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611280426';
-import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611280426';
-import { SB } from '../api.js?v=202611280426';
+import { $, esc, rp, pc, poin, tgl, tglPendek, blnTahun, yearFrac, endPrevMonth, sum, group, errMsg } from '../utils.js?v=202611280457';
+import { WAKTU, DB, D, S, SRC, FAK_ORDER, FAK_FULL, rows, unitCaption, isUnitUser, A2, status, pill } from '../state.js?v=202611280457';
+import { card, tipAttr, tipOf, track, printHead, IC, bindTips } from '../ui-components.js?v=202611280457';
+import { SB } from '../api.js?v=202611280457';
 
 /* ================= RINGKASAN ================= */
 function gauge(p){
@@ -22,7 +22,7 @@ function gauge(p){
 var IK_REAL='<i class="bn-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M6.5 15.5l4-4.5 3 3 4.5-6"/><path d="M14.5 8h3.5v3.5"/></svg></i>';
 var IK_LOCK='<i class="bn-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.2v2.2"/></svg></i>';
 var IK_BLOK='<i class="bn-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M6.3 6.3l11.4 11.4"/></svg></i>';
-/* gauge setengah lingkaran: bagian terealisasi (hijau) dan sisa (gelap) dipisah celah, penanda waktu berjalan */
+/* gauge setengah lingkaran: bagian terealisasi (kuning) dan sisa (biru) seperti batang indikator utama, dipisah celah; penanda waktu berjalan */
 var SG_N=0;
 function setengah(p){
   var r=62, cx=80, cy=80, L=Math.PI*r, v=Math.min(1,Math.max(0,p||0)), id='sg'+(++SG_N);
@@ -30,7 +30,7 @@ function setengah(p){
   var hijau=L*v, gelap=Math.max(0,L-hijau-celah);
   var th=Math.PI*(1-WAKTU), tk=function(rr){ return [(cx+rr*Math.cos(th)).toFixed(1),(cy-rr*Math.sin(th)).toFixed(1)]; }, a=tk(r-13), b=tk(r+13);
   return '<svg class="sg" viewBox="0 0 160 100" role="img" aria-label="Realisasi '+pc(p)+', waktu berjalan '+pc(WAKTU)+'">'+
-    '<defs><linearGradient id="'+id+'" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#2fbf5b"/><stop offset="1" stop-color="#5fe07f"/></linearGradient></defs>'+
+    '<defs><linearGradient id="'+id+'" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#eba521"/><stop offset="1" stop-color="#f7c85c"/></linearGradient></defs>'+
     (gelap>0?'<path d="'+d+'" fill="none" stroke="var(--sg-sisa)" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+gelap.toFixed(1)+' '+(L*2).toFixed(1)+'" stroke-dashoffset="'+(-(hijau+celah)).toFixed(1)+'"/>':'')+
     (hijau>0?'<path d="'+d+'" fill="none" stroke="url(#'+id+')" stroke-width="16" stroke-linecap="round" stroke-dasharray="'+hijau.toFixed(1)+' '+(L*2).toFixed(1)+'"/>':'')+
     '<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"><title>Waktu berjalan '+pc(WAKTU)+'</title></line>'+
@@ -38,7 +38,8 @@ function setengah(p){
     '<text x="80" y="94" text-anchor="middle" class="sg-sm">terealisasi</text></svg>';
 }
 /* grafik kolom 3D: per jenis belanja, kolom transparan = pagu (100%), kolom padat = realisasi */
-function kolom3d(gs,catCol){
+var IND_REAL='#f2b33d', IND_SISA='#3d7fd6';
+function kolom3d(gs){
   var W=320, base=212, H=150, w=46, dx=16, dy=10, n=gs.length||1, step=(W-40-dx)/n, s='';
   var poly=function(pts,fill,extra){ return '<polygon points="'+pts.map(function(q){return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ')+'" fill="'+fill+'"'+(extra||'')+'/>'; };
   var balok=function(x,top,col,ghost){
@@ -47,10 +48,10 @@ function kolom3d(gs,catCol){
     return poly(f,col)+poly(f,'url(#k3kilau)')+poly(sd,col)+poly(sd,'#000',' fill-opacity=".28"')+poly(tp,col)+poly(tp,'#fff',' fill-opacity=".38"');
   };
   gs.forEach(function(g,i){
-    var x=26+i*step+(step-w-dx)/2, col=catCol(g.key), h=H*Math.min(1,Math.max(0,g.p)), hh=Math.max(h,2);
+    var x=26+i*step+(step-w-dx)/2, h=H*Math.min(1,Math.max(0,g.p)), hh=Math.max(h,2);
     s+='<g class="k3" data-goa2="'+g.key+'" role="button" tabindex="0" aria-label="Akun '+g.key+' '+esc(A2(g.key))+': realisasi '+pc(g.p)+'">'+
       '<ellipse cx="'+(x+(w+dx)/2)+'" cy="'+(base+4)+'" rx="'+((w+dx)/2+6)+'" ry="6" fill="#000" opacity=".10"/>'+
-      balok(x,H,col,true)+balok(x,hh,col,false)+
+      balok(x,H,IND_SISA,true)+balok(x,hh,IND_REAL,false)+
       '<text x="'+(x+(w+dx)/2)+'" y="'+(base-hh-dy-8)+'" text-anchor="middle" class="k3-pct">'+pc(g.p)+'</text>'+
       '<text x="'+(x+w/2)+'" y="'+(base+22)+'" text-anchor="middle" class="k3-kode">'+g.key+'</text>'+
       '<text x="'+(x+w/2)+'" y="'+(base+36)+'" text-anchor="middle" class="k3-nm">'+esc(String(A2(g.key)).replace(/^Belanja\s+/i,''))+'</text></g>';
@@ -113,12 +114,14 @@ export function renderRingkasan(){
   var catCol=function(k){ return 'var(--cat-'+(k==='51'?1:k==='52'?2:3)+')'; };
   var catSw=function(k){ return '<span class="cat-sw" style="background:'+catCol(k)+'" aria-hidden="true"></span>'; };
   var typesBody='<div class="rz-3d"><div class="rz-list">'+byA2.map(function(g){
-      return realRow(catSw(g.key)+'<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
-    }).join('')+'</div><div class="rz-3d-graf">'+kolom3d(byA2,catCol)+'<div class="k3-leg"><span><i class="k3-sw padat"></i>Realisasi</span><span><i class="k3-sw"></i>Pagu (100%)</span></div></div></div>';
+      return realRow('<span class="rz-ic">'+(icons[g.key]||IC.box)+'</span><span><span class="code">Akun '+g.key+'</span> '+esc(A2(g.key))+'</span>',g,'var(--real)',' type="button" data-goa2="'+g.key+'"','button');
+    }).join('')+'</div><div class="rz-3d-graf">'+kolom3d(byA2)+'<div class="k3-leg"><span><i class="k3-sw padat"></i>Realisasi</span><span><i class="k3-sw"></i>Pagu (100%)</span></div></div></div>';
   /* dua sisi: kiri realisasi (sumber dana di atas, jenis belanja di bawah), kanan berita & pengumuman */
-  h+='<div class="rk-split"><div class="rk-main">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
-    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+'</div>'+
-    '<div class="rk-side noprint">'+card('c-berita','Berita &amp; Pengumuman','Informasi terbaru dari admin keuangan.','<div id="rkBerita"><div class="loading" style="padding:24px 0">Memuat berita…</div></div>','')+'</div></div>';
+  /* empat petak sejajar: realisasi per sumber dana ↔ flayer, realisasi per jenis belanja ↔ berita */
+  h+='<div class="rk-grid">'+card('c-src','Realisasi per sumber dana','Capaian realisasi masing-masing sumber dana terhadap pagunya.',srcBody)+
+    '<div class="rk-fl-sel noprint">'+card('c-flayer','Info &amp; Flayer','','<div id="rkFlayer" class="rk-fl-host"><div class="loading" style="padding:24px 0">Memuat…</div></div>','')+'</div>'+
+    card('c-type','Realisasi per jenis belanja','Akun 51, 52, 53. Klik untuk merinci.',typesBody)+
+    '<div class="rk-br-sel noprint">'+card('c-berita','Berita &amp; Pengumuman','Informasi terbaru dari admin keuangan.','<div id="rkBerita" class="rk-br-host"><div class="loading" style="padding:24px 0">Memuat berita…</div></div>','')+'</div></div>';
 
   var cells=[]; byA2.forEach(function(g){ ['RM','PNP'].forEach(function(s){ cells.push(sum(g.rows.filter(function(r){return r.sumber===s;}))); }); });
   var max=Math.max.apply(null,cells.map(function(c){return c.pagu;}).concat([1]));

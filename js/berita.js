@@ -1,8 +1,8 @@
 /* js/berita.js — Berita & Pengumuman: tampilan bersama (halaman login, lonceng dasbor, halaman baca berita) */
-import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280426';
-import { SB } from './api.js?v=202611280426';
-import { sess, punyaSalah } from './state.js?v=202611280426';
-import { openModal, closeModal } from './ui-components.js?v=202611280426';
+import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280457';
+import { SB } from './api.js?v=202611280457';
+import { sess, punyaSalah } from './state.js?v=202611280457';
+import { openModal, closeModal } from './ui-components.js?v=202611280457';
 
 export var JENIS = { info: ['st-info', 'Info'], penting: ['st-crit', 'Penting'], tenggat: ['st-warn', 'Tenggat'] };
 export var IC_BERITA = '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>';
@@ -296,25 +296,73 @@ function tampilBel(){
   var lbl = 'Berita, pengumuman & usulan revisi' + (n ? ' (' + n + ' baru)' : '');
   b.setAttribute('aria-label', lbl); b.title = lbl;
 }
-/* panel Berita & Pengumuman di sisi kanan Ringkasan: 5 berita teratas (yang disematkan lebih dulu) */
-var PANEL_BATAS = 5;
+/* panel kanan Ringkasan: petak flayer (sejajar Realisasi per sumber dana) dan petak berita redaksi
+   (sejajar Realisasi per jenis belanja). Berita redaksi tampil 3 sekaligus sebagai kartu bergambar dengan judul
+   di depan; bila lebih dari 3, daftar bergeser otomatis satu per satu (bisa digeser manual). */
+var GESER_TAMPIL = 3;
 export function isiPanelBerita(){
-  var h = $('rkBerita'); if (!h || !DASBOR.dimuat) return;
-  var pisah = pisahFlayer(DASBOR.items), list = pisah.redaksi.slice(0, PANEL_BATAS);
-  if (!list.length && !pisah.flayer.length){ h.innerHTML = '<div class="empty rk-kosong">Belum ada berita atau pengumuman.</div>'; return; }
-  /* flayer yang sama tetap berjalan (tidak kembali ke gambar pertama) saat daftar berita digambar ulang */
-  var kunci = pisah.flayer.map(function(b){ return b.id; }).join(','), lama = $('rkFlayer');
-  var pakaiLama = lama && lama.getAttribute('data-k') === kunci ? lama : null;
-  h.innerHTML = (pisah.flayer.length ? '<div class="rk-fl" id="rkFlayer" data-k="' + kunci + '"></div>' : '') +
-    (list.length ? '<div class="nw-list">' + list.map(function(b){ return itemHtml(b, !sudahDibaca(b.id)); }).join('') + '</div>' : '') +
-    (pisah.redaksi.length > PANEL_BATAS ? '<div class="tools nw-ft"><button type="button" class="btn" id="rkSemua">Lihat semua (' + DASBOR.items.length + ')</button></div>' : '');
-  if (pakaiLama) $('rkFlayer').replaceWith(pakaiLama);
-  else if (pisah.flayer.length) pasangFlayer($('rkFlayer'), pisah.flayer);
-  bindItems(h, list, function(b, el){
+  var hf = $('rkFlayer'), h = $('rkBerita'); if (!h || !DASBOR.dimuat) return;
+  var pisah = pisahFlayer(DASBOR.items);
+  if (hf){
+    var kunci = pisah.flayer.map(function(b){ return b.id; }).join(',') || '-';
+    if (hf.getAttribute('data-k') !== kunci || !hf.firstChild || hf.querySelector('.loading')){
+      hf.setAttribute('data-k', kunci);
+      if (pisah.flayer.length) pasangFlayer(hf, pisah.flayer);
+      else { if (hf._flayer) hf._flayer.henti(); hf.innerHTML = '<div class="fl-kosong"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m4.5 17 5-4.5 3.5 3 2.5-2 4 3.5"/></svg>Belum ada flayer.</div>'; }
+    }
+  }
+  pasangGeser(h, pisah.redaksi);
+}
+var GRAD = { info: 'linear-gradient(135deg,#194276,#285ea6)', penting: 'linear-gradient(135deg,#7a1d1d,#c0392b)', tenggat: 'linear-gradient(135deg,#8a4b08,#f26b2c)' };
+function pasangGeser(host, items){
+  if (host._geser) host._geser.henti();
+  if (!items.length){ host.innerHTML = '<div class="empty rk-kosong">Belum ada berita atau pengumuman.</div>'; return; }
+  var n = items.length, geser = n > GESER_TAMPIL, posMaks = Math.max(0, n - GESER_TAMPIL);
+  host.innerHTML = '<div class="nws" role="region" aria-roledescription="carousel" aria-label="Berita dan pengumuman">' +
+    '<div class="nws-vp"><div class="nws-track">' + items.map(function(b){
+      var baru = !sudahDibaca(b.id);
+      return '<button type="button" class="nws-it' + (baru ? ' baru' : '') + '" data-berita="' + b.id + '" style="background-image:' + (GRAD[b.jenis] || GRAD.info) + '">' +
+        '<span class="nws-bg"></span><span class="nws-txt"><span class="nws-meta">' + pillJenis(b.jenis) + '<span>' + tglBerita(b.mulai) + '</span>' +
+          (b.lampiran.some(function(l){ return !isFoto(l); }) ? '<span class="nws-pdf">PDF</span>' : '') + (baru ? '<span class="nw-dot" aria-label="Belum dibaca"></span>' : '') + '</span>' +
+        '<b class="nws-judul">' + esc(b.judul) + '</b></span></button>'; }).join('') + '</div></div>' +
+    (geser ? '<div class="nws-nav"><button type="button" class="nws-btn" data-nws="-1" aria-label="Berita sebelumnya">' + IC_KIRI + '</button><div class="nws-titik">' +
+      Array.apply(null, Array(posMaks + 1)).map(function(x, k){ return '<button type="button" data-nws-ke="' + k + '" aria-label="Geser ke berita ' + (k + 1) + '"' + (k ? '' : ' aria-current="true"') + '></button>'; }).join('') +
+      '</div><button type="button" class="nws-btn" data-nws="1" aria-label="Berita berikutnya">' + IC_KANAN + '</button>' +
+      '<button type="button" class="nws-semua" id="rkSemua">Lihat semua (' + n + ')</button></div>' : '') + '</div>';
+  var root = host.firstChild, vp = root.querySelector('.nws-vp'), track = root.querySelector('.nws-track'), titik = root.querySelectorAll('[data-nws-ke]');
+  var st = { i: 0, t: null, tahan: 0, aktif: true };
+  /* tinggi kartu mengikuti tinggi petak: 3 kartu mengisi ruang yang tersedia */
+  function ukur(){
+    var gap = 10, tinggi = vp.clientHeight, hItem = Math.max(64, (tinggi - gap * (GESER_TAMPIL - 1)) / GESER_TAMPIL);
+    root.style.setProperty('--nh', hItem + 'px'); st.lang = hItem + gap; posisi();
+  }
+  function posisi(){ track.style.transform = 'translateY(' + (-(st.i * (st.lang || 0))) + 'px)';
+    [].forEach.call(titik, function(t, k){ if (k === st.i) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); }); }
+  function jadwal(){ clearTimeout(st.t); st.t = null; if (!geser || KURANGI || st.tahan || document.hidden || !st.aktif) return;
+    st.t = setTimeout(function(){ if (!document.contains(root)){ henti(); return; } ke(st.i + 1); }, 6000); }
+  function ke(k){ st.i = k > posMaks ? 0 : k < 0 ? posMaks : k; posisi(); jadwal(); }
+  function henti(){ st.aktif = false; clearTimeout(st.t); window.removeEventListener('resize', ukur); document.removeEventListener('visibilitychange', jadwal); host._geser = null; }
+  host._geser = { henti: henti };
+  [].forEach.call(root.querySelectorAll('[data-nws]'), function(b){ b.onclick = function(){ ke(st.i + (+b.getAttribute('data-nws'))); }; });
+  [].forEach.call(titik, function(b){ b.onclick = function(){ ke(+b.getAttribute('data-nws-ke')); }; });
+  root.addEventListener('mouseenter', function(){ st.tahan++; jadwal(); });
+  root.addEventListener('mouseleave', function(){ st.tahan = Math.max(0, st.tahan - 1); jadwal(); });
+  root.addEventListener('focusin', function(){ st.tahan++; jadwal(); });
+  root.addEventListener('focusout', function(){ st.tahan = Math.max(0, st.tahan - 1); jadwal(); });
+  window.addEventListener('resize', ukur); document.addEventListener('visibilitychange', jadwal);
+  bindItems(root, items, function(b, el){
     tandaiDibaca([b.id]); tampilBel();
     el.classList.remove('baru'); var d = el.querySelector('.nw-dot'); if (d) d.remove();
     bukaHalamanBerita(b, el);
   });
   if ($('rkSemua')) $('rkSemua').onclick = bukaBeritaDasbor;
+  /* gambar latar: foto pertama tiap berita (tautan sementara dari Storage privat) */
+  var foto = items.map(function(b){ return b.lampiran.filter(isFoto)[0]; });
+  var paths = foto.filter(Boolean).map(function(l){ return l.path; });
+  if (paths.length) SB.urlLampiran(paths).then(function(m){
+    if (!st.aktif) return;
+    [].forEach.call(root.querySelectorAll('.nws-it'), function(el, k){ var l = foto[k], u = l && m[l.path]; if (u) el.querySelector('.nws-bg').style.backgroundImage = 'url("' + u + '")'; });
+  }).catch(function(){});
+  requestAnimationFrame(ukur); setTimeout(function(){ if (st.aktif) ukur(); }, 400); jadwal();
 }
 export function bukaBeritaDasbor(){ bukaDaftar(DASBOR.items, 'Berita & pengumuman', { tandaiBaru: true, usulan: notifUsulan(), onBerubah: function(){ tampilBel(); isiPanelBerita(); }, asal: $('btnBerita') }); }
