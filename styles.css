@@ -1425,3 +1425,26 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
 .nws-titik button{ width:8px; height:8px; padding:0; border:0; border-radius:99px; background:currentColor; opacity:.3; cursor:pointer; transition:width .25s, opacity .25s; }
 .nws-titik button[aria-current="true"]{ width:22px; opacity:1; background:var(--accent, #285ea6); }
 @media (prefers-reduced-motion:reduce){ .nws-track, .nws-bg{ transition:none; } }
+
+/* ===== Monev Realisasi → Unit Kerja: kartu bergaya ikon bulat + tombol "Lihat selengkapnya" ===== */
+.uk-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:30px 16px; padding-top:20px; }
+.uk{ position:relative; display:flex; flex-direction:column; gap:7px; padding:30px 16px 14px; border-radius:18px; background:var(--glass-strong); border:1px solid var(--line);
+  box-shadow:0 10px 26px -20px rgba(10,20,42,.45); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; min-width:0; }
+.uk:hover{ transform:translateY(-3px); box-shadow:0 16px 30px -18px rgba(10,20,42,.45); border-color:var(--line-strong); }
+.uk-ic{ position:absolute; top:-20px; left:16px; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; color:#fff;
+  box-shadow:0 0 0 4px var(--glass-strong), 0 8px 16px -8px rgba(10,20,42,.5); }
+.uk-ic svg{ width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.uk-nm{ margin:2px 0 2px; font-size:15px; font-weight:800; letter-spacing:-.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.uk-meta{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink2); min-width:0; }
+.uk-meta > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.uk-meta b{ color:var(--ink); font-weight:700; }
+.uk-meta svg{ width:14px; height:14px; flex:none; fill:none; stroke:var(--muted); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.uk-ft{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 10px; margin-top:8px; padding-top:10px; border-top:1px dashed var(--line-strong); }
+.uk-prog{ display:flex; flex-direction:column; line-height:1.15; }
+.uk-prog small{ font-size:11px; color:var(--muted); font-weight:600; }
+.uk-prog b{ font-size:18px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.uk-btn{ border:0; border-radius:999px; padding:8px 14px; font:700 12px var(--sans); color:#fff; cursor:pointer; white-space:nowrap;
+  background:linear-gradient(180deg,#3d7fd6,#285ea6); box-shadow:0 8px 16px -10px rgba(40,94,166,.9); transition:filter .15s, transform .15s; }
+.uk-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+.uk-btn:focus-visible{ outline:3px solid #f2b33d; outline-offset:2px; }
+@media print{ .uk-btn{ display:none; } .uk{ break-inside:avoid; box-shadow:none; } }

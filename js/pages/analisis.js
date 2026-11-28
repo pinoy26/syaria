@@ -1,19 +1,36 @@
 /* js/pages/analisis.js — Unit Kerja, Sumber Dana, Jenis Belanja, Struktur DIPA */
-import { esc, rp, rpk, pc, group, sum } from '../utils.js?v=202611280457';
-import { FAK_ORDER, FAK_FULL, SRC, S, WAKTU, rows, pill, A2 } from '../state.js?v=202611280457';
-import { card, actions, track, trackIdeal, printHead, treeCard, LV } from '../ui-components.js?v=202611280457';
+import { esc, rp, rpk, pc, group, sum } from '../utils.js?v=202611280524';
+import { FAK_ORDER, FAK_FULL, SRC, S, WAKTU, rows, pill, status, A2 } from '../state.js?v=202611280524';
+import { card, actions, track, trackIdeal, printHead, treeCard, LV } from '../ui-components.js?v=202611280524';
 
 /* ================= halaman analisis ================= */
 export function unitSort(a,b){ var ka=a.key.split('|'),kb=b.key.split('|'); if(ka[0]!==kb[0]) return ka[0]==='Fakultas'?-1:1; var ia=FAK_ORDER.indexOf(ka[1]),ib=FAK_ORDER.indexOf(kb[1]); if(ia>=0&&ib>=0) return ia-ib; return b.pagu-a.pagu; }
+/* kartu unit kerja: ikon bulat berwarna di atas, keterangan berikon, persentase realisasi + tombol "Lihat selengkapnya" */
+var UK_WARNA=['#e84a7f','#1fae7a','#3d7fd6','#f26b2c','#8e5bd6','#e5604a','#2bb3c0','#c9a227','#d8487a','#4f6bd8'];
+var UK_IK={
+  fak:'<svg viewBox="0 0 24 24"><path d="M3 9.5 12 5l9 4.5-9 4.5z"/><path d="M7 11.5v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4"/><path d="M21 9.5v5"/></svg>',
+  rek:'<svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M5.5 20V9.5L12 5l6.5 4.5V20"/><path d="M9.5 20v-5h5v5"/><path d="M9 11h.01M15 11h.01"/></svg>',
+  nama:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 4-5 7-5s5.8 1.7 7 5"/></svg>',
+  pagu:'<svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="11" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M7 9.5h.01M17 14.5h.01"/></svg>',
+  real:'<svg viewBox="0 0 24 24"><path d="M4 19.5h16"/><path d="M6.5 15.5l4-4.5 3 3 4.5-6"/></svg>',
+  sisa:'<svg viewBox="0 0 24 24"><path d="M5 7.5h14v11H5z"/><path d="M8 7.5V5.5h8v2"/><path d="M9 13h6"/></svg>'
+};
+var UK_TINTA={'st-good':'var(--good-ink)','st-warn':'var(--warn-ink)','st-crit':'var(--crit-ink)'};
 export function renderUnit(){
   var R=rows();
   var gu=group(R,function(r){return r.kat+'|'+r.unit;}).sort(unitSort);
-  var unitCard=function(g){
-    var p=g.key.split('|');
-    return '<button type="button" class="unit-card" data-unit="'+esc(g.key)+'">'+
-      '<span class="nm" title="'+esc(FAK_FULL[p[1]]||p[1])+'">'+esc(p[1])+'</span>'+
-      trackIdeal(g.p)+
-      '<span class="row"><span class="pct">'+pc(g.p)+'</span><span class="note num">'+rpk(g.pagu)+'</span></span></button>';
+  var unitCard=function(g,i){
+    var p=g.key.split('|'), fak=p[0]==='Fakultas', st=status(g.p,WAKTU);
+    var full=FAK_FULL[p[1]]||(fak?'Fakultas':'Rektorat · '+p[1]);
+    return '<article class="uk">'+
+      '<span class="uk-ic" style="background:'+UK_WARNA[i%UK_WARNA.length]+'" aria-hidden="true">'+(fak?UK_IK.fak:UK_IK.rek)+'</span>'+
+      '<h4 class="uk-nm" title="'+esc(full)+'">'+esc(p[1])+'</h4>'+
+      '<span class="uk-meta">'+UK_IK.nama+'<span>'+esc(full)+'</span></span>'+
+      '<span class="uk-meta">'+UK_IK.pagu+'<span>Pagu <b>Rp '+rpk(g.pagu)+'</b></span></span>'+
+      '<span class="uk-meta">'+UK_IK.real+'<span>Realisasi <b>Rp '+rpk(g.sd)+'</b></span></span>'+
+      '<span class="uk-meta">'+UK_IK.sisa+'<span>Sisa <b>Rp '+rpk(g.sisa)+'</b></span></span>'+
+      '<div class="uk-ft"><span class="uk-prog"><small>Realisasi</small><b style="color:'+(UK_TINTA[st[0]]||'inherit')+'" title="'+esc(st[1])+'">'+pc(g.p)+'</b></span>'+
+        '<button type="button" class="uk-btn" data-unit="'+esc(g.key)+'" aria-label="Lihat selengkapnya: '+esc(p[1])+'">Lihat selengkapnya</button></div></article>';
   };
   /* dikelompokkan per kategori (Fakultas lebih dulu), masing-masing dengan subtotal */
   var kats=[]; gu.forEach(function(g){ var k=g.key.split('|')[0]; if(kats.indexOf(k)<0) kats.push(k); });
@@ -21,13 +38,11 @@ export function renderUnit(){
     var gs=gu.filter(function(g){ return g.key.split('|')[0]===k; });
     var t=sum([].concat.apply([],gs.map(function(g){ return g.rows; })));
     return '<section class="unit-sec" aria-label="'+esc(k)+'">'+
-      '<div class="unit-sec-hd"><div><h3>'+esc(k)+'</h3><span class="note">'+gs.length+' unit · pagu '+rpk(t.pagu)+' · realisasi '+rpk(t.sd)+' · sisa '+rpk(t.sisa)+'</span></div>'+
-        '<div class="unit-sec-bar">'+trackIdeal(t.p)+'<span class="pct">'+pc(t.p)+'</span></div></div>'+
-      '<div class="unit-grid">'+gs.map(unitCard).join('')+'</div></section>';
+      '<div class="unit-sec-hd"><div><h3>'+esc(k)+'</h3><span class="note">'+gs.length+' unit · pagu '+rpk(t.pagu)+' · realisasi '+rpk(t.sd)+' ('+pc(t.p)+') · sisa '+rpk(t.sisa)+'</span></div></div>'+
+      '<div class="uk-grid">'+gs.map(unitCard).join('')+'</div></section>';
   }).join('');
-  var legend='<div class="legend unit-legend"><span><span class="sw" style="background:linear-gradient(90deg,var(--crit),var(--warn),var(--good));width:42px"></span>Merah → hijau: makin dekat ke ideal</span><span><span class="sw tick"></span>Garis ideal (waktu berjalan '+pc(WAKTU)+')</span></div>';
   return '<div class="page-sec grid">'+printHead()+
-    card('c-units','Unit kerja','Klik salah satu unit untuk melihat rincian sumber dana dan jenis belanjanya.',legend+sections)+'</div>';
+    card('c-units','Unit kerja','Klik <b>Lihat selengkapnya</b> pada kartu untuk melihat rincian sumber dana dan jenis belanja unit tersebut. Warna persentase: hijau sesuai jadwal, kuning perlu percepatan, merah tertinggal (waktu berjalan '+pc(WAKTU)+').',sections)+'</div>';
 }
 export function unitModalHtml(key){
   var gu=group(rows(),function(r){return r.kat+'|'+r.unit;});
