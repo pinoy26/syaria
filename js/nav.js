@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc } from './utils.js?v=202611280543';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280543';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal } from './ui-components.js?v=202611280543';
-import { THEME_BTN } from './theme.js?v=202611280543';
-import { renderFilters } from './filters.js?v=202611280543';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280543';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280543';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280543';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280543';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280543';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280543';
-import { renderLaporan } from './pages/laporan.js?v=202611280543';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280543';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280543';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280543';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280543';
+import { $, esc, toast } from './utils.js?v=202611280605';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280605';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280605';
+import { THEME_BTN } from './theme.js?v=202611280605';
+import { renderFilters } from './filters.js?v=202611280605';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280605';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280605';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280605';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280605';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280605';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280605';
+import { renderLaporan } from './pages/laporan.js?v=202611280605';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280605';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280605';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280605';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280605';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -202,5 +202,87 @@ export function refresh(){
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
   isiPanelBerita();
   if (p.after && !kunci) p.after();
+  catatRiwayat();
+}
+
+/* ================= riwayat browser: tombol back browser/HP & tombol ‹ Kembali di navbar =================
+   Setiap perpindahan menu / filter / tampilan di dalam halaman yang dilakukan PENGGUNA dicatat (pushState, alamat #/menu);
+   perubahan otomatis (memuat data, pengalihan) hanya memperbarui catatan yang sedang aktif (replaceState) agar tombol
+   back tidak terjebak. Back saat jendela/panel terbuka hanya menutupnya. Di bawah halaman pertama ada catatan "jaga":
+   back di halaman pertama memunculkan peringatan, back sekali lagi keluar dari LANTERA. */
+/* halaman yang punya tampilan di dalamnya (mis. Usulan Revisi: daftar → detail) mendaftarkan cara membaca & memasang tampilannya.
+   SUB sengaja tanpa nilai awal: modul halaman bisa mendaftar sebelum isi modul ini dijalankan (impor melingkar). */
+var SUB;
+export function daftarSub(pages,o){ SUB=SUB||{}; pages.forEach(function(p){ SUB[p]=o; }); }
+function subDari(p){ return SUB&&SUB[p]; }
+var RW={ awal:false, pulih:false, aksi:false, keluar:false, peringatan:0 };
+['click','keydown','change','submit'].forEach(function(ev){ document.addEventListener(ev,function(e){ if(e.isTrusted&&$('app')&&!$('app').hidden) RW.aksi=true; },true); });
+function salin(x){ return JSON.parse(JSON.stringify(x||{})); }
+function snap(d){ var o=subDari(S.page); return { lantera:1, page:S.page, f:salin(S.f), uv:S.unitView||'', open:salin(S.open), sub:o?o.ambil():null, d:d||0 }; }
+function kunciSnap(x){ return JSON.stringify([x.page,x.f,x.uv,x.sub]); }
+function alamat(p){ return '#/'+p; }
+function aktifApp(){ var a=$('app'); return a&&!a.hidden; }
+function catatRiwayat(){
+  if (RW.pulih || !aktifApp()) return;
+  var cur=history.state;
+  if (!RW.awal){
+    RW.awal=true;
+    if (cur && cur.lantera && !cur.jaga){ var s0=snap(cur.d); history.replaceState(s0,'',alamat(s0.page)); RW.aksi=false; tombolKembali(); return; }   /* muat ulang (F5) */
+    history.replaceState({lantera:1,jaga:1},'',location.pathname+location.search);
+    history.pushState(snap(0),'',alamat(S.page)); RW.aksi=false; tombolKembali(); return;
+  }
+  var d=cur&&cur.lantera&&!cur.jaga?cur.d:0, s=snap(d);
+  if (cur && cur.lantera && !cur.jaga && (kunciSnap(cur)===kunciSnap(s) || !RW.aksi)){ s.y=cur.y; history.replaceState(s,'',alamat(s.page)); }
+  else {
+    if (cur && cur.lantera && !cur.jaga){ var c2=salin(cur); c2.y=window.scrollY; history.replaceState(c2,'',location.hash); }
+    s.d=d+1; history.pushState(s,'',alamat(s.page));
+  }
+  RW.aksi=false; tombolKembali();
+}
+function pulihkan(st){
+  RW.pulih=true;
+  try{
+    S.page=st.page; S.f=salin(st.f); S.unitView=st.uv||S.unitView; S.open=salin(st.open);
+    if (subDari(st.page) && st.sub) subDari(st.page).pasang(st.sub);
+    refresh();
+  } finally { RW.pulih=false; }
+  window.scrollTo(0,st.y||0); tombolKembali();
+}
+window.addEventListener('popstate',function(e){
+  if (!aktifApp() || /^#berita-\d+$/.test(location.hash)) return;   /* halaman baca berita menangani dirinya sendiri */
+  var st=e.state;
+  /* jendela / panel terbuka: back hanya menutupnya, tetap di halaman ini */
+  if (!$('modal').hidden || filterDrawerOpen() || sheetOpen()){
+    closeModal(); closeFilterDrawer(); closeSheet();
+    if (st && st.lantera && !st.jaga && kunciSnap(st)===kunciSnap(snap())) return;
+    history.pushState(snap(st&&st.d!=null?st.d+1:1),'',alamat(S.page)); tombolKembali(); return;
+  }
+  if (st && st.jaga){
+    if (Date.now()-RW.peringatan<4000){ RW.keluar=true; history.back(); return; }
+    RW.peringatan=Date.now();
+    toast('Tekan Kembali sekali lagi untuk keluar dari LANTERA.','info','Keluar dari LANTERA?');
+    history.pushState(snap(0),'',alamat(S.page)); tombolKembali(); return;
+  }
+  if (!st || !st.lantera){ if (RW.keluar){ history.back(); return; } history.pushState(snap(0),'',alamat(S.page)); return; }
+  if (kunciSnap(st)===kunciSnap(snap())){ tombolKembali(); return; }   /* mis. kembali dari halaman berita */
+  pulihkan(st);
+});
+/* tombol ‹ Kembali & jejak lokasi di navbar */
+function tombolKembali(){
+  var b=$('btnKembali'), st=history.state, ada=!!(st&&st.lantera&&!st.jaga&&st.d>0);
+  if (b) b.hidden=!ada;
+  var j=$('tbJejak'); if (!j) return;
+  var p=PAGES.filter(function(x){ return x.id===S.page; })[0]; if (!p){ j.innerHTML=''; return; }
+  var bag=[p.g,p.t]; if (p.id==='unit-rincian' && S.f && S.f.unit) bag.push(S.f.unit.split('|')[1]||S.f.unit.split('|')[0]);
+  j.innerHTML=bag.filter(Boolean).map(function(x,i,a){ return '<span'+(i===a.length-1?' aria-current="page"':'')+'>'+esc(x)+'</span>'; }).join('<i aria-hidden="true">›</i>');
+}
+document.addEventListener('click',function(e){ if (e.target.closest('#btnKembali')) history.back(); });
+/* setelah muat ulang (F5): kembali ke menu yang sedang dibuka (login baru selalu mulai dari Ringkasan) */
+export function pulihkanDariAlamat(){
+  var st=history.state;
+  if (st && st.lantera && !st.jaga && /^#\/[\w-]+$/.test(location.hash) && PAGES.some(function(x){ return x.id===st.page; })){
+    S.page=st.page; S.f=salin(st.f); S.unitView=st.uv||S.unitView; S.open=salin(st.open);
+    if (subDari(st.page) && st.sub) subDari(st.page).pasang(st.sub);
+  }
 }
 export function keepScroll(){ var y=window.scrollY; refresh(); window.scrollTo(0,y); }

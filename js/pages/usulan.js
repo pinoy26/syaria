@@ -2,14 +2,14 @@
    Daftar usulan, editor (pemeriksaan langsung di browser), detail + tindakan per peran,
    Matriks Usulan Revisi (PDF/Excel) dan pencocokan dengan RKK baru setelah diinput ke SAKTI.
    Aturan yang sama diperiksa ulang di database saat disimpan/diajukan/disetujui. */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611280543';
-import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611280543';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611280543';
-import { SB } from '../api.js?v=202611280543';
-import { refresh, keepScroll } from '../nav.js?v=202611280543';
-import { kunciItem } from './anggaran.js?v=202611280543';
-import { muatPdfLib } from './laporan.js?v=202611280543';
-import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611280543';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611280605';
+import { S, DB, ALL, BOOT, sess, isSuperAdmin, punya, punyaSalah, bolehUnitUsulan } from '../state.js?v=202611280605';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611280605';
+import { SB } from '../api.js?v=202611280605';
+import { refresh, keepScroll, daftarSub } from '../nav.js?v=202611280605';
+import { kunciItem } from './anggaran.js?v=202611280605';
+import { muatPdfLib } from './laporan.js?v=202611280605';
+import { muatNotifUsulan, tandaiUsulanDilihat } from '../berita.js?v=202611280605';
 
 /* dipakai di dua menu: Monev Anggaran → Usulan Revisi (pengusul) dan Admin → Kelola Usulan Revisi (Admin perencanaan) */
 export var HAL_USULAN = ['anggaran-usulan', 'kelola-usulan'];
@@ -26,6 +26,8 @@ document.addEventListener('buka-usulan', function(e){
   refresh(); window.scrollTo(0, 0);
 });
 var U = { form: {}, jenis: {}, kurang: {}, templat: undefined, semua: false, tab: 'histori', list: null, view: 'daftar', id: null, draft: null, detail: null, basis: null, kelompok: '', memuat: false, err: null };
+/* riwayat browser: daftar ↔ detail ↔ isian usulan ikut tercatat, tombol back kembali ke tampilan sebelumnya */
+daftarSub(['anggaran-usulan', 'kelola-usulan'], { ambil: function(){ return { tab: U.tab, view: U.view, id: U.id }; }, pasang: function(x){ if (U.tab === x.tab && U.view === x.view && U.id === x.id) return; U.tab = x.tab; U.view = x.view; U.id = x.id; U.detail = null; U.err = null; } });
 var ST = {
   draf: ['st-draf', 'Draf'], diajukan: ['st-info', 'Diajukan'], dikembalikan: ['st-warn', 'Dikembalikan'], disetujui: ['st-good', 'Disetujui'],
   ditolak: ['st-crit', 'Ditolak'], diinput_sakti: ['st-info', 'Diinput SAKTI'], selesai: ['st-good', 'Selesai']

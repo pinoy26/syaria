@@ -1468,3 +1468,15 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
   .uk-st, .uk-st:first-child{ margin-left:0; padding:14px 16px; clip-path:none; border-radius:12px; }
   .uk-st-sub{ white-space:normal; }
 }
+
+/* navbar: tombol ‹ Kembali & jejak lokasi (riwayat browser) */
+.tb-kembali{ display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 12px 0 8px; margin-right:6px; border-radius:999px; border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.12); color:#fff; font:600 12.5px var(--sans); cursor:pointer; flex:none; transition:background .15s; }
+.tb-kembali:hover{ background:rgba(255,255,255,.22); }
+.tb-kembali:focus-visible{ outline:2px solid #f2b33d; outline-offset:2px; }
+.tb-kembali svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.tb-jejak{ display:flex; align-items:center; gap:7px; min-width:0; margin-left:14px; font-size:12.5px; color:rgba(255,255,255,.72); overflow:hidden; white-space:nowrap; }
+.tb-jejak span{ overflow:hidden; text-overflow:ellipsis; }
+.tb-jejak span[aria-current]{ color:#fff; font-weight:700; }
+.tb-jejak i{ font-style:normal; opacity:.6; }
+@media (max-width:900px){ .tb-jejak{ display:none; } .tb-kembali span{ display:none; } .tb-kembali{ padding:0 7px; } }
