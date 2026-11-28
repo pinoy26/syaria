@@ -1469,14 +1469,18 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
   .uk-st-sub{ white-space:normal; }
 }
 
-/* navbar: tombol ‹ Kembali & jejak lokasi (riwayat browser) */
-.tb-kembali{ display:inline-flex; align-items:center; gap:4px; height:32px; padding:0 12px 0 8px; margin-right:6px; border-radius:999px; border:1px solid rgba(255,255,255,.35);
-  background:rgba(255,255,255,.12); color:#fff; font:600 12.5px var(--sans); cursor:pointer; flex:none; transition:background .15s; }
-.tb-kembali:hover{ background:rgba(255,255,255,.22); }
-.tb-kembali:focus-visible{ outline:2px solid #f2b33d; outline-offset:2px; }
-.tb-kembali svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+/* tombol Kembali di bagian bawah isi halaman (oranye LANTERA agar mudah ditemukan) & jejak lokasi di navbar */
+.kembali-bawah{ display:flex; justify-content:flex-start; margin:22px 0 8px; }
+.kembali-bawah:has(.btn-kembali[hidden]){ display:none; }
+.btn-kembali{ display:inline-flex; align-items:center; gap:8px; padding:11px 20px 11px 14px; border:0; border-radius:999px; cursor:pointer;
+  background:linear-gradient(150deg,#ff9a4d,#f26b2c); color:#fff; font:700 14px var(--sans); box-shadow:0 10px 22px -12px rgba(242,107,44,.9); transition:transform .15s, filter .15s; }
+.btn-kembali:hover{ transform:translateY(-1px); filter:brightness(1.06); }
+.btn-kembali:focus-visible{ outline:3px solid #194276; outline-offset:3px; }
+.btn-kembali svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+/* Belanja Redesain punya bilah ringkasan tetap di bawah layar: beri ruang agar tombol tidak tertutup */
+#page:has(.rd-foot) .kembali-bawah{ margin-bottom:64px; }
 .tb-jejak{ display:flex; align-items:center; gap:7px; min-width:0; margin-left:14px; font-size:12.5px; color:rgba(255,255,255,.72); overflow:hidden; white-space:nowrap; }
 .tb-jejak span{ overflow:hidden; text-overflow:ellipsis; }
 .tb-jejak span[aria-current]{ color:#fff; font-weight:700; }
 .tb-jejak i{ font-style:normal; opacity:.6; }
-@media (max-width:900px){ .tb-jejak{ display:none; } .tb-kembali span{ display:none; } .tb-kembali{ padding:0 7px; } }
+@media (max-width:900px){ .tb-jejak{ display:none; } }

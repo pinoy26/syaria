@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc, toast } from './utils.js?v=202611280605';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280605';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280605';
-import { THEME_BTN } from './theme.js?v=202611280605';
-import { renderFilters } from './filters.js?v=202611280605';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280605';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280605';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280605';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280605';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280605';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280605';
-import { renderLaporan } from './pages/laporan.js?v=202611280605';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280605';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280605';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280605';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280605';
+import { $, esc, toast } from './utils.js?v=202611280611';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280611';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280611';
+import { THEME_BTN } from './theme.js?v=202611280611';
+import { renderFilters } from './filters.js?v=202611280611';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280611';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280611';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280611';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280611';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280611';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280611';
+import { renderLaporan } from './pages/laporan.js?v=202611280611';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280611';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280611';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280611';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280611';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -202,6 +202,8 @@ export function refresh(){
   if ($('cmpP1')) $('cmpP1').onchange=function(){ S.cmpP1=this.value; S.cmp=null; refresh(); };
   isiPanelBerita();
   if (p.after && !kunci) p.after();
+  /* tombol Kembali di bagian bawah isi halaman (label & tampil-tidaknya diatur tombolKembali) */
+  pg.insertAdjacentHTML('beforeend','<div class="kembali-bawah noprint"><button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Kembali</span></button></div>');
   catatRiwayat();
 }
 
@@ -227,15 +229,15 @@ function catatRiwayat(){
   var cur=history.state;
   if (!RW.awal){
     RW.awal=true;
-    if (cur && cur.lantera && !cur.jaga){ var s0=snap(cur.d); history.replaceState(s0,'',alamat(s0.page)); RW.aksi=false; tombolKembali(); return; }   /* muat ulang (F5) */
+    if (cur && cur.lantera && !cur.jaga){ var s0=snap(cur.d); s0.dari=cur.dari; history.replaceState(s0,'',alamat(s0.page)); RW.aksi=false; tombolKembali(); return; }   /* muat ulang (F5) */
     history.replaceState({lantera:1,jaga:1},'',location.pathname+location.search);
     history.pushState(snap(0),'',alamat(S.page)); RW.aksi=false; tombolKembali(); return;
   }
   var d=cur&&cur.lantera&&!cur.jaga?cur.d:0, s=snap(d);
-  if (cur && cur.lantera && !cur.jaga && (kunciSnap(cur)===kunciSnap(s) || !RW.aksi)){ s.y=cur.y; history.replaceState(s,'',alamat(s.page)); }
+  if (cur && cur.lantera && !cur.jaga && (kunciSnap(cur)===kunciSnap(s) || !RW.aksi)){ s.y=cur.y; s.dari=cur.dari; history.replaceState(s,'',alamat(s.page)); }
   else {
     if (cur && cur.lantera && !cur.jaga){ var c2=salin(cur); c2.y=window.scrollY; history.replaceState(c2,'',location.hash); }
-    s.d=d+1; history.pushState(s,'',alamat(s.page));
+    s.d=d+1; s.dari=cur&&cur.lantera&&!cur.jaga?cur.page:null; history.pushState(s,'',alamat(s.page));
   }
   RW.aksi=false; tombolKembali();
 }
@@ -270,7 +272,12 @@ window.addEventListener('popstate',function(e){
 /* tombol ‹ Kembali & jejak lokasi di navbar */
 function tombolKembali(){
   var b=$('btnKembali'), st=history.state, ada=!!(st&&st.lantera&&!st.jaga&&st.d>0);
-  if (b) b.hidden=!ada;
+  if (b){
+    b.hidden=!ada;
+    var asal=ada&&st.dari&&st.dari!==S.page?PAGES.filter(function(x){ return x.id===st.dari; })[0]:null;
+    b.querySelector('span').textContent=asal?'Kembali ke '+asal.t:'Kembali';
+    b.title='Kembali ke halaman sebelumnya';
+  }
   var j=$('tbJejak'); if (!j) return;
   var p=PAGES.filter(function(x){ return x.id===S.page; })[0]; if (!p){ j.innerHTML=''; return; }
   var bag=[p.g,p.t]; if (p.id==='unit-rincian' && S.f && S.f.unit) bag.push(S.f.unit.split('|')[1]||S.f.unit.split('|')[0]);
