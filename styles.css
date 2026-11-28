@@ -1469,13 +1469,13 @@ button.btn.rd-perlu-simpan::before{content:'●';color:#f2b632;margin-right:2px;
   .uk-st-sub{ white-space:normal; }
 }
 
-/* tombol Kembali di bagian bawah isi halaman (oranye LANTERA agar mudah ditemukan) & jejak lokasi di navbar */
-.kembali-bawah{ display:flex; justify-content:flex-start; margin:22px 0 8px; }
+/* tombol Back di pojok kanan bawah isi halaman (biru navbar) & jejak lokasi di navbar */
+.kembali-bawah{ display:flex; justify-content:flex-end; margin:22px 0 8px; }
 .kembali-bawah:has(.btn-kembali[hidden]){ display:none; }
 .btn-kembali{ display:inline-flex; align-items:center; gap:8px; padding:11px 20px 11px 14px; border:0; border-radius:999px; cursor:pointer;
-  background:linear-gradient(150deg,#ff9a4d,#f26b2c); color:#fff; font:700 14px var(--sans); box-shadow:0 10px 22px -12px rgba(242,107,44,.9); transition:transform .15s, filter .15s; }
+  background:var(--tb-bg,#285ea6); color:#fff; font:700 14px var(--sans); box-shadow:0 10px 22px -12px rgba(40,94,166,.9); transition:transform .15s, filter .15s; }
 .btn-kembali:hover{ transform:translateY(-1px); filter:brightness(1.06); }
-.btn-kembali:focus-visible{ outline:3px solid #194276; outline-offset:3px; }
+.btn-kembali:focus-visible{ outline:3px solid #f2b33d; outline-offset:3px; }
 .btn-kembali svg{ width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
 /* Belanja Redesain punya bilah ringkasan tetap di bawah layar: beri ruang agar tombol tidak tertutup */
 #page:has(.rd-foot) .kembali-bawah{ margin-bottom:64px; }

@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc, toast } from './utils.js?v=202611280611';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280611';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280611';
-import { THEME_BTN } from './theme.js?v=202611280611';
-import { renderFilters } from './filters.js?v=202611280611';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280611';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280611';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280611';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280611';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280611';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280611';
-import { renderLaporan } from './pages/laporan.js?v=202611280611';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280611';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280611';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280611';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280611';
+import { $, esc, toast } from './utils.js?v=202611280616';
+import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280616';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280616';
+import { THEME_BTN } from './theme.js?v=202611280616';
+import { renderFilters } from './filters.js?v=202611280616';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280616';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280616';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280616';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280616';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280616';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280616';
+import { renderLaporan } from './pages/laporan.js?v=202611280616';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280616';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280616';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280616';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280616';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -203,7 +203,7 @@ export function refresh(){
   isiPanelBerita();
   if (p.after && !kunci) p.after();
   /* tombol Kembali di bagian bawah isi halaman (label & tampil-tidaknya diatur tombolKembali) */
-  pg.insertAdjacentHTML('beforeend','<div class="kembali-bawah noprint"><button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Kembali</span></button></div>');
+  pg.insertAdjacentHTML('beforeend','<div class="kembali-bawah noprint"><button type="button" id="btnKembali" class="btn-kembali" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>Back</span></button></div>');
   catatRiwayat();
 }
 
@@ -275,8 +275,7 @@ function tombolKembali(){
   if (b){
     b.hidden=!ada;
     var asal=ada&&st.dari&&st.dari!==S.page?PAGES.filter(function(x){ return x.id===st.dari; })[0]:null;
-    b.querySelector('span').textContent=asal?'Kembali ke '+asal.t:'Kembali';
-    b.title='Kembali ke halaman sebelumnya';
+    b.title=asal?'Kembali ke '+asal.t:'Kembali ke halaman sebelumnya'; b.setAttribute('aria-label',b.title);
   }
   var j=$('tbJejak'); if (!j) return;
   var p=PAGES.filter(function(x){ return x.id===S.page; })[0]; if (!p){ j.innerHTML=''; return; }
