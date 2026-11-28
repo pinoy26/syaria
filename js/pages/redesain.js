@@ -7,18 +7,18 @@
    → Akun → Header 1 (">") → Header 2 (">>") → Detail. Pilih baris, lalu pakai tombol di bilah alat:
    Rekam Header 1 / Rekam Header 2 / Rekam Detail / Ubah / Hapus. Perubahan disimpan ke database lewat
    simpan_salinan (struktur & item terblokir dijaga di server; aturan revisi diperiksa saat diajukan). */
-import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611280644';
-import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611280644';
-import { card, openModal, closeModal } from '../ui-components.js?v=202611280644';
-import { SB } from '../api.js?v=202611280644';
-import { refresh, daftarSub } from '../nav.js?v=202611280644';
-import { bandingRKK } from './anggaran.js?v=202611280644';
-import { lupakanUsulan } from './usulan.js?v=202611280644';
+import { $, esc, rp, tgl, labelVersi, toast, tanya, errMsg } from '../utils.js?v=202611280703';
+import { S, sess, isSuperAdmin, punya, KODE_KL, KODE_IND } from '../state.js?v=202611280703';
+import { card, openModal, closeModal } from '../ui-components.js?v=202611280703';
+import { SB } from '../api.js?v=202611280703';
+import { refresh, daftarSub } from '../nav.js?v=202611280703';
+import { bandingRKK } from './anggaran.js?v=202611280703';
+import { lupakanUsulan } from './usulan.js?v=202611280703';
 
 var BISA_EDIT = ['draf', 'dikembalikan'], AKTIF = ['draf', 'diajukan', 'dikembalikan', 'disetujui'];
 var R = { lihat: null, cekKey: {}, daftar: null, mode: null, u: null, rows: null, basis: null, bl: {}, rk: {}, bas: [], vs: null, dv: null, sel: null, kotor: false, memuat: false, err: null, simpan: false };
 /* riwayat browser: pilihan lembar kerja (DIPA / proyeksi / usulan yang dilihat) ikut tercatat */
-daftarSub(['anggaran-rkk'], { ambil: function(){ return { lihat: R.lihat, mode: R.mode, dv: R.dv == null ? null : R.dv }; }, pasang: function(x){ if (R.lihat === x.lihat && R.mode === x.mode && R.dv === x.dv) return; R.lihat = x.lihat; R.mode = x.mode; R.dv = x.dv; R.daftar = null; R.u = null; R.rows = null; R.cocok = null; R.cocokOn = false; } });
+daftarSub(['anggaran-rkk'], { ambil: function(){ return { lihat: R.lihat, mode: R.mode, dv: R.dv == null ? null : R.dv }; }, pasang: function(x){ if (R.lihat === x.lihat && R.mode === x.mode && R.dv === x.dv) return; R.lihat = x.lihat; R.mode = x.mode; R.dv = x.dv; R.daftar = null; R.u = null; R.rows = null; R.cocok = null; R.cocokOn = false; }, sejajar: function(){ return true; } });
 var ST = { draf: 'Draf', diajukan: 'Diajukan', dikembalikan: 'Dikembalikan', disetujui: 'Disetujui', diinput_sakti: 'Diinput SAKTI', selesai: 'Selesai', ditolak: 'Ditolak' };
 var IC_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 

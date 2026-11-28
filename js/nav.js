@@ -1,20 +1,20 @@
 /* js/nav.js — navigasi: menu horizontal di header (desktop), bottom tab bar & sheet "Lainnya" (mobile), refresh halaman */
-import { $, esc, toast } from './utils.js?v=202611280644';
-import { S, BOOT, DB, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280644';
-import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280644';
-import { THEME_BTN } from './theme.js?v=202611280644';
-import { renderFilters } from './filters.js?v=202611280644';
-import { pdfCard, printCard, printAll } from './export.js?v=202611280644';
-import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280644';
-import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280644';
-import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280644';
-import { renderPerhatian } from './pages/perhatian.js?v=202611280644';
-import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280644';
-import { renderLaporan } from './pages/laporan.js?v=202611280644';
-import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280644';
-import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280644';
-import { renderKelolaBerita } from './pages/berita.js?v=202611280644';
-import { IC_BERITA, isiPanelBerita, hitungMenuUsulan } from './berita.js?v=202611280644';
+import { $, esc, toast } from './utils.js?v=202611280703';
+import { S, BOOT, DB, EMPTY_F, sess, isAdmin, isSuperAdmin, punyaSalah, NAMA_PERAN, scopeLabel, persist, activeFilterCount, unitCaption } from './state.js?v=202611280703';
+import { bindTips, bindTreeSearch, hideTip, clearPageState, openLevel, openAll, openModal, closeModal } from './ui-components.js?v=202611280703';
+import { THEME_BTN } from './theme.js?v=202611280703';
+import { renderFilters } from './filters.js?v=202611280703';
+import { pdfCard, printCard, printAll } from './export.js?v=202611280703';
+import { renderRingkasan, loadTrend } from './pages/ringkasan.js?v=202611280703';
+import { renderUnit, renderUnitRincian, unitModalHtml, renderSumber, renderJenis, renderDipa } from './pages/analisis.js?v=202611280703';
+import { renderRiwayat, loadCompare } from './pages/riwayat.js?v=202611280703';
+import { renderPerhatian } from './pages/perhatian.js?v=202611280703';
+import { renderKelola, renderKelolaUser } from './pages/kelola.js?v=202611280703';
+import { renderLaporan } from './pages/laporan.js?v=202611280703';
+import { renderAnggaran, renderAnggaranUnit, renderAnggaranRKK, renderAnggaranRevisi, HAL_ANGGARAN } from './pages/anggaran.js?v=202611280703';
+import { renderUsulan, renderKelolaUsulan, renderMonitor } from './pages/usulan.js?v=202611280703';
+import { renderKelolaBerita } from './pages/berita.js?v=202611280703';
+import { IC_BERITA, isiPanelBerita, hitungMenuUsulan, bacaBaruDitutup } from './berita.js?v=202611280703';
 
 /* ================= navigasi ================= */
 export var PAGES=[
@@ -213,39 +213,56 @@ export function refresh(){
   catatRiwayat();
 }
 
-/* ================= riwayat browser: tombol back browser/HP & tombol ‹ Kembali di navbar =================
-   Setiap perpindahan menu / filter / tampilan di dalam halaman yang dilakukan PENGGUNA dicatat (pushState, alamat #/menu);
-   perubahan otomatis (memuat data, pengalihan) hanya memperbarui catatan yang sedang aktif (replaceState) agar tombol
-   back tidak terjebak. Back saat jendela/panel terbuka hanya menutupnya. Di bawah halaman pertama ada catatan "jaga":
-   back di halaman pertama memunculkan peringatan, back sekali lagi keluar dari LANTERA. */
-/* halaman yang punya tampilan di dalamnya (mis. Usulan Revisi: daftar → detail) mendaftarkan cara membaca & memasang tampilannya.
-   SUB sengaja tanpa nilai awal: modul halaman bisa mendaftar sebelum isi modul ini dijalankan (impor melingkar). */
-var SUB;
+/* ================= riwayat & tombol Back BERTINGKAT (bukan urutan kronologis) =================
+   Ringkasan = tingkat 0. Halaman yang dibuka dari menu (sidebar / menu bawah) = tingkat 1, induknya Ringkasan.
+   Halaman yang dibuka dari dalam halaman lain (Lihat selengkapnya, detail usulan, Lihat di Belanja Redesain, ...)
+   = satu tingkat di bawah halaman asalnya, dan halaman asal itu menjadi induknya. Ganti filter / pilihan di halaman
+   yang sama tidak menambah tingkat. Back (tombol maupun back browser/HP) selalu menuju INDUK halaman yang sedang dibuka;
+   tombol Back hanya tampil mulai tingkat 2. Back di Ringkasan: peringatan, back sekali lagi keluar dari LANTERA.
+   Jendela/panel terbuka: back hanya menutupnya. Perubahan otomatis (memuat data, pengalihan) tidak dianggap langkah. */
+var SUB;   /* tanpa nilai awal: modul halaman bisa mendaftar sebelum isi modul ini dijalankan (impor melingkar) */
+/* halaman bertampilan dalam mendaftarkan cara membaca & memasang tampilannya; sejajar(a,b)=true bila perpindahan a→b
+   setara (tab lain, versi lain) sehingga tidak menambah tingkat */
 export function daftarSub(pages,o){ SUB=SUB||{}; pages.forEach(function(p){ SUB[p]=o; }); }
 function subDari(p){ return SUB&&SUB[p]; }
-var RW={ awal:false, pulih:false, aksi:false, keluar:false, peringatan:0 };
-['click','keydown','change','submit'].forEach(function(ev){ document.addEventListener(ev,function(e){ if(e.isTrusted&&$('app')&&!$('app').hidden) RW.aksi=true; },true); });
-function salin(x){ return JSON.parse(JSON.stringify(x||{})); }
-function snap(d){ var o=subDari(S.page); return { lantera:1, page:S.page, f:salin(S.f), uv:S.unitView||'', open:salin(S.open), sub:o?o.ambil():null, d:d||0 }; }
-function kunciSnap(x){ return JSON.stringify([x.page,x.f,x.uv,x.sub]); }
+var RW={ awal:false, pulih:false, aksi:false, menu:false, keluar:false, peringatan:0, cur:null };
+['click','keydown','change','submit'].forEach(function(ev){ document.addEventListener(ev,function(e){
+  if (!e.isTrusted || !aktifApp()) return;
+  RW.aksi=true;
+  if (ev==='click' && e.target.closest && e.target.closest('[data-page]')) RW.menu=true;   /* pilih menu sidebar / menu bawah */
+},true); });
+function salin(x){ return JSON.parse(JSON.stringify(x==null?{}:x)); }
+function snap(){ var o=subDari(S.page); return { lantera:1, page:S.page, f:salin(S.f), uv:S.unitView||'', open:salin(S.open), sub:o?o.ambil():null }; }
+function kunciSnap(x){ return x?JSON.stringify([x.page,x.f,x.uv,x.sub]):''; }
+function akar(){ return { lantera:1, page:'ringkasan', f:EMPTY_F(), uv:'', open:{}, sub:null, lvl:0, induk:null }; }
 function alamat(p){ return '#/'+p; }
 function aktifApp(){ var a=$('app'); return a&&!a.hidden; }
+function tulis(st,baru){ if (baru) history.pushState(st,'',alamat(st.page)); else history.replaceState(st,'',alamat(st.page)); RW.cur=st; }
 function catatRiwayat(){
   if (RW.pulih || !aktifApp()) return;
-  var cur=history.state;
+  var s=snap(), cur=RW.cur;
   if (!RW.awal){
     RW.awal=true;
-    if (cur && cur.lantera && !cur.jaga){ var s0=snap(cur.d); s0.dari=cur.dari; history.replaceState(s0,'',alamat(s0.page)); RW.aksi=false; tombolKembali(); return; }   /* muat ulang (F5) */
-    history.replaceState({lantera:1,jaga:1},'',location.pathname+location.search);
-    history.pushState(snap(0),'',alamat(S.page)); RW.aksi=false; tombolKembali(); return;
+    var h=history.state;
+    if (h && h.lantera && !h.jaga && h.page===s.page){ s.lvl=h.lvl||0; s.induk=h.induk||null; s.y=h.y; tulis(s,false); }   /* muat ulang (F5) */
+    else {
+      history.replaceState({lantera:1,jaga:1},'',location.pathname+location.search);
+      s.lvl=s.page==='ringkasan'?0:1; s.induk=s.lvl?akar():null; tulis(s,true);
+    }
+    RW.aksi=RW.menu=false; tombolKembali(); return;
   }
-  var d=cur&&cur.lantera&&!cur.jaga?cur.d:0, s=snap(d);
-  if (cur && cur.lantera && !cur.jaga && (kunciSnap(cur)===kunciSnap(s) || !RW.aksi)){ s.y=cur.y; s.dari=cur.dari; history.replaceState(s,'',alamat(s.page)); }
+  var sama=cur&&kunciSnap(cur)===kunciSnap(s);
+  if (sama || !RW.aksi){ s.lvl=cur?cur.lvl:0; s.induk=cur?cur.induk:null; s.y=cur&&cur.y; tulis(s,false); }   /* render ulang / perubahan otomatis */
   else {
-    if (cur && cur.lantera && !cur.jaga){ var c2=salin(cur); c2.y=window.scrollY; history.replaceState(c2,'',location.hash); }
-    s.d=d+1; s.dari=cur&&cur.lantera&&!cur.jaga?cur.page:null; history.pushState(s,'',alamat(s.page));
+    if (cur){ var c2=salin(cur); c2.y=window.scrollY; history.replaceState(c2,'',location.hash); }
+    var o=subDari(s.page);
+    if (RW.menu){ s.lvl=s.page==='ringkasan'?0:1; s.induk=s.lvl?akar():null; }                         /* dari menu: tingkat 1 */
+    else if (cur && cur.induk && kunciSnap(cur.induk)===kunciSnap(s)){ s.lvl=cur.induk.lvl; s.induk=cur.induk.induk; }   /* naik ke induk lewat tombol di halaman */
+    else if (cur && s.page===cur.page && (JSON.stringify(s.sub)===JSON.stringify(cur.sub) || (o && o.sejajar && o.sejajar(cur.sub,s.sub)))){ s.lvl=cur.lvl; s.induk=cur.induk; }   /* filter / pilihan setara */
+    else { s.lvl=(cur?cur.lvl:0)+1; s.induk=cur?salin(cur):akar(); }                                         /* turun satu tingkat */
+    tulis(s,true);
   }
-  RW.aksi=false; tombolKembali();
+  RW.aksi=RW.menu=false; tombolKembali();
 }
 function pulihkan(st){
   RW.pulih=true;
@@ -258,29 +275,29 @@ function pulihkan(st){
 }
 window.addEventListener('popstate',function(e){
   if (!aktifApp() || /^#berita-\d+$/.test(location.hash)) return;   /* halaman baca berita menangani dirinya sendiri */
-  var st=e.state;
+  if (RW.keluar){ history.back(); return; }                           /* keluar: lewati semua catatan LANTERA */
+  var asal=RW.cur, st=e.state;
+  if (bacaBaruDitutup()) return;   /* back hanya menutup halaman baca berita */
   /* jendela / panel terbuka: back hanya menutupnya, tetap di halaman ini */
-  if (!$('modal').hidden || filterDrawerOpen() || sheetOpen()){
-    closeModal(); closeFilterDrawer(); closeSheet();
-    if (st && st.lantera && !st.jaga && kunciSnap(st)===kunciSnap(snap())) return;
-    history.pushState(snap(st&&st.d!=null?st.d+1:1),'',alamat(S.page)); tombolKembali(); return;
-  }
-  if (st && st.jaga){
+  if (!$('modal').hidden || filterDrawerOpen() || sheetOpen()){ closeModal(); closeFilterDrawer(); closeSheet(); if (asal) history.pushState(asal,'',alamat(asal.page)); return; }
+  var tujuan=asal&&asal.induk?asal.induk:(asal&&asal.lvl>0?akar():null);
+  if (!tujuan){   /* di Ringkasan */
     if (Date.now()-RW.peringatan<4000){ RW.keluar=true; history.back(); return; }
     RW.peringatan=Date.now();
     toast('Tekan Kembali sekali lagi untuk keluar dari LANTERA.','info','Keluar dari LANTERA?');
-    history.pushState(snap(0),'',alamat(S.page)); tombolKembali(); return;
+    if (asal) history.pushState(asal,'',alamat(asal.page)); return;
   }
-  if (!st || !st.lantera){ if (RW.keluar){ history.back(); return; } history.pushState(snap(0),'',alamat(S.page)); return; }
-  if (kunciSnap(st)===kunciSnap(snap())){ tombolKembali(); return; }   /* mis. kembali dari halaman berita */
-  pulihkan(st);
+  /* catatan browser yang dituju diganti dengan halaman induk */
+  history.replaceState(tujuan,'',alamat(tujuan.page)); RW.cur=tujuan;
+  if (st && st.jaga) history.pushState(tujuan,'',alamat(tujuan.page));   /* jangan sampai berada di catatan penjaga */
+  pulihkan(tujuan);
 });
-/* tombol ‹ Kembali & jejak lokasi di navbar */
+/* tombol Back (tampil mulai tingkat 2) & jejak lokasi di navbar */
 function tombolKembali(){
-  var b=$('btnKembali'), st=history.state, ada=!!(st&&st.lantera&&!st.jaga&&st.d>0);
+  var b=$('btnKembali'), st=RW.cur, ada=!!(st&&st.lvl>=2&&st.induk);
   if (b){
     b.hidden=!ada;
-    var asal=ada&&st.dari&&st.dari!==S.page?PAGES.filter(function(x){ return x.id===st.dari; })[0]:null;
+    var asal=ada?PAGES.filter(function(x){ return x.id===st.induk.page; })[0]:null;
     b.title=asal?'Kembali ke '+asal.t:'Kembali ke halaman sebelumnya'; b.setAttribute('aria-label',b.title);
   }
   var j=$('tbJejak'); if (!j) return;

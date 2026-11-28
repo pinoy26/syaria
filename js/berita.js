@@ -1,8 +1,8 @@
 /* js/berita.js — Berita & Pengumuman: tampilan bersama (halaman login, lonceng dasbor, halaman baca berita) */
-import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280644';
-import { SB } from './api.js?v=202611280644';
-import { sess, punyaSalah } from './state.js?v=202611280644';
-import { openModal, closeModal } from './ui-components.js?v=202611280644';
+import { $, esc, tgl, toast, errMsg } from './utils.js?v=202611280703';
+import { SB } from './api.js?v=202611280703';
+import { sess, punyaSalah } from './state.js?v=202611280703';
+import { openModal, closeModal } from './ui-components.js?v=202611280703';
 
 export var JENIS = { info: ['st-info', 'Info'], penting: ['st-crit', 'Penting'], tenggat: ['st-warn', 'Tenggat'] };
 export var IC_BERITA = '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>';
@@ -92,8 +92,12 @@ export function bukaHalamanBerita(b, asal, dariUrl){
     p.hidden = false; p.textContent = 'Lampiran tidak bisa dibuka: ' + errMsg(e);
   });
 }
+/* waktu halaman baca ditutup lewat tombol back: navigasi riwayat (nav.js) tidak menganggapnya langkah mundur */
+var DITUTUP = 0;
+export function bacaBaruDitutup(){ return Date.now() - DITUTUP < 500; }
 function sembunyikanHalaman(){
   if (!RD.open) return;
+  DITUTUP = Date.now();
   RD.open = false; RD.pushed = false;
   var h = $('reader'); h.hidden = true; h.innerHTML = '';
   document.documentElement.classList.remove('reader-open');
